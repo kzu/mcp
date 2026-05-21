@@ -1,11 +1,9 @@
-﻿using ModelContextProtocol.Client;
+using ModelContextProtocol.Client;
 using System.Text;
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public class StreamableHttpServerIntegrationTests(SseServerIntegrationTestFixture fixture, ITestOutputHelper testOutputHelper)
-    : HttpServerIntegrationTests(fixture, testOutputHelper)
-
+public class StreamableHttpServerIntegrationTests : HttpServerIntegrationTests
 {
      private const string InitializeRequest = """
         {"jsonrpc":"2.0","id":"1","method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"IntegrationTestClient","version":"1.0.0"}}}
@@ -18,7 +16,7 @@ public class StreamableHttpServerIntegrationTests(SseServerIntegrationTestFixtur
         TransportMode = HttpTransportMode.StreamableHttp,
     };
 
-    [Fact]
+    [Test]
     public async Task EventSourceResponse_Includes_ExpectedHeaders()
     {
         using var initializeRequestBody = new StringContent(InitializeRequest, Encoding.UTF8, "application/json");
@@ -30,7 +28,7 @@ public class StreamableHttpServerIntegrationTests(SseServerIntegrationTestFixtur
             },
             Content = initializeRequestBody,
         };
-        using var sseResponse = await _fixture.HttpClient.SendAsync(postRequest, TestContext.Current.CancellationToken);
+        using var sseResponse = await _fixture.HttpClient.SendAsync(postRequest, TestContext.CurrentContext.CancellationToken);
 
         sseResponse.EnsureSuccessStatusCode();
 
@@ -41,7 +39,7 @@ public class StreamableHttpServerIntegrationTests(SseServerIntegrationTestFixtur
         Assert.True(sseResponse.Headers.CacheControl.NoCache);
     }
 
-    [Fact]
+    [Test]
     public async Task EventSourceStream_Includes_MessageEventType()
     {
         using var initializeRequestBody = new StringContent(InitializeRequest, Encoding.UTF8, "application/json");
@@ -53,11 +51,11 @@ public class StreamableHttpServerIntegrationTests(SseServerIntegrationTestFixtur
             },
             Content = initializeRequestBody,
         };
-        using var sseResponse = await _fixture.HttpClient.SendAsync(postRequest, TestContext.Current.CancellationToken);
-        using var sseResponseStream = await sseResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+        using var sseResponse = await _fixture.HttpClient.SendAsync(postRequest, TestContext.CurrentContext.CancellationToken);
+        using var sseResponseStream = await sseResponse.Content.ReadAsStreamAsync(TestContext.CurrentContext.CancellationToken);
         using var streamReader = new StreamReader(sseResponseStream);
 
-        var messageEvent = await streamReader.ReadLineAsync(TestContext.Current.CancellationToken);
+        var messageEvent = await streamReader.ReadLineAsync(TestContext.CurrentContext.CancellationToken);
         Assert.Equal("event: message", messageEvent);
     }
 }

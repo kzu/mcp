@@ -24,7 +24,7 @@ namespace ModelContextProtocol.Tests;
 /// </remarks>
 public class ExperimentalPropertySerializationTests
 {
-    [Fact]
+    [Test]
     public void ExperimentalProperties_Dropped_WithConsumerContextOnly()
     {
         var options = new JsonSerializerOptions
@@ -43,7 +43,7 @@ public class ExperimentalPropertySerializationTests
         Assert.Contains("\"name\"", json);
     }
 
-    [Fact]
+    [Test]
     public void ExperimentalProperties_IgnoredOnDeserialize_WithConsumerContextOnly()
     {
         string json = JsonSerializer.Serialize(
@@ -64,7 +64,7 @@ public class ExperimentalPropertySerializationTests
         Assert.Null(deserialized.Execution);
     }
 
-    [Fact]
+    [Test]
     public void ExperimentalProperties_RoundTrip_WhenSdkResolverIsChained()
     {
         var options = new JsonSerializerOptions
@@ -92,7 +92,7 @@ public class ExperimentalPropertySerializationTests
         Assert.Equal(ToolTaskSupport.Optional, deserialized.Execution.TaskSupport);
     }
 
-    [Fact]
+    [Test]
     public void ExperimentalProperties_RoundTrip_WithDefaultOptions()
     {
         var capabilities = new ServerCapabilities

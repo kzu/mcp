@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class InitializedNotificationParamsTests
 {
-    [Fact]
+    [Test]
     public static void InitializedNotificationParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new InitializedNotificationParams
@@ -22,7 +22,7 @@ public static class InitializedNotificationParamsTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void InitializedNotificationParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new InitializedNotificationParams();

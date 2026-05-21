@@ -29,7 +29,7 @@ namespace ModelContextProtocol.AspNetCore.Tests;
 /// to provide the specific event store implementation to test.
 /// </para>
 /// </remarks>
-public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOutputHelper) : KestrelInMemoryTest(testOutputHelper)
+public abstract class ResumabilityIntegrationTestsBase : KestrelInMemoryTest
 {
     /// <summary>
     /// The initialize request JSON for the current protocol version.
@@ -52,7 +52,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
     /// <returns>The event stream store instance.</returns>
     protected abstract ValueTask<ISseEventStreamStore> CreateEventStreamStoreAsync();
 
-    [Fact]
+    [Test]
     public virtual async Task Server_StoresEvents_WhenEventStoreConfigured()
     {
         // Arrange
@@ -62,7 +62,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         // Act - Make a tool call which generates events
         var result = await client.CallToolAsync("echo",
             new Dictionary<string, object?> { ["message"] = "test" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert - The call succeeded
         Assert.NotNull(result);
@@ -70,7 +70,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         Assert.Equal("Echo: test", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public virtual async Task Client_CanMakeMultipleRequests_WithResumabilityEnabled()
     {
         // Arrange
@@ -82,14 +82,14 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         {
             var result = await client.CallToolAsync("echo",
                 new Dictionary<string, object?> { ["message"] = $"test{i}" },
-                cancellationToken: TestContext.Current.CancellationToken);
+                cancellationToken: TestContext.CurrentContext.CancellationToken);
 
             var textContent = Assert.Single(result.Content.OfType<TextContentBlock>());
             Assert.Equal($"Echo: test{i}", textContent.Text);
         }
     }
 
-    [Fact]
+    [Test]
     public virtual async Task Ping_WorksWithResumabilityEnabled()
     {
         // Arrange
@@ -97,10 +97,10 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         await using var client = await ConnectClientAsync();
 
         // Act & Assert - Ping should work
-        await client.PingAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.PingAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public virtual async Task ListTools_WorksWithResumabilityEnabled()
     {
         // Arrange
@@ -108,14 +108,14 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         await using var client = await ConnectClientAsync();
 
         // Act
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(tools);
         Assert.Single(tools);
     }
 
-    [Fact]
+    [Test]
     public virtual async Task Client_CanPollResponse_FromServer()
     {
         const string ProgressToolName = "progress_tool";
@@ -125,13 +125,13 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         {
             progress.Report(new() { Progress = 0, Message = "Initial value" });
 
-            await clientReceivedInitialValueTcs.Task.WaitAsync(TestContext.Current.CancellationToken);
+            await clientReceivedInitialValueTcs.Task.WaitAsync(TestContext.CurrentContext.CancellationToken);
 
             await context.EnablePollingAsync(retryInterval: TimeSpan.FromSeconds(1));
 
             progress.Report(new() { Progress = 50, Message = "Polled value" });
 
-            await clientReceivedPolledValueTcs.Task.WaitAsync(TestContext.Current.CancellationToken);
+            await clientReceivedPolledValueTcs.Task.WaitAsync(TestContext.CurrentContext.CancellationToken);
 
             return "Complete";
         }, options: new() { Name = ProgressToolName });
@@ -157,13 +157,13 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
             }
         });
 
-        var result = await client.CallToolAsync(ProgressToolName, progress: progressHandler, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync(ProgressToolName, progress: progressHandler, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.False(result.IsError is true);
         Assert.Equal("Complete", result.Content.OfType<TextContentBlock>().Single().Text);
     }
 
-    [Fact]
+    [Test]
     public virtual async Task Client_CanResumePostResponseStream_AfterDisconnection()
     {
         using var faultingStreamHandler = new FaultingStreamHandler()
@@ -186,10 +186,10 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
             progress.Report(new() { Progress = 0, Message = InitialMessage });
 
             // Make sure the client receives one message before we disconnect.
-            await clientReceivedInitialValueTcs.Task.WaitAsync(TestContext.Current.CancellationToken);
+            await clientReceivedInitialValueTcs.Task.WaitAsync(TestContext.CurrentContext.CancellationToken);
 
             // Simulate a network disconnection by faulting the response stream.
-            var reconnectAttempt = await faultingStreamHandler.TriggerFaultAsync(TestContext.Current.CancellationToken);
+            var reconnectAttempt = await faultingStreamHandler.TriggerFaultAsync(TestContext.CurrentContext.CancellationToken);
 
             // Send another message that the client should receive after reconnecting.
             progress.Report(new() { Progress = 50, Message = ReplayedMessage });
@@ -197,7 +197,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
             reconnectAttempt.Continue();
 
             // Wait for the client to receive the message via replay.
-            await clientReceivedReconnectValueTcs.Task.WaitAsync(TestContext.Current.CancellationToken);
+            await clientReceivedReconnectValueTcs.Task.WaitAsync(TestContext.CurrentContext.CancellationToken);
 
             // Return the final result with the client still connected.
             return ResultMessage;
@@ -228,7 +228,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
             }
         });
 
-        var result = await client.CallToolAsync(ProgressToolName, progress: progressHandler, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync(ProgressToolName, progress: progressHandler, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.False(result.IsError is true);
         Assert.Equal(1, initialNotificationReceivedCount);
@@ -236,7 +236,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         Assert.Equal(ResultMessage, result.Content.OfType<TextContentBlock>().Single().Text);
     }
 
-    [Fact]
+    [Test]
     public virtual async Task Client_CanResumeUnsolicitedMessageStream_AfterDisconnection()
     {
         var timeout = TestConstants.DefaultTimeout;
@@ -265,7 +265,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         await using var client = await ConnectClientAsync();
 
         // Get the server instance
-        var server = await serverTcs.Task.WaitAsync(timeout, TestContext.Current.CancellationToken);
+        var server = await serverTcs.Task.WaitAsync(timeout, TestContext.CurrentContext.CancellationToken);
 
         // Set up notification tracking with unique messages
         var clientReceivedInitialNotificationTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -305,31 +305,31 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         });
 
         // Wait for the client's unsolicited message stream to be established before sending notifications
-        await faultingStreamHandler.WaitForUnsolicitedMessageStreamAsync(TestContext.Current.CancellationToken);
+        await faultingStreamHandler.WaitForUnsolicitedMessageStreamAsync(TestContext.CurrentContext.CancellationToken);
 
         // Send a custom notification to the client on the unsolicited message stream
-        await server.SendNotificationAsync(CustomNotificationMethod, new JsonObject { ["message"] = InitialMessage }, cancellationToken: TestContext.Current.CancellationToken);
+        await server.SendNotificationAsync(CustomNotificationMethod, new JsonObject { ["message"] = InitialMessage }, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Wait for client to receive the first notification
-        await clientReceivedInitialNotificationTcs.Task.WaitAsync(timeout, TestContext.Current.CancellationToken);
+        await clientReceivedInitialNotificationTcs.Task.WaitAsync(timeout, TestContext.CurrentContext.CancellationToken);
 
         // Fault the unsolicited message stream (GET SSE)
-        var reconnectAttempt = await faultingStreamHandler.TriggerFaultAsync(TestContext.Current.CancellationToken);
+        var reconnectAttempt = await faultingStreamHandler.TriggerFaultAsync(TestContext.CurrentContext.CancellationToken);
 
         // Send another notification while the client is disconnected - this should be stored
-        await server.SendNotificationAsync(CustomNotificationMethod, new JsonObject { ["message"] = ReplayedMessage }, cancellationToken: TestContext.Current.CancellationToken);
+        await server.SendNotificationAsync(CustomNotificationMethod, new JsonObject { ["message"] = ReplayedMessage }, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Allow the client to reconnect
         reconnectAttempt.Continue();
 
         // Wait for client to receive the notification via replay
-        await clientReceivedReplayedNotificationTcs.Task.WaitAsync(timeout, TestContext.Current.CancellationToken);
+        await clientReceivedReplayedNotificationTcs.Task.WaitAsync(timeout, TestContext.CurrentContext.CancellationToken);
 
         // Send a final notification while the client has reconnected - this should be handled by the transport
-        await server.SendNotificationAsync(CustomNotificationMethod, new JsonObject { ["message"] = ReconnectMessage }, cancellationToken: TestContext.Current.CancellationToken);
+        await server.SendNotificationAsync(CustomNotificationMethod, new JsonObject { ["message"] = ReconnectMessage }, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Wait for the client to receive the final notification
-        await clientReceivedReconnectNotificationTcs.Task.WaitAsync(timeout, TestContext.Current.CancellationToken);
+        await clientReceivedReconnectNotificationTcs.Task.WaitAsync(timeout, TestContext.CurrentContext.CancellationToken);
 
         // Assert each notification was received exactly once
         Assert.Equal(1, initialNotificationReceivedCount);
@@ -337,7 +337,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         Assert.Equal(1, reconnectNotificationReceivedCount);
     }
 
-    [Fact]
+    [Test]
     public virtual async Task Server_Returns400_WhenLastEventIdRefersToWrongSession()
     {
         // Arrange - Create server with event store
@@ -352,16 +352,16 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
             },
             Content = new StringContent(InitializeRequest, Encoding.UTF8, "application/json"),
         };
-        var initResponse = await HttpClient.SendAsync(initRequest, HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        var initResponse = await HttpClient.SendAsync(initRequest, HttpCompletionOption.ResponseHeadersRead, TestContext.CurrentContext.CancellationToken);
         initResponse.EnsureSuccessStatusCode();
 
         // Get the session ID from the response
         var sessionId = initResponse.Headers.GetValues("Mcp-Session-Id").First();
 
         // Read the SSE response to get an event ID
-        await using var initStream = await initResponse.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+        await using var initStream = await initResponse.Content.ReadAsStreamAsync(TestContext.CurrentContext.CancellationToken);
         string? eventId = null;
-        await foreach (var sseItem in SseParser.Create(initStream).EnumerateAsync(TestContext.Current.CancellationToken))
+        await foreach (var sseItem in SseParser.Create(initStream).EnumerateAsync(TestContext.CurrentContext.CancellationToken))
         {
             if (!string.IsNullOrEmpty(sseItem.EventId))
             {
@@ -383,7 +383,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         resumeRequest.Headers.Add("Mcp-Session-Id", wrongSessionId);
         resumeRequest.Headers.Add("Last-Event-ID", eventId);
 
-        var resumeResponse = await HttpClient.SendAsync(resumeRequest, HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        var resumeResponse = await HttpClient.SendAsync(resumeRequest, HttpCompletionOption.ResponseHeadersRead, TestContext.CurrentContext.CancellationToken);
 
         // Assert - First we get 404 because the wrong session doesn't exist
         Assert.Equal(HttpStatusCode.NotFound, resumeResponse.StatusCode);
@@ -398,15 +398,15 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
             },
             Content = new StringContent(InitializeRequest, Encoding.UTF8, "application/json"),
         };
-        var initResponse2 = await HttpClient.SendAsync(initRequest2, HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        var initResponse2 = await HttpClient.SendAsync(initRequest2, HttpCompletionOption.ResponseHeadersRead, TestContext.CurrentContext.CancellationToken);
         initResponse2.EnsureSuccessStatusCode();
 
         var sessionId2 = initResponse2.Headers.GetValues("Mcp-Session-Id").First();
         Assert.NotEqual(sessionId, sessionId2);
 
         // Read the second session's response
-        await using var initStream2 = await initResponse2.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
-        await foreach (var _ in SseParser.Create(initStream2).EnumerateAsync(TestContext.Current.CancellationToken))
+        await using var initStream2 = await initResponse2.Content.ReadAsStreamAsync(TestContext.CurrentContext.CancellationToken);
+        await foreach (var _ in SseParser.Create(initStream2).EnumerateAsync(TestContext.CurrentContext.CancellationToken))
         {
             // Consume the stream
         }
@@ -422,20 +422,20 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         mismatchRequest.Headers.Add("Mcp-Session-Id", sessionId2);
         mismatchRequest.Headers.Add("Last-Event-ID", eventId);  // This event ID belongs to session 1
 
-        var mismatchResponse = await HttpClient.SendAsync(mismatchRequest, HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        var mismatchResponse = await HttpClient.SendAsync(mismatchRequest, HttpCompletionOption.ResponseHeadersRead, TestContext.CurrentContext.CancellationToken);
 
         // Assert - Should get 400 Bad Request because the event ID doesn't match the session
         Assert.Equal(HttpStatusCode.BadRequest, mismatchResponse.StatusCode);
 
         // Verify the error message
-        var responseBody = await mismatchResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var responseBody = await mismatchResponse.Content.ReadAsStringAsync(TestContext.CurrentContext.CancellationToken);
         var errorResponse = JsonNode.Parse(responseBody);
         Assert.NotNull(errorResponse);
         var errorMessage = errorResponse["error"]?["message"]?.GetValue<string>();
         Assert.Equal("Bad Request: The Last-Event-ID header refers to a session with a different session ID.", errorMessage);
     }
 
-    [Fact]
+    [Test]
     public virtual async Task EnablePollingAsync_SendsSseItemWithRetryField()
     {
         // Arrange
@@ -454,7 +454,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         await using var client = await ConnectClientAsync();
 
         // Act - Call the tool that enables polling
-        var result = await client.CallToolAsync(PollingToolName, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync(PollingToolName, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert - The result should be successful
         Assert.False(result.IsError is true);
@@ -500,7 +500,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         var app = Builder.Build();
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
         return app;
     }
 
@@ -516,7 +516,7 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         }, HttpClient, LoggerFactory);
 
         return await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
     }
 
     /// <summary>
@@ -535,13 +535,13 @@ public abstract class ResumabilityIntegrationTestsBase(ITestOutputHelper testOut
         };
 
         var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead,
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         response.EnsureSuccessStatusCode();
 
         var sseResponse = new SseResponse();
-        await using var stream = await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
-        await foreach (var sseItem in SseParser.Create(stream).EnumerateAsync(TestContext.Current.CancellationToken))
+        await using var stream = await response.Content.ReadAsStreamAsync(TestContext.CurrentContext.CancellationToken);
+        await foreach (var sseItem in SseParser.Create(stream).EnumerateAsync(TestContext.CurrentContext.CancellationToken))
         {
             if (!string.IsNullOrEmpty(sseItem.EventId))
             {

@@ -12,10 +12,9 @@ namespace ModelContextProtocol.AspNetCore.Tests.OAuth;
 /// </summary>
 public class AuthEventTests : OAuthTestBase
 {
-    public AuthEventTests(ITestOutputHelper outputHelper)
-        : base(outputHelper, configureMcpMetadata: false)
+    protected override void ConfigureMcpAuthenticationOptions(IServiceCollection services)
     {
-        Builder.Services.Configure<McpAuthenticationOptions>(McpAuthenticationDefaults.AuthenticationScheme, options =>
+        services.Configure<McpAuthenticationOptions>(McpAuthenticationDefaults.AuthenticationScheme, options =>
         {
             // Note: ResourceMetadata is NOT set here - it will be provided via events
             options.ResourceMetadata = null;
@@ -34,7 +33,7 @@ public class AuthEventTests : OAuthTestBase
         });
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithResourceMetadataFromEvent()
     {
         await using var app = await StartMcpServerAsync();
@@ -58,11 +57,11 @@ public class AuthEventTests : OAuthTestBase
         await using var client = await McpClient.CreateAsync(
             transport,
             loggerFactory: LoggerFactory,
-            cancellationToken: TestContext.Current.CancellationToken
+            cancellationToken: TestContext.CurrentContext.CancellationToken
         );
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithDynamicClientRegistration_FromEvent()
     {
         await using var app = await StartMcpServerAsync();
@@ -97,7 +96,7 @@ public class AuthEventTests : OAuthTestBase
         await using var client = await McpClient.CreateAsync(
             transport,
             loggerFactory: LoggerFactory,
-            cancellationToken: TestContext.Current.CancellationToken
+            cancellationToken: TestContext.CurrentContext.CancellationToken
         );
 
         Assert.NotNull(dcrResponse);
@@ -105,7 +104,7 @@ public class AuthEventTests : OAuthTestBase
         Assert.False(string.IsNullOrEmpty(dcrResponse.ClientSecret));
     }
 
-    [Fact]
+    [Test]
     public async Task ResourceMetadataEndpoint_ReturnsCorrectMetadata_FromEvent()
     {
         await using var app = await StartMcpServerAsync();
@@ -113,14 +112,14 @@ public class AuthEventTests : OAuthTestBase
         // Make a direct request to the resource metadata endpoint
         using var response = await HttpClient.GetAsync(
             "/.well-known/oauth-protected-resource",
-            TestContext.Current.CancellationToken
+            TestContext.CurrentContext.CancellationToken
         );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var metadata = await response.Content.ReadFromJsonAsync<ProtectedResourceMetadata>(
             McpJsonUtilities.DefaultOptions,
-            TestContext.Current.CancellationToken
+            TestContext.CurrentContext.CancellationToken
         );
 
         Assert.NotNull(metadata);
@@ -129,7 +128,7 @@ public class AuthEventTests : OAuthTestBase
         Assert.Contains("mcp:tools", metadata.ScopesSupported);
     }
 
-    [Fact]
+    [Test]
     public async Task ResourceMetadataEndpoint_CanModifyExistingMetadata_InEvent()
     {
         // Override the configuration to test modification of existing metadata
@@ -164,14 +163,14 @@ public class AuthEventTests : OAuthTestBase
         // Make a direct request to the resource metadata endpoint
         using var response = await HttpClient.GetAsync(
             "/.well-known/oauth-protected-resource",
-            TestContext.Current.CancellationToken
+            TestContext.CurrentContext.CancellationToken
         );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var metadata = await response.Content.ReadFromJsonAsync<ProtectedResourceMetadata>(
             McpJsonUtilities.DefaultOptions,
-            TestContext.Current.CancellationToken
+            TestContext.CurrentContext.CancellationToken
         );
 
         Assert.NotNull(metadata);
@@ -182,7 +181,7 @@ public class AuthEventTests : OAuthTestBase
         Assert.Equal("Dynamic Test Resource", metadata.ResourceName);
     }
 
-    [Fact]
+    [Test]
     public async Task ResourceMetadataEndpoint_ThrowsException_WhenNoMetadataProvided()
     {
         // Override the configuration to test the error case where no metadata is provided
@@ -204,14 +203,14 @@ public class AuthEventTests : OAuthTestBase
         // Make a direct request to the resource metadata endpoint - this should fail
         using var response = await HttpClient.GetAsync(
             "/.well-known/oauth-protected-resource",
-            TestContext.Current.CancellationToken
+            TestContext.CurrentContext.CancellationToken
         );
 
         // The request should fail with an internal server error due to the InvalidOperationException
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task ResourceMetadataEndpoint_HandlesResponse_WhenHandleResponseCalled()
     {
         // Override the configuration to test HandleResponse behavior
@@ -233,7 +232,7 @@ public class AuthEventTests : OAuthTestBase
         // Make a direct request to the resource metadata endpoint
         using var response = await HttpClient.GetAsync(
             "/.well-known/oauth-protected-resource",
-            TestContext.Current.CancellationToken
+            TestContext.CurrentContext.CancellationToken
         );
 
         // The request should be handled by the event handler without returning metadata
@@ -243,11 +242,11 @@ public class AuthEventTests : OAuthTestBase
 
         // The response should be empty since the event handler called HandleResponse()
         // but didn't write any content to the response
-        var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var content = await response.Content.ReadAsStringAsync(TestContext.CurrentContext.CancellationToken);
         Assert.Empty(content);
     }
 
-    [Fact]
+    [Test]
     public async Task ResourceMetadataEndpoint_SkipsHandler_WhenSkipHandlerCalled()
     {
         // Override the configuration to test SkipHandler behavior
@@ -269,7 +268,7 @@ public class AuthEventTests : OAuthTestBase
         // Make a direct request to the resource metadata endpoint
         using var response = await HttpClient.GetAsync(
             "/.well-known/oauth-protected-resource",
-            TestContext.Current.CancellationToken
+            TestContext.CurrentContext.CancellationToken
         );
 
         // When SkipHandler() is called, the authentication handler should skip processing

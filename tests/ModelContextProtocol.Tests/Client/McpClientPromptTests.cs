@@ -10,8 +10,7 @@ namespace ModelContextProtocol.Tests.Client;
 
 public class McpClientPromptTests : ClientServerTestBase
 {
-    public McpClientPromptTests(ITestOutputHelper outputHelper)
-        : base(outputHelper)
+    public McpClientPromptTests()
     {
     }
 
@@ -32,12 +31,12 @@ public class McpClientPromptTests : ClientServerTestBase
             new(ChatRole.User, context.Params.Meta?.ToJsonString() ?? "{}");
     }
 
-    [Fact]
+    [Test]
     public async Task Constructor_WithValidParameters_CreatesInstance()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         var originalPrompt = prompts.First(p => p.Name == "greeting");
         var promptDefinition = originalPrompt.ProtocolPrompt;
 
@@ -49,7 +48,7 @@ public class McpClientPromptTests : ClientServerTestBase
         Assert.Same(promptDefinition, newPrompt.ProtocolPrompt);
     }
 
-    [Fact]
+    [Test]
     public void Constructor_WithNullClient_ThrowsArgumentNullException()
     {
         var promptDefinition = new Prompt
@@ -61,7 +60,7 @@ public class McpClientPromptTests : ClientServerTestBase
         Assert.Throws<ArgumentNullException>("client", () => new McpClientPrompt(null!, promptDefinition));
     }
 
-    [Fact]
+    [Test]
     public async Task Constructor_WithNullPrompt_ThrowsArgumentNullException()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -69,13 +68,13 @@ public class McpClientPromptTests : ClientServerTestBase
         Assert.Throws<ArgumentNullException>("prompt", () => new McpClientPrompt(client, null!));
     }
 
-    [Fact]
+    [Test]
     public async Task ReusePromptDefinition_AcrossDifferentClients_InvokesSuccessfully()
     {
         Prompt promptDefinition;
         {
             await using McpClient client1 = await CreateMcpClientForServer();
-            var prompts = await client1.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var prompts = await client1.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
             var greetingPrompt = prompts.First(p => p.Name == "greeting");
             promptDefinition = greetingPrompt.ProtocolPrompt;
         }
@@ -86,7 +85,7 @@ public class McpClientPromptTests : ClientServerTestBase
 
         var result = await reusedPrompt.GetAsync(
             new Dictionary<string, object?> { ["name"] = "World" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
         Assert.NotNull(result.Messages);
@@ -97,12 +96,12 @@ public class McpClientPromptTests : ClientServerTestBase
         Assert.Equal("Hello, World!", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ReusePromptDefinition_PreservesPromptMetadata()
     {
         await using McpClient client = await CreateMcpClientForServer();
         
-        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         var originalPrompt = prompts.First(p => p.Name == "greeting");
         var promptDefinition = originalPrompt.ProtocolPrompt;
 
@@ -114,7 +113,7 @@ public class McpClientPromptTests : ClientServerTestBase
         Assert.Equal(originalPrompt.ProtocolPrompt.Description, reusedPrompt.ProtocolPrompt.Description);
     }
 
-    [Fact]
+    [Test]
     public async Task ManuallyConstructedPrompt_CanBeInvoked()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -129,7 +128,7 @@ public class McpClientPromptTests : ClientServerTestBase
 
         var result = await clientPrompt.GetAsync(
             new Dictionary<string, object?> { ["name"] = "Test" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
         Assert.NotNull(result.Messages);
@@ -140,12 +139,12 @@ public class McpClientPromptTests : ClientServerTestBase
         Assert.Equal("Hello, Test!", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task GetAsync_WithRequestOptions_PassesMetaToServer()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         var prompt = prompts.Single(p => p.Name == "metadata_echo");
 
         RequestOptions requestOptions = new()
@@ -157,7 +156,7 @@ public class McpClientPromptTests : ClientServerTestBase
             }
         };
 
-        var result = await prompt.GetAsync(options: requestOptions, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await prompt.GetAsync(options: requestOptions, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
         var message = result.Messages.First();

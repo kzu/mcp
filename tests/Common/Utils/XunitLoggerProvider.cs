@@ -40,13 +40,11 @@ public class XunitLoggerProvider(ITestOutputHelper output) : ILoggerProvider
             }
             catch (InvalidOperationException)
             {
-                // Ignore exceptions from xUnit's TestOutputHelper when the test has already completed.
-                // Background work may continue logging after xUnit has disposed the test context.
+                // Ignore exceptions when the active test output context has already completed.
             }
             catch (NullReferenceException)
             {
-                // xUnit v3 may throw NullReferenceException in TestOutputHelper.QueueTestOutput()
-                // when the internal queue has been torn down after test completion.
+                // Some test output implementations may tear down internal state during shutdown.
             }
         }
 

@@ -11,9 +11,9 @@ namespace ModelContextProtocol.Tests;
 /// <summary>
 /// Tests for <see cref="DistributedCacheEventStreamStore"/>.
 /// </summary>
-public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputHelper) : LoggedTest(testOutputHelper)
+public class DistributedCacheEventStreamStoreTests : LoggedTest
 {
-    private static CancellationToken CancellationToken => TestContext.Current.CancellationToken;
+    private static CancellationToken CancellationToken => TestContext.CurrentContext.CancellationToken;
 
     private static IDistributedCache CreateMemoryCache()
     {
@@ -28,13 +28,13 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         return new DistributedCacheEventStreamStore(Options.Create(storeOptions));
     }
 
-    [Fact]
+    [Test]
     public void Constructor_ThrowsArgumentNullException_WhenOptionsIsNull()
     {
         Assert.Throws<ArgumentNullException>("options", () => new DistributedCacheEventStreamStore(null!));
     }
 
-    [Fact]
+    [Test]
     public void Constructor_ThrowsInvalidOperationException_WhenCacheIsNull()
     {
         var options = Options.Create(new DistributedCacheEventStreamStoreOptions());
@@ -42,7 +42,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.StartsWith($"The '{nameof(DistributedCacheEventStreamStoreOptions)}.{nameof(DistributedCacheEventStreamStoreOptions.Cache)}'", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateStreamAsync_ThrowsArgumentNullException_WhenOptionsIsNull()
     {
         // Arrange
@@ -54,7 +54,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
             async () => await store.CreateStreamAsync(null!, CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_AssignsUniqueEventId_WhenItemHasNoEventId()
     {
         // Arrange
@@ -77,7 +77,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.NotEmpty(result.EventId);
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_SkipsAssigningEventId_WhenItemAlreadyHasEventId()
     {
         // Arrange
@@ -100,7 +100,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(existingEventId, result.EventId);
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_PreservesDataProperty_InReturnedItem()
     {
         // Arrange
@@ -123,7 +123,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Same(message, result.Data);
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_PreservesEventTypeProperty_InReturnedItem()
     {
         // Arrange
@@ -145,7 +145,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal("custom-event-type", result.EventType);
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_PreservesReconnectionIntervalProperty_InStoredEvent()
     {
         // Arrange
@@ -197,7 +197,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(TimeSpan.FromSeconds(10), events[0].ReconnectionInterval);
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_HandlesNullReconnectionInterval_InStoredEvent()
     {
         // Arrange
@@ -234,7 +234,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Null(events[0].ReconnectionInterval);
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_HandlesNullData_AssignsEventIdAndStoresEvent()
     {
         // Arrange
@@ -260,7 +260,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.NotNull(reader);
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_StoresEventWithCorrectSlidingExpiration()
     {
         // Arrange - Use a mock cache to verify expiration options
@@ -288,7 +288,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
             call.Options.SlidingExpiration == TimeSpan.FromMinutes(15));
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_StoresEventWithCorrectAbsoluteExpiration()
     {
         // Arrange
@@ -316,7 +316,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
             call.Options.AbsoluteExpirationRelativeToNow == TimeSpan.FromHours(3));
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_UpdatesStreamMetadata_AfterEachWrite()
     {
         // Arrange
@@ -338,7 +338,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Contains(mockCache.SetCalls, call => call.Key.Contains("meta:"));
     }
 
-    [Fact]
+    [Test]
     public async Task SetModeAsync_PersistsModeChangeToMetadata()
     {
         // Arrange
@@ -360,7 +360,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Contains(mockCache.SetCalls, call => call.Key.Contains("meta:"));
     }
 
-    [Fact]
+    [Test]
     public async Task SetModeAsync_ModeChangeReflectedInReader()
     {
         // Arrange
@@ -400,7 +400,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Empty(events); // No events after the one we used to create the reader
     }
 
-    [Fact]
+    [Test]
     public async Task DisposeAsync_MarksStreamAsCompleted()
     {
         // Arrange
@@ -435,7 +435,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Empty(events); // No new events after the one we used to create the reader
     }
 
-    [Fact]
+    [Test]
     public async Task DisposeAsync_IsIdempotent()
     {
         // Arrange
@@ -457,7 +457,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         // If we got here without exception, the test passes
     }
 
-    [Fact]
+    [Test]
     public async Task DisposeAsync_UpdatesMetadata_WithIsCompletedFlag()
     {
         // Arrange
@@ -479,7 +479,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Contains(mockCache.SetCalls, call => call.Key.Contains("meta:"));
     }
 
-    [Fact]
+    [Test]
     public async Task GetStreamReaderAsync_ThrowsArgumentNullException_WhenLastEventIdIsNull()
     {
         // Arrange
@@ -491,7 +491,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
             async () => await store.GetStreamReaderAsync(null!, CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task GetStreamReaderAsync_ReturnsNull_WhenEventIdIsUnparseable()
     {
         // Arrange
@@ -509,7 +509,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Null(result3);
     }
 
-    [Fact]
+    [Test]
     public async Task GetStreamReaderAsync_ReturnsNull_WhenStreamMetadataDoesNotExist()
     {
         // Arrange
@@ -526,7 +526,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Null(reader);
     }
 
-    [Fact]
+    [Test]
     public async Task GetStreamReaderAsync_ReturnsReaderWithCorrectSessionIdAndStreamId()
     {
         // Arrange
@@ -552,7 +552,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal("my-stream", reader.StreamId);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_ReturnsEventsInOrder()
     {
         // Arrange
@@ -589,7 +589,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(event3.EventId, events[2].EventId);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_ReturnsEmpty_WhenNoNewEventsExist()
     {
         // Arrange
@@ -620,7 +620,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Empty(events);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_PreservesCorrectDataEventTypeAndEventId()
     {
         // Arrange
@@ -658,7 +658,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal("test/method", readMessage.Method);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_HandlesNullData()
     {
         // Arrange
@@ -691,7 +691,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(writtenItem.EventId, events[0].EventId);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_InPollingMode_CompletesImmediatelyAfterReturningAvailableEvents()
     {
         // Arrange
@@ -727,7 +727,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.True(stopwatch.ElapsedMilliseconds < 500, $"Polling mode should complete quickly, took {stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_InPollingMode_ReturnsOnlyEventsAfterLastEventId()
     {
         // Arrange
@@ -761,7 +761,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(event3.EventId, events[0].EventId);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_InPollingMode_ReturnsEmptyIfNoNewEvents()
     {
         // Arrange
@@ -790,7 +790,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Empty(events);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_InPollingMode_DoesNotWaitForNewEvents()
     {
         // Arrange
@@ -822,7 +822,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.True(stopwatch.ElapsedMilliseconds < 500, $"Polling mode should complete quickly, took {stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_InStreamingMode_WaitsForNewEvents()
     {
         // Arrange
@@ -879,7 +879,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(newEvent.EventId, events[0].EventId);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_InStreamingMode_YieldsNewlyWrittenEvents()
     {
         // Arrange
@@ -937,7 +937,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(event3.EventId, events[2].EventId);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_InStreamingMode_CompletesWhenStreamIsDisposed()
     {
         // Arrange
@@ -975,7 +975,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         await readTask.WaitAsync(timeoutCts.Token);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_InStreamingMode_RespectsCancellation()
     {
         // Arrange
@@ -1039,7 +1039,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.NotNull(capturedException);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_RespectsModeSwitchFromStreamingToPolling()
     {
         // Arrange
@@ -1084,7 +1084,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Empty(events); // No new events were written after the one we used to create the reader
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_PollingModeReturnsEventsThenCompletes()
     {
         // Arrange - Start in default mode, write some events, switch to polling, reader should return remaining events
@@ -1130,7 +1130,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.True(stopwatch.ElapsedMilliseconds < 500, $"Should complete quickly, took {stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact]
+    [Test]
     public async Task MultipleStreams_AreIsolated_EventsDoNotLeakBetweenStreams()
     {
         // Arrange
@@ -1188,7 +1188,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(event2.EventId, events2[0].EventId);
     }
 
-    [Fact]
+    [Test]
     public async Task MultipleStreams_SameSession_DifferentStreamIds_AreIsolated()
     {
         // Arrange
@@ -1241,7 +1241,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal("from-B", events2[0].EventType);
     }
 
-    [Fact]
+    [Test]
     public async Task EventIds_AreGloballyUnique_AcrossStreams()
     {
         // Arrange
@@ -1273,7 +1273,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(4, allEventIds.Distinct().Count());
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_UsesConfiguredSlidingExpiration()
     {
         // Arrange
@@ -1301,7 +1301,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
             call.Options.SlidingExpiration == TimeSpan.FromMinutes(30));
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_UsesConfiguredAbsoluteExpiration()
     {
         // Arrange
@@ -1330,7 +1330,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(TimeSpan.FromHours(6), eventCall.Options.AbsoluteExpirationRelativeToNow);
     }
 
-    [Fact]
+    [Test]
     public async Task WriteEventAsync_UsesConfiguredMetadataExpiration()
     {
         // Arrange - Metadata is written when events are written
@@ -1358,7 +1358,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(TimeSpan.FromHours(12), metadataCall.Options.AbsoluteExpirationRelativeToNow);
     }
 
-    [Fact]
+    [Test]
     public void DefaultOptions_HaveReasonableDefaults()
     {
         // Arrange & Act
@@ -1372,7 +1372,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.True(options.MetadataAbsoluteExpiration > TimeSpan.Zero, "Metadata absolute expiration should be positive");
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_ThrowsMcpException_WhenMetadataExpires()
     {
         // Arrange - Use a cache that allows us to simulate metadata expiration
@@ -1415,7 +1415,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Contains("metadata", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_ThrowsMcpException_WhenEventExpires()
     {
         // Arrange - Use a cache that allows us to simulate event expiration
@@ -1456,7 +1456,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Contains("not found", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadEventsAsync_DoesNotReadMetadata_InPollingMode()
     {
         // Arrange - Use a tracking cache to count metadata reads
@@ -1505,7 +1505,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(1, trackingCache.MetadataReadCount);
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_Format_CreatesValidEventId()
     {
         // Act
@@ -1517,7 +1517,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Contains(":", eventId); // Should contain separators
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_TryParse_RoundTripsSuccessfully()
     {
         // Arrange
@@ -1536,7 +1536,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(originalSequence, sequence);
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_TryParse_HandlesEmptySessionAndStreamIds()
     {
         // Arrange
@@ -1555,7 +1555,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(originalSequence, sequence);
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_TryParse_HandlesSpecialCharactersInSessionId()
     {
         // Arrange - Session IDs can contain any visible ASCII character per MCP spec
@@ -1574,7 +1574,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(originalSequence, sequence);
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_TryParse_HandlesSpecialCharactersInStreamId()
     {
         // Arrange
@@ -1593,7 +1593,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(originalSequence, sequence);
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_TryParse_HandlesUnicodeCharacters()
     {
         // Arrange
@@ -1612,7 +1612,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(originalSequence, sequence);
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_TryParse_HandlesZeroSequence()
     {
         // Act
@@ -1624,7 +1624,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(0, sequence);
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_TryParse_HandlesLargeSequence()
     {
         // Act
@@ -1636,7 +1636,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(long.MaxValue, sequence);
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_TryParse_ReturnsFalse_ForEmptyString()
     {
         // Act
@@ -1649,7 +1649,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.Equal(0, sequence);
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_TryParse_ReturnsFalse_ForInvalidFormat()
     {
         // Act & Assert - Various invalid formats
@@ -1658,7 +1658,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.False(DistributedCacheEventIdFormatter.TryParse("too:many:parts:here", out _, out _, out _));
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_TryParse_ReturnsFalse_ForInvalidBase64()
     {
         // Act - Invalid base64 in first part
@@ -1668,7 +1668,7 @@ public class DistributedCacheEventStreamStoreTests(ITestOutputHelper testOutputH
         Assert.False(parsed);
     }
 
-    [Fact]
+    [Test]
     public void EventIdFormatter_TryParse_ReturnsFalse_ForNonNumericSequence()
     {
         // Arrange - Valid base64 but non-numeric sequence

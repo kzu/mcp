@@ -13,8 +13,7 @@ public class McpServerTaskMethodsTests : LoggedTest
 {
     private readonly McpServerOptions _options;
 
-    public McpServerTaskMethodsTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public McpServerTaskMethodsTests()
     {
 #if !NET
         Assert.SkipWhen(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "https://github.com/modelcontextprotocol/csharp-sdk/issues/587");
@@ -34,14 +33,14 @@ public class McpServerTaskMethodsTests : LoggedTest
 
     #region SampleAsTaskAsync Tests
 
-    [Fact]
+    [Test]
     public async Task SampleAsTaskAsync_ThrowsException_WhenClientDoesNotSupportSampling()
     {
         // Arrange
         await using var transport = new TestServerTransport();
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
-        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
+        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -54,18 +53,18 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task SampleAsTaskAsync_ThrowsException_WhenClientDoesNotSupportTaskAugmentedSampling()
     {
         // Arrange - Client supports sampling but NOT task-augmented sampling
         await using var transport = new TestServerTransport();
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Sampling = new SamplingCapability(),
             // Note: No Tasks capability
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -78,7 +77,7 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task SampleAsTaskAsync_SendsRequest_WhenClientSupportsTaskAugmentedSampling()
     {
         // Arrange
@@ -94,7 +93,7 @@ public class McpServerTaskMethodsTests : LoggedTest
         };
 
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Sampling = new SamplingCapability(),
@@ -108,13 +107,13 @@ public class McpServerTaskMethodsTests : LoggedTest
                     }
                 }
             }
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act
         var task = await server.SampleAsTaskAsync(
             new CreateMessageRequestParams { Messages = [], MaxTokens = 1000 },
             new McpTaskMetadata { TimeToLive = TimeSpan.FromMinutes(5) },
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(task);
@@ -137,14 +136,14 @@ public class McpServerTaskMethodsTests : LoggedTest
 
     #region ElicitAsTaskAsync Tests
 
-    [Fact]
+    [Test]
     public async Task ElicitAsTaskAsync_ThrowsException_WhenClientDoesNotSupportElicitation()
     {
         // Arrange
         await using var transport = new TestServerTransport();
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
-        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
+        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -157,18 +156,18 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ElicitAsTaskAsync_ThrowsException_WhenClientDoesNotSupportTaskAugmentedElicitation()
     {
         // Arrange - Client supports elicitation but NOT task-augmented elicitation
         await using var transport = new TestServerTransport();
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Elicitation = new ElicitationCapability { Form = new() },
             // Note: No Tasks capability
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -181,7 +180,7 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ElicitAsTaskAsync_SendsRequest_WhenClientSupportsTaskAugmentedElicitation()
     {
         // Arrange
@@ -197,7 +196,7 @@ public class McpServerTaskMethodsTests : LoggedTest
         };
 
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Elicitation = new ElicitationCapability { Form = new() },
@@ -211,13 +210,13 @@ public class McpServerTaskMethodsTests : LoggedTest
                     }
                 }
             }
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act
         var task = await server.ElicitAsTaskAsync(
             new ElicitRequestParams { Message = "Please provide input", RequestedSchema = new() },
             new McpTaskMetadata { TimeToLive = TimeSpan.FromMinutes(10) },
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(task);
@@ -232,14 +231,14 @@ public class McpServerTaskMethodsTests : LoggedTest
 
     #region GetTaskAsync Tests
 
-    [Fact]
+    [Test]
     public async Task GetTaskAsync_ThrowsException_WhenClientDoesNotSupportTasks()
     {
         // Arrange
         await using var transport = new TestServerTransport();
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
-        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
+        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -249,7 +248,7 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskAsync_SendsRequest_AndReturnsTask()
     {
         // Arrange
@@ -264,14 +263,14 @@ public class McpServerTaskMethodsTests : LoggedTest
         };
 
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability()
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var task = await server.GetTaskAsync("client-task-789", TestContext.Current.CancellationToken);
+        var task = await server.GetTaskAsync("client-task-789", TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(task);
@@ -287,17 +286,17 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskAsync_ThrowsArgumentException_WhenTaskIdIsEmpty()
     {
         // Arrange
         await using var transport = new TestServerTransport();
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability()
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(async () =>
@@ -311,14 +310,14 @@ public class McpServerTaskMethodsTests : LoggedTest
 
     #region GetTaskResultAsync Tests
 
-    [Fact]
+    [Test]
     public async Task GetTaskResultAsync_ThrowsException_WhenClientDoesNotSupportTasks()
     {
         // Arrange
         await using var transport = new TestServerTransport();
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
-        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
+        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -328,7 +327,7 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskResultAsync_ReturnsDeserializedResult()
     {
         // Arrange
@@ -340,15 +339,15 @@ public class McpServerTaskMethodsTests : LoggedTest
         };
 
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability()
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act
         var result = await server.GetTaskResultAsync<CreateMessageResult>(
-            "task-id", cancellationToken: TestContext.Current.CancellationToken);
+            "task-id", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -365,14 +364,14 @@ public class McpServerTaskMethodsTests : LoggedTest
 
     #region ListTasksAsync Tests
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_ThrowsException_WhenClientDoesNotSupportTasks()
     {
         // Arrange
         await using var transport = new TestServerTransport();
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
-        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
+        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -382,20 +381,20 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_ThrowsException_WhenClientDoesNotSupportTaskListing()
     {
         // Arrange - Client supports tasks but NOT task listing
         await using var transport = new TestServerTransport();
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability
             {
                 // Note: No List capability
             }
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -405,7 +404,7 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_ReturnsTaskList()
     {
         // Arrange
@@ -437,17 +436,17 @@ public class McpServerTaskMethodsTests : LoggedTest
         ];
 
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability
             {
                 List = new ListMcpTasksCapability()
             }
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var tasks = await server.ListTasksAsync(TestContext.Current.CancellationToken);
+        var tasks = await server.ListTasksAsync(TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(tasks);
@@ -464,14 +463,14 @@ public class McpServerTaskMethodsTests : LoggedTest
 
     #region CancelTaskAsync Tests
 
-    [Fact]
+    [Test]
     public async Task CancelTaskAsync_ThrowsException_WhenClientDoesNotSupportTasks()
     {
         // Arrange
         await using var transport = new TestServerTransport();
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
-        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
+        await InitializeServerAsync(transport, new ClientCapabilities(), TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -481,20 +480,20 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task CancelTaskAsync_ThrowsException_WhenClientDoesNotSupportTaskCancellation()
     {
         // Arrange - Client supports tasks but NOT task cancellation
         await using var transport = new TestServerTransport();
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability
             {
                 // Note: No Cancel capability
             }
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -504,7 +503,7 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task CancelTaskAsync_SendsRequest_AndReturnsCancelledTask()
     {
         // Arrange
@@ -518,17 +517,17 @@ public class McpServerTaskMethodsTests : LoggedTest
         };
 
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability
             {
                 Cancel = new CancelMcpTasksCapability()
             }
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var task = await server.CancelTaskAsync("task-to-cancel", TestContext.Current.CancellationToken);
+        var task = await server.CancelTaskAsync("task-to-cancel", TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(task);
@@ -548,7 +547,7 @@ public class McpServerTaskMethodsTests : LoggedTest
 
     #region PollTaskUntilCompleteAsync Tests
 
-    [Fact]
+    [Test]
     public async Task PollTaskUntilCompleteAsync_ReturnsImmediately_WhenTaskIsAlreadyComplete()
     {
         // Arrange
@@ -562,14 +561,14 @@ public class McpServerTaskMethodsTests : LoggedTest
         };
 
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability()
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var task = await server.PollTaskUntilCompleteAsync("completed-task", TestContext.Current.CancellationToken);
+        var task = await server.PollTaskUntilCompleteAsync("completed-task", TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(task);
@@ -580,7 +579,7 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task PollTaskUntilCompleteAsync_ReturnsTask_WhenTaskFails()
     {
         // Arrange
@@ -595,14 +594,14 @@ public class McpServerTaskMethodsTests : LoggedTest
         };
 
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability()
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var task = await server.PollTaskUntilCompleteAsync("failed-task", TestContext.Current.CancellationToken);
+        var task = await server.PollTaskUntilCompleteAsync("failed-task", TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(task);
@@ -618,7 +617,7 @@ public class McpServerTaskMethodsTests : LoggedTest
 
     #region WaitForTaskResultAsync Tests
 
-    [Fact]
+    [Test]
     public async Task WaitForTaskResultAsync_ReturnsTaskAndResult_WhenTaskCompletes()
     {
         // Arrange
@@ -637,15 +636,15 @@ public class McpServerTaskMethodsTests : LoggedTest
         };
 
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability()
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act
         var (task, result) = await server.WaitForTaskResultAsync<CreateMessageResult>(
-            "task-with-result", cancellationToken: TestContext.Current.CancellationToken);
+            "task-with-result", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(task);
@@ -661,7 +660,7 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task WaitForTaskResultAsync_ThrowsException_WhenTaskFails()
     {
         // Arrange
@@ -676,16 +675,16 @@ public class McpServerTaskMethodsTests : LoggedTest
         };
 
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability()
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<McpException>(async () =>
             await server.WaitForTaskResultAsync<CreateMessageResult>(
-                "failed-task", cancellationToken: TestContext.Current.CancellationToken));
+                "failed-task", cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains("failed", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Something went wrong", ex.Message);
@@ -694,7 +693,7 @@ public class McpServerTaskMethodsTests : LoggedTest
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task WaitForTaskResultAsync_ThrowsException_WhenTaskIsCancelled()
     {
         // Arrange
@@ -708,16 +707,16 @@ public class McpServerTaskMethodsTests : LoggedTest
         };
 
         await using var server = McpServer.Create(transport, _options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await InitializeServerAsync(transport, new ClientCapabilities
         {
             Tasks = new McpTasksCapability()
-        }, TestContext.Current.CancellationToken);
+        }, TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<McpException>(async () =>
             await server.WaitForTaskResultAsync<CreateMessageResult>(
-                "cancelled-task", cancellationToken: TestContext.Current.CancellationToken));
+                "cancelled-task", cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains("cancelled", ex.Message, StringComparison.OrdinalIgnoreCase);
 

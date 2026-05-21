@@ -11,12 +11,11 @@ namespace ModelContextProtocol.Tests.Server;
 /// </summary>
 public class McpServerTaskNotificationTests : ClientServerTestBase
 {
-    public McpServerTaskNotificationTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public McpServerTaskNotificationTests()
     {
     }
 
-    [Fact]
+    [Test]
     public async Task NotifyTaskStatusAsync_SendsNotificationWithTaskDetails()
     {
         // Arrange
@@ -50,8 +49,8 @@ public class McpServerTaskNotificationTests : ClientServerTestBase
         };
 
         // Act
-        await Server.NotifyTaskStatusAsync(mcpTask, TestContext.Current.CancellationToken);
-        var notification = await tcs.Task.WaitAsync(TestContext.Current.CancellationToken);
+        await Server.NotifyTaskStatusAsync(mcpTask, TestContext.CurrentContext.CancellationToken);
+        var notification = await tcs.Task.WaitAsync(TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(mcpTask.TaskId, notification.TaskId);
@@ -63,7 +62,7 @@ public class McpServerTaskNotificationTests : ClientServerTestBase
         Assert.Equal(mcpTask.PollInterval, notification.PollInterval);
     }
 
-    [Fact]
+    [Test]
     public async Task NotifyTaskStatusAsync_ThrowsOnNullTask()
     {
         // Arrange
@@ -71,10 +70,10 @@ public class McpServerTaskNotificationTests : ClientServerTestBase
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
-            () => Server.NotifyTaskStatusAsync(null!, TestContext.Current.CancellationToken));
+            () => Server.NotifyTaskStatusAsync(null!, TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task NotifyTaskStatusAsync_SendsMultipleNotificationsForDifferentStatuses()
     {
         // Arrange
@@ -136,12 +135,12 @@ public class McpServerTaskNotificationTests : ClientServerTestBase
             PollInterval = TimeSpan.FromSeconds(1)
         };
 
-        await Server.NotifyTaskStatusAsync(task1, TestContext.Current.CancellationToken);
-        await Server.NotifyTaskStatusAsync(task2, TestContext.Current.CancellationToken);
-        await Server.NotifyTaskStatusAsync(task3, TestContext.Current.CancellationToken);
+        await Server.NotifyTaskStatusAsync(task1, TestContext.CurrentContext.CancellationToken);
+        await Server.NotifyTaskStatusAsync(task2, TestContext.CurrentContext.CancellationToken);
+        await Server.NotifyTaskStatusAsync(task3, TestContext.CurrentContext.CancellationToken);
         
         // Wait for all notifications to be received
-        await allReceivedTcs.Task.WaitAsync(TestContext.Current.CancellationToken);
+        await allReceivedTcs.Task.WaitAsync(TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(3, receivedNotifications.Count);

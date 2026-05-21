@@ -1,11 +1,11 @@
-﻿using ModelContextProtocol.Protocol;
+using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public class RequestIdTests
 {
-    [Fact]
+    [Test]
     public void StringCtor_Roundtrips()
     {
         RequestId id = new("test-id");
@@ -20,7 +20,7 @@ public class RequestIdTests
         Assert.Equal(id, JsonSerializer.Deserialize<RequestId>(JsonSerializer.Serialize(id, McpJsonUtilities.DefaultOptions), McpJsonUtilities.DefaultOptions));
     }
 
-    [Fact]
+    [Test]
     public void Int64Ctor_Roundtrips()
     {
         RequestId id = new(42);

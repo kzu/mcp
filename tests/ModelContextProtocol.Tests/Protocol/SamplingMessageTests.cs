@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public class SamplingMessageTests
 {
-    [Fact]
+    [Test]
     public void WithToolResults_SerializationRoundtrips()
     {
         SamplingMessage message = new()
@@ -39,7 +39,7 @@ public class SamplingMessageTests
         Assert.Equal("Weather in Paris: 18°C, partly cloudy", textBlock.Text);
     }
 
-    [Fact]
+    [Test]
     public void WithMultipleToolResults_SerializationRoundtrips()
     {
         SamplingMessage message = new()
@@ -80,7 +80,7 @@ public class SamplingMessageTests
         Assert.Equal("Weather in London: 15°C, rainy", textBlock2.Text);
     }
 
-    [Fact]
+    [Test]
     public void WithToolResultOnly_SerializationRoundtrips()
     {
         SamplingMessage message = new()

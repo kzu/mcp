@@ -1,6 +1,6 @@
 ﻿namespace ModelContextProtocol.Tests.Utils;
 
-public class DelegatingTestOutputHelper() : ITestOutputHelper
+public class DelegatingTestOutputHelper : ITestOutputHelper
 {
     public ITestOutputHelper? CurrentTestOutputHelper { get; set; }
 

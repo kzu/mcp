@@ -6,13 +6,13 @@ namespace ModelContextProtocol.Tests.Server;
 
 public class DelegatingMcpServerToolTests
 {
-    [Fact]
+    [Test]
     public void Ctor_NullInnerTool_Throws()
     {
         Assert.Throws<ArgumentNullException>("innerTool", () => new TestDelegatingTool(null!));
     }
 
-    [Fact]
+    [Test]
     public async Task AllMembers_DelegateToInnerTool()
     {
         Tool expectedTool = new() { Name = "sentinel-tool" };
@@ -28,7 +28,7 @@ public class DelegatingMcpServerToolTests
         Assert.Equal(inner.ToString(), delegating.ToString());
     }
 
-    [Fact]
+    [Test]
     public void OverridesAllVirtualAndAbstractMembers()
     {
         MethodInfo[] baseMethods = typeof(McpServerTool).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)

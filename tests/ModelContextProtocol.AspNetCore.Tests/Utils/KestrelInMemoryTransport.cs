@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Connections;
+using Microsoft.AspNetCore.Connections;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Threading.Channels;

@@ -1,2 +1,16 @@
-global using Xunit;
+global using Assert = ModelContextProtocol.Tests.Utils.XunitAssert;
+global using Record = ModelContextProtocol.Tests.Utils.XunitRecord;
+global using CancelAfterAttribute = NUnit.Framework.CancelAfterAttribute;
+global using CategoryAttribute = NUnit.Framework.CategoryAttribute;
+global using ExplicitAttribute = NUnit.Framework.ExplicitAttribute;
+global using IgnoreAttribute = NUnit.Framework.IgnoreAttribute;
+global using NonParallelizableAttribute = NUnit.Framework.NonParallelizableAttribute;
+global using OneTimeSetUpAttribute = NUnit.Framework.OneTimeSetUpAttribute;
+global using OneTimeTearDownAttribute = NUnit.Framework.OneTimeTearDownAttribute;
+global using SetUpAttribute = NUnit.Framework.SetUpAttribute;
+global using TearDownAttribute = NUnit.Framework.TearDownAttribute;
+global using TestAttribute = NUnit.Framework.TestAttribute;
+global using TestCaseAttribute = NUnit.Framework.TestCaseAttribute;
+global using TestCaseSourceAttribute = NUnit.Framework.TestCaseSourceAttribute;
+global using TestContext = NUnit.Framework.TestContext;
 global using System.Net.Http;

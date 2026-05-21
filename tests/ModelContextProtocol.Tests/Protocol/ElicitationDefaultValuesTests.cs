@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ElicitationDefaultValuesTests
 {
-    [Fact]
+    [Test]
     public static void StringSchema_Default_Serializes_Correctly()
     {
         // Arrange
@@ -29,7 +29,7 @@ public static class ElicitationDefaultValuesTests
         Assert.Contains("\"default\":\"John Doe\"", json);
     }
 
-    [Fact]
+    [Test]
     public static void StringSchema_Default_Null_DoesNotSerialize()
     {
         // Arrange
@@ -45,7 +45,7 @@ public static class ElicitationDefaultValuesTests
         Assert.DoesNotContain("\"default\"", json);
     }
 
-    [Fact]
+    [Test]
     public static void NumberSchema_Default_Serializes_Correctly()
     {
         // Arrange
@@ -71,7 +71,7 @@ public static class ElicitationDefaultValuesTests
         Assert.Contains("\"default\":25.5", json);
     }
 
-    [Fact]
+    [Test]
     public static void NumberSchema_Integer_Default_Serializes_Correctly()
     {
         // Arrange
@@ -94,7 +94,7 @@ public static class ElicitationDefaultValuesTests
         Assert.Contains("\"default\":42", json);
     }
 
-    [Fact]
+    [Test]
     public static void NumberSchema_Default_Null_DoesNotSerialize()
     {
         // Arrange
@@ -110,7 +110,7 @@ public static class ElicitationDefaultValuesTests
         Assert.DoesNotContain("\"default\"", json);
     }
 
-    [Fact]
+    [Test]
     public static void BooleanSchema_Default_True_Serializes_Correctly()
     {
         // Arrange
@@ -132,7 +132,7 @@ public static class ElicitationDefaultValuesTests
         Assert.Contains("\"default\":true", json);
     }
 
-    [Fact]
+    [Test]
     public static void BooleanSchema_Default_False_Serializes_Correctly()
     {
         // Arrange
@@ -153,7 +153,7 @@ public static class ElicitationDefaultValuesTests
         Assert.Contains("\"default\":false", json);
     }
 
-    [Fact]
+    [Test]
     public static void PrimitiveSchemaDefinition_StringSchema_WithDefault_RoundTrips()
     {
         // Arrange
@@ -175,7 +175,7 @@ public static class ElicitationDefaultValuesTests
         Assert.Equal("email", stringSchema.Format);
     }
 
-    [Fact]
+    [Test]
     public static void PrimitiveSchemaDefinition_NumberSchema_WithDefault_RoundTrips()
     {
         // Arrange
@@ -199,7 +199,7 @@ public static class ElicitationDefaultValuesTests
         Assert.Equal(100, numberSchema.Maximum);
     }
 
-    [Fact]
+    [Test]
     public static void UntitledSingleSelectEnumSchema_Default_Null_DoesNotSerialize()
     {
         // Arrange
@@ -216,7 +216,7 @@ public static class ElicitationDefaultValuesTests
         Assert.DoesNotContain("\"default\"", json);
     }
 
-    [Fact]
+    [Test]
     public static void TitledSingleSelectEnumSchema_Default_Null_DoesNotSerialize()
     {
         // Arrange
@@ -238,7 +238,7 @@ public static class ElicitationDefaultValuesTests
         Assert.DoesNotContain("\"default\"", json);
     }
 
-    [Fact]
+    [Test]
     public static void UntitledMultiSelectEnumSchema_Default_Null_DoesNotSerialize()
     {
         // Arrange
@@ -258,7 +258,7 @@ public static class ElicitationDefaultValuesTests
         Assert.DoesNotContain("\"default\"", json);
     }
 
-    [Fact]
+    [Test]
     public static void TitledMultiSelectEnumSchema_Default_Null_DoesNotSerialize()
     {
         // Arrange
@@ -283,7 +283,7 @@ public static class ElicitationDefaultValuesTests
     }
 
 #pragma warning disable MCP9001 // LegacyTitledEnumSchema is deprecated but supported for backward compatibility
-    [Fact]
+    [Test]
     public static void LegacyTitledEnumSchema_Default_Null_DoesNotSerialize()
     {
         // Arrange
@@ -302,7 +302,7 @@ public static class ElicitationDefaultValuesTests
     }
 #pragma warning restore MCP9001
 
-    [Fact]
+    [Test]
     public static void RequestSchema_WithAllDefaultTypes_Serializes_Correctly()
     {
         // Arrange

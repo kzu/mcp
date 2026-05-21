@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ArgumentTests
 {
-    [Fact]
+    [Test]
     public static void Argument_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new Argument

@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class IconTests
 {
-    [Fact]
+    [Test]
     public static void Icon_SerializationRoundTrip_PreservesAllProperties()
     {
         // Arrange
@@ -31,7 +31,7 @@ public static class IconTests
         Assert.Equal(original.Theme, deserialized.Theme);
     }
 
-    [Fact]
+    [Test]
     public static void Icon_SerializationRoundTrip_WithOnlyRequiredProperties()
     {
         // Arrange
@@ -54,7 +54,7 @@ public static class IconTests
         Assert.Null(deserialized.Theme);
     }
 
-    [Fact]
+    [Test]
     public static void Icon_HasCorrectJsonPropertyNames()
     {
         var icon = new Icon
@@ -72,22 +72,18 @@ public static class IconTests
         Assert.Contains("\"sizes\":", json);
         Assert.Contains("\"theme\":", json);
     }
-
-    [Theory]
-    [InlineData("""{}""")]
-    [InlineData("""{"mimeType":"image/png"}""")]
-    [InlineData("""{"sizes":"48x48"}""")]
-    [InlineData("""{"mimeType":"image/png","sizes":"48x48"}""")]
+    [TestCase("""{}""")]
+    [TestCase("""{"mimeType":"image/png"}""")]
+    [TestCase("""{"sizes":"48x48"}""")]
+    [TestCase("""{"mimeType":"image/png","sizes":"48x48"}""")]
     public static void Icon_DeserializationWithMissingSrc_ThrowsJsonException(string invalidJson)
     {
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Icon>(invalidJson, McpJsonUtilities.DefaultOptions));
     }
-
-    [Theory]
-    [InlineData("false")]
-    [InlineData("true")]
-    [InlineData("42")]
-    [InlineData("[]")]
+    [TestCase("false")]
+    [TestCase("true")]
+    [TestCase("42")]
+    [TestCase("[]")]
     public static void Icon_DeserializationWithInvalidJson_ThrowsJsonException(string invalidJson)
     {
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Icon>(invalidJson, McpJsonUtilities.DefaultOptions));

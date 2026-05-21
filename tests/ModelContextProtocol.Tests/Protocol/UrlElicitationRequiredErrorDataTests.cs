@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class UrlElicitationRequiredErrorDataTests
 {
-    [Fact]
+    [Test]
     public static void UrlElicitationRequiredErrorData_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new UrlElicitationRequiredErrorData

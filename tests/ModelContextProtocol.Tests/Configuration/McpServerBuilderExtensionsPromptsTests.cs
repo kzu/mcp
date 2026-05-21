@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.AI;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -16,8 +16,7 @@ namespace ModelContextProtocol.Tests.Configuration;
 
 public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBase
 {
-    public McpServerBuilderExtensionsPromptsTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public McpServerBuilderExtensionsPromptsTests()
     {
     }
 
@@ -87,7 +86,7 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
         services.AddSingleton(new ObjectWithId());
     }
 
-    [Fact]
+    [Test]
     public void Adds_Prompts_To_Server()
     {
         var serverOptions = ServiceProvider.GetRequiredService<IOptions<McpServerOptions>>().Value;
@@ -96,18 +95,18 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
         Assert.NotEmpty(prompts);
     }
 
-    [Fact]
+    [Test]
     public async Task Can_List_And_Call_Registered_Prompts()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal(8, prompts.Count);
 
         var prompt = prompts.First(t => t.Name == "returns_chat_messages");
         Assert.Equal("Returns chat messages", prompt.Description);
 
-        var result = await prompt.GetAsync(new Dictionary<string, object?>() { ["message"] = "hello" }, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await prompt.GetAsync(new Dictionary<string, object?>() { ["message"] = "hello" }, cancellationToken: TestContext.CurrentContext.CancellationToken);
         var chatMessages = result.ToChatMessages();
 
         Assert.NotNull(chatMessages);
@@ -118,23 +117,23 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
 
         prompt = prompts.First(t => t.Name == "SecondCustomPrompt");
         Assert.Equal("Second prompt returned by custom handler", prompt.Description);
-        result = await prompt.GetAsync(cancellationToken: TestContext.Current.CancellationToken);
+        result = await prompt.GetAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         chatMessages = result.ToChatMessages();
         Assert.NotNull(chatMessages);
         Assert.Single(chatMessages);
         Assert.Equal("hello from SecondCustomPrompt", chatMessages[0].Text);
     }
 
-    [Fact]
+    [Test]
     public async Task Can_Be_Notified_Of_Prompt_Changes()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal(8, prompts.Count);
 
         Channel<JsonRpcNotification> listChanged = Channel.CreateUnbounded<JsonRpcNotification>();
-        var notificationRead = listChanged.Reader.ReadAsync(TestContext.Current.CancellationToken);
+        var notificationRead = listChanged.Reader.ReadAsync(TestContext.CurrentContext.CancellationToken);
         Assert.False(notificationRead.IsCompleted);
 
         var serverOptions = ServiceProvider.GetRequiredService<IOptions<McpServerOptions>>().Value;
@@ -151,27 +150,27 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
             serverPrompts.Add(newPrompt);
             await notificationRead;
 
-            prompts = await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            prompts = await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
             Assert.Equal(9, prompts.Count);
             Assert.Contains(prompts, t => t.Name == "NewPrompt");
 
-            notificationRead = listChanged.Reader.ReadAsync(TestContext.Current.CancellationToken);
+            notificationRead = listChanged.Reader.ReadAsync(TestContext.CurrentContext.CancellationToken);
             Assert.False(notificationRead.IsCompleted);
             serverPrompts.Remove(newPrompt);
             await notificationRead;
         }
 
-        prompts = await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        prompts = await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal(8, prompts.Count);
         Assert.DoesNotContain(prompts, t => t.Name == "NewPrompt");
     }
 
-    [Fact]
+    [Test]
     public async Task AttributeProperties_Propagated()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(prompts);
         Assert.NotEmpty(prompts);
 
@@ -186,17 +185,17 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
         Assert.Null(icon.Theme);
     }
 
-    [Fact]
+    [Test]
     public async Task Throws_When_Prompt_Fails()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         await Assert.ThrowsAsync<McpProtocolException>(async () => await client.GetPromptAsync(
             nameof(SimplePrompts.ThrowsException),
-            cancellationToken: TestContext.Current.CancellationToken));
+            cancellationToken: TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task Logs_Prompt_Name_On_Successful_Call()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -204,7 +203,7 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
         var result = await client.GetPromptAsync(
             "returns_chat_messages",
             new Dictionary<string, object?> { ["message"] = "hello" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
 
@@ -212,7 +211,7 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
         Assert.Equal(LogLevel.Information, infoLog.LogLevel);
     }
 
-    [Fact]
+    [Test]
     public async Task Logs_Prompt_Name_When_Prompt_Throws()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -220,21 +219,21 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
         await Assert.ThrowsAsync<McpProtocolException>(async () => await client.GetPromptAsync(
             "throws_exception",
             new Dictionary<string, object?> { ["message"] = "test" },
-            cancellationToken: TestContext.Current.CancellationToken));
+            cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         var errorLog = Assert.Single(MockLoggerProvider.LogMessages, m => m.LogLevel == LogLevel.Error);
         Assert.Equal("GetPrompt \"throws_exception\" threw an unhandled exception.", errorLog.Message);
         Assert.IsType<FormatException>(errorLog.Exception);
     }
 
-    [Fact]
+    [Test]
     public async Task Logs_Prompt_Error_When_Prompt_Throws_OperationCanceledException()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         await Assert.ThrowsAsync<McpProtocolException>(async () => await client.GetPromptAsync(
             "throws_operation_canceled_exception",
-            cancellationToken: TestContext.Current.CancellationToken));
+            cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains(MockLoggerProvider.LogMessages, m =>
             m.LogLevel == LogLevel.Error &&
@@ -246,14 +245,14 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
             m.Message.Contains("request handler failed"));
     }
 
-    [Fact]
+    [Test]
     public async Task Logs_Prompt_Error_When_Prompt_Throws_McpProtocolException()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         await Assert.ThrowsAsync<McpProtocolException>(async () => await client.GetPromptAsync(
             "throws_mcp_protocol_exception",
-            cancellationToken: TestContext.Current.CancellationToken));
+            cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains(MockLoggerProvider.LogMessages, m =>
             m.LogLevel == LogLevel.Error &&
@@ -265,31 +264,31 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
             m.Message.Contains("request handler failed"));
     }
 
-    [Fact]
+    [Test]
     public async Task Throws_Exception_On_Unknown_Prompt()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         var e = await Assert.ThrowsAsync<McpProtocolException>(async () => await client.GetPromptAsync(
             "NotRegisteredPrompt",
-            cancellationToken: TestContext.Current.CancellationToken));
+            cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains("'NotRegisteredPrompt'", e.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task Throws_Exception_Missing_Parameter()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         var e = await Assert.ThrowsAsync<McpProtocolException>(async () => await client.GetPromptAsync(
             "returns_chat_messages",
-            cancellationToken: TestContext.Current.CancellationToken));
+            cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal(McpErrorCode.InternalError, e.ErrorCode);
     }
 
-    [Fact]
+    [Test]
     public void WithPrompts_InvalidArgs_Throws()
     {
         IMcpServerBuilder builder = new ServiceCollection().AddMcpServer();
@@ -305,7 +304,7 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
         Assert.Throws<ArgumentNullException>("builder", () => nullBuilder.WithPromptsFromAssembly());
     }
 
-    [Fact]
+    [Test]
     public async Task WithPrompts_TargetInstance_UsesTarget()
     {
         ServiceCollection sc = new();
@@ -321,12 +320,12 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
             {
                 ["message"] = JsonSerializer.SerializeToElement("hello", AIJsonUtilities.DefaultOptions),
             }
-        }), TestContext.Current.CancellationToken);
+        }), TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(target.ReturnsString("hello"), (result.Messages[0].Content as TextContentBlock)?.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task WithPrompts_TargetInstance_UsesEnumerableImplementation()
     {
         ServiceCollection sc = new();
@@ -350,7 +349,7 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    [Fact]
+    [Test]
     public void Empty_Enumerables_Is_Allowed()
     {
         IMcpServerBuilder builder = new ServiceCollection().AddMcpServer();
@@ -361,7 +360,7 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
         builder.WithPromptsFromAssembly(typeof(AIFunction).Assembly); // no exception even though no prompts exposed
     }
 
-    [Fact]
+    [Test]
     public void Register_Prompts_From_Current_Assembly()
     {
         ServiceCollection sc = new();
@@ -371,7 +370,7 @@ public partial class McpServerBuilderExtensionsPromptsTests : ClientServerTestBa
         Assert.Contains(services.GetServices<McpServerPrompt>(), t => t.ProtocolPrompt.Name == "returns_chat_messages");
     }
 
-    [Fact]
+    [Test]
     public void Register_Prompts_From_Multiple_Sources()
     {
         ServiceCollection sc = new();

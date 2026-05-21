@@ -4,9 +4,9 @@ using System.Net;
 
 namespace ModelContextProtocol.Tests.Transport;
 
-public class HttpClientTransportAutoDetectTests(ITestOutputHelper testOutputHelper) : LoggedTest(testOutputHelper)
+public class HttpClientTransportAutoDetectTests : LoggedTest
 {
-    [Fact]
+    [Test]
     public async Task AutoDetectMode_UsesStreamableHttp_WhenServerSupportsIt()
     {
         var options = new HttpClientTransportOptions
@@ -41,13 +41,13 @@ public class HttpClientTransportAutoDetectTests(ITestOutputHelper testOutputHelp
             throw new InvalidOperationException("Unexpected request");
         };
 
-        await using var session = await transport.ConnectAsync(TestContext.Current.CancellationToken);
+        await using var session = await transport.ConnectAsync(TestContext.CurrentContext.CancellationToken);
         
         // The auto-detecting transport should be returned
         Assert.NotNull(session);
     }
 
-    [Fact] 
+    [Test] 
     public async Task AutoDetectMode_FallsBackToSse_WhenStreamableHttpFails()
     {
         var options = new HttpClientTransportOptions
@@ -101,7 +101,7 @@ public class HttpClientTransportAutoDetectTests(ITestOutputHelper testOutputHelp
             throw new InvalidOperationException($"Unexpected request: {request.Method}, count: {requestCount}");
         };
 
-        await using var session = await transport.ConnectAsync(TestContext.Current.CancellationToken);
+        await using var session = await transport.ConnectAsync(TestContext.CurrentContext.CancellationToken);
         
         // The auto-detecting transport should be returned
         Assert.NotNull(session);

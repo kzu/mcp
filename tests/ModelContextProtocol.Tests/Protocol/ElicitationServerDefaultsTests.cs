@@ -10,7 +10,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 /// Tests verifying that the server applies elicitation schema defaults as defense-in-depth,
 /// independent of the client. Uses a custom transport to bypass client-side default application.
 /// </summary>
-public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) : LoggedTest(testOutputHelper)
+public class ElicitationServerDefaultsTests : LoggedTest
 {
     private static ElicitRequestParams.RequestSchema s_schemaWithDefaults => new()
     {
@@ -29,7 +29,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
         },
     };
 
-    [Fact]
+    [Test]
     public async Task ServerDefenseInDepth_NullContent_AppliesDefaults()
     {
         // Simulate a client that returns accept with null content (no defaults applied).
@@ -38,7 +38,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
 
         var options = new McpServerOptions { Capabilities = new() { Tools = new() } };
         await using var server = McpServer.Create(transport, options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await transport.InitializeAsync();
 
         var result = await server.ElicitAsync(new ElicitRequestParams
@@ -60,7 +60,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ServerDefenseInDepth_EmptyContent_AppliesDefaults()
     {
         await using var transport = new ElicitationTestTransport(
@@ -68,7 +68,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
 
         var options = new McpServerOptions { Capabilities = new() { Tools = new() } };
         await using var server = McpServer.Create(transport, options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await transport.InitializeAsync();
 
         var result = await server.ElicitAsync(new ElicitRequestParams
@@ -87,7 +87,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ServerDefenseInDepth_PartialContent_FillsMissing()
     {
         // Simulate a client returning accept with only some fields, without applying defaults.
@@ -104,7 +104,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
 
         var options = new McpServerOptions { Capabilities = new() { Tools = new() } };
         await using var server = McpServer.Create(transport, options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await transport.InitializeAsync();
 
         var result = await server.ElicitAsync(new ElicitRequestParams
@@ -130,7 +130,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ServerDefenseInDepth_AllFieldsProvided_NoChange()
     {
         await using var transport = new ElicitationTestTransport(
@@ -149,7 +149,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
 
         var options = new McpServerOptions { Capabilities = new() { Tools = new() } };
         await using var server = McpServer.Create(transport, options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await transport.InitializeAsync();
 
         var result = await server.ElicitAsync(new ElicitRequestParams
@@ -170,7 +170,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ServerDefenseInDepth_Decline_NoDefaultsApplied()
     {
         await using var transport = new ElicitationTestTransport(
@@ -178,7 +178,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
 
         var options = new McpServerOptions { Capabilities = new() { Tools = new() } };
         await using var server = McpServer.Create(transport, options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await transport.InitializeAsync();
 
         var result = await server.ElicitAsync(new ElicitRequestParams
@@ -194,7 +194,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ServerDefenseInDepth_Cancel_NoDefaultsApplied()
     {
         await using var transport = new ElicitationTestTransport(
@@ -202,7 +202,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
 
         var options = new McpServerOptions { Capabilities = new() { Tools = new() } };
         await using var server = McpServer.Create(transport, options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await transport.InitializeAsync();
 
         var result = await server.ElicitAsync(new ElicitRequestParams
@@ -218,7 +218,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ServerDefenseInDepth_SchemaWithNoDefaults_NoChange()
     {
         await using var transport = new ElicitationTestTransport(
@@ -226,7 +226,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
 
         var options = new McpServerOptions { Capabilities = new() { Tools = new() } };
         await using var server = McpServer.Create(transport, options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await transport.InitializeAsync();
 
         var result = await server.ElicitAsync(new ElicitRequestParams
@@ -250,7 +250,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ServerDefenseInDepth_MultiSelectEnum()
     {
         await using var transport = new ElicitationTestTransport(
@@ -258,7 +258,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
 
         var options = new McpServerOptions { Capabilities = new() { Tools = new() } };
         await using var server = McpServer.Create(transport, options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await transport.InitializeAsync();
 
         var result = await server.ElicitAsync(new ElicitRequestParams
@@ -304,7 +304,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
         await runTask;
     }
 
-    [Fact]
+    [Test]
     public async Task ServerDefenseInDepth_TitledSingleSelectEnum()
     {
         await using var transport = new ElicitationTestTransport(
@@ -312,7 +312,7 @@ public class ElicitationServerDefaultsTests(ITestOutputHelper testOutputHelper) 
 
         var options = new McpServerOptions { Capabilities = new() { Tools = new() } };
         await using var server = McpServer.Create(transport, options, LoggerFactory);
-        var runTask = server.RunAsync(TestContext.Current.CancellationToken);
+        var runTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
         await transport.InitializeAsync();
 
         var result = await server.ElicitAsync(new ElicitRequestParams

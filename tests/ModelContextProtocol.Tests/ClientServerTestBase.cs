@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.AI;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
@@ -9,16 +9,27 @@ using System.IO.Pipelines;
 
 namespace ModelContextProtocol.Tests;
 
+[CancelAfter(60_000)]
 public abstract class ClientServerTestBase : LoggedTest, IAsyncDisposable
 {
-    private readonly Pipe _clientToServerPipe = new();
-    private readonly Pipe _serverToClientPipe = new();
-    private readonly CancellationTokenSource _cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+    private Pipe _clientToServerPipe = null!;
+    private Pipe _serverToClientPipe = null!;
+    private CancellationTokenSource _cts = null!;
     private Task _serverTask = Task.CompletedTask;
+    private McpServer? _server;
+    private ServiceProvider? _serviceProvider;
 
-    public ClientServerTestBase(ITestOutputHelper testOutputHelper, bool startServer = true)
-        : base(testOutputHelper)
+    protected virtual bool StartServerOnSetUp => true;
+
+    [SetUp]
+    public override void SetUp()
     {
+        base.SetUp();
+        _clientToServerPipe = new();
+        _serverToClientPipe = new();
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.CurrentContext.CancellationToken);
+
+        ServiceCollection = new ServiceCollection();
         ServiceCollection.AddLogging();
         ServiceCollection.AddSingleton(XunitLoggerProvider);
         ServiceCollection.AddSingleton<ILoggerProvider>(MockLoggerProvider);
@@ -28,26 +39,32 @@ public abstract class ClientServerTestBase : LoggedTest, IAsyncDisposable
 
         ConfigureServices(ServiceCollection, McpServerBuilder);
 
-        if (startServer)
+        if (StartServerOnSetUp)
         {
             StartServer();
         }
     }
 
-    protected ServiceCollection ServiceCollection { get; } = [];
+    [TearDown]
+    public async Task TearDownAsync()
+    {
+        await DisposeAsync();
+    }
 
-    protected IMcpServerBuilder McpServerBuilder { get; }
+    protected ServiceCollection ServiceCollection { get; private set; } = null!;
+
+    protected IMcpServerBuilder McpServerBuilder { get; private set; } = null!;
 
     protected McpServer Server
     {
-         get => field ?? throw new InvalidOperationException("You must call StartServer first.");
-         private set => field = value;
+         get => _server ?? throw new InvalidOperationException("You must call StartServer first.");
+         private set => _server = value;
     }
 
     protected ServiceProvider ServiceProvider
     {
-         get => field ?? throw new InvalidOperationException("You must call StartServer first.");
-         private set => field = value;
+         get => _serviceProvider ?? throw new InvalidOperationException("You must call StartServer first.");
+         private set => _serviceProvider = value;
     }
 
     protected virtual void ConfigureServices(ServiceCollection services, IMcpServerBuilder mcpServerBuilder)
@@ -64,6 +81,11 @@ public abstract class ClientServerTestBase : LoggedTest, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        if (_cts is null)
+        {
+            return;
+        }
+
         await _cts.CancelAsync();
 
         _clientToServerPipe.Writer.Complete();
@@ -71,17 +93,21 @@ public abstract class ClientServerTestBase : LoggedTest, IAsyncDisposable
 
         await _serverTask;
 
-        if (ServiceProvider is IAsyncDisposable asyncDisposable)
+        if (_serviceProvider is IAsyncDisposable asyncDisposable)
         {
             await asyncDisposable.DisposeAsync();
+            _serviceProvider = null;
         }
-        else if (ServiceProvider is IDisposable disposable)
+        else if (_serviceProvider is IDisposable disposable)
         {
             disposable.Dispose();
+            _serviceProvider = null;
         }
 
+        _server = null;
+
         _cts.Dispose();
-        Dispose();
+        _cts = null!;
     }
 
     protected async Task<McpClient> CreateMcpClientForServer(McpClientOptions? clientOptions = null)
@@ -93,6 +119,6 @@ public abstract class ClientServerTestBase : LoggedTest, IAsyncDisposable
                 LoggerFactory),
             clientOptions: clientOptions,
             loggerFactory: LoggerFactory,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
     }
 }

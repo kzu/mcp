@@ -9,8 +9,7 @@ namespace ModelContextProtocol.Tests.Client;
 
 public class McpClientResourceTemplateConstructorTests : ClientServerTestBase
 {
-    public McpClientResourceTemplateConstructorTests(ITestOutputHelper outputHelper)
-        : base(outputHelper)
+    public McpClientResourceTemplateConstructorTests()
     {
     }
 
@@ -30,12 +29,12 @@ public class McpClientResourceTemplateConstructorTests : ClientServerTestBase
             context.Params.Meta?.ToJsonString() ?? "{}";
     }
 
-    [Fact]
+    [Test]
     public async Task Constructor_WithValidParameters_CreatesInstance()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var templates = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var templates = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         var originalTemplate = templates.First(t => t.Name == "file_template");
         var templateDefinition = originalTemplate.ProtocolResourceTemplate;
 
@@ -47,7 +46,7 @@ public class McpClientResourceTemplateConstructorTests : ClientServerTestBase
         Assert.Same(templateDefinition, newTemplate.ProtocolResourceTemplate);
     }
 
-    [Fact]
+    [Test]
     public void Constructor_WithNullClient_ThrowsArgumentNullException()
     {
         var templateDefinition = new ResourceTemplate
@@ -60,7 +59,7 @@ public class McpClientResourceTemplateConstructorTests : ClientServerTestBase
         Assert.Throws<ArgumentNullException>("client", () => new McpClientResourceTemplate(null!, templateDefinition));
     }
 
-    [Fact]
+    [Test]
     public async Task Constructor_WithNullResourceTemplate_ThrowsArgumentNullException()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -68,12 +67,12 @@ public class McpClientResourceTemplateConstructorTests : ClientServerTestBase
         Assert.Throws<ArgumentNullException>("resourceTemplate", () => new McpClientResourceTemplate(client, null!));
     }
 
-    [Fact]
+    [Test]
     public async Task ReuseResourceTemplateDefinition_PreservesTemplateMetadata()
     {
         await using McpClient client = await CreateMcpClientForServer();
         
-        var templates = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var templates = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         var originalTemplate = templates.First(t => t.Name == "file_template");
         var templateDefinition = originalTemplate.ProtocolResourceTemplate;
 
@@ -86,7 +85,7 @@ public class McpClientResourceTemplateConstructorTests : ClientServerTestBase
         Assert.Equal(originalTemplate.ProtocolResourceTemplate.Description, reusedTemplate.ProtocolResourceTemplate.Description);
     }
 
-    [Fact]
+    [Test]
     public async Task ManuallyConstructedResourceTemplate_CreatesValidInstance()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -106,12 +105,12 @@ public class McpClientResourceTemplateConstructorTests : ClientServerTestBase
         Assert.Equal("file:///{path}", clientTemplate.UriTemplate);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadAsync_WithRequestOptions_PassesMetaToServer()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var templates = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var templates = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         var template = templates.Single(t => t.Name == "metadata_echo");
 
         RequestOptions requestOptions = new()
@@ -126,7 +125,7 @@ public class McpClientResourceTemplateConstructorTests : ClientServerTestBase
         var result = await template.ReadAsync(
             new Dictionary<string, object?> { ["id"] = "test-id" },
             options: requestOptions,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
         var content = Assert.IsType<TextResourceContents>(result.Contents.First());

@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class PromptTests
 {
-    [Fact]
+    [Test]
     public static void Prompt_SerializationRoundTrip_PreservesAllProperties()
     {
         // Arrange
@@ -47,7 +47,7 @@ public static class PromptTests
         Assert.Equal(original.Arguments[0].Required, deserialized.Arguments[0].Required);
     }
 
-    [Fact]
+    [Test]
     public static void Prompt_SerializationRoundTrip_WithMinimalProperties()
     {
         // Arrange
@@ -71,7 +71,7 @@ public static class PromptTests
         Assert.Equal(original.Arguments, deserialized.Arguments);
     }
 
-    [Fact]
+    [Test]
     public static void Prompt_HasCorrectJsonPropertyNames()
     {
         var prompt = new Prompt

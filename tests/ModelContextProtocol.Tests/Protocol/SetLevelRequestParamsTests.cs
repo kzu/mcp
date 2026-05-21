@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class SetLevelRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void SetLevelRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new SetLevelRequestParams
@@ -24,7 +24,7 @@ public static class SetLevelRequestParamsTests
         Assert.Equal("tok-1", (string)deserialized.Meta["progressToken"]!);
     }
 
-    [Fact]
+    [Test]
     public static void SetLevelRequestParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new SetLevelRequestParams

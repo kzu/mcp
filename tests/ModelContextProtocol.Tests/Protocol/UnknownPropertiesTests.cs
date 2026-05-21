@@ -9,7 +9,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 /// </summary>
 public class UnknownPropertiesTests
 {
-    [Fact]
+    [Test]
     public void ContentBlock_DeserializationWithUnknownProperty_SkipsProperty()
     {
         // Arrange - JSON with unknown "unknownField" property
@@ -30,7 +30,7 @@ public class UnknownPropertiesTests
         Assert.Equal("Hello, world!", textBlock.Text);
     }
 
-    [Fact]
+    [Test]
     public void ContentBlock_DeserializationWithStructuredContentInContent_SkipsProperty()
     {
         // Arrange - This was the actual bug case: structuredContent incorrectly placed
@@ -54,7 +54,7 @@ public class UnknownPropertiesTests
         Assert.Equal("Result text", textBlock.Text);
     }
 
-    [Fact]
+    [Test]
     public void ContentBlock_DeserializationWithMultipleUnknownProperties_SkipsAll()
     {
         // Arrange - JSON with multiple unknown properties
@@ -79,7 +79,7 @@ public class UnknownPropertiesTests
         Assert.Equal("image/png", imageBlock.MimeType);
     }
 
-    [Fact]
+    [Test]
     public void Reference_DeserializationWithUnknownProperty_SkipsProperty()
     {
         // Arrange - JSON with unknown "metadata" property
@@ -103,7 +103,7 @@ public class UnknownPropertiesTests
         Assert.Equal("test-prompt", promptRef.Name);
     }
 
-    [Fact]
+    [Test]
     public void Reference_DeserializationWithMultipleUnknownProperties_SkipsAll()
     {
         // Arrange
@@ -126,7 +126,7 @@ public class UnknownPropertiesTests
         Assert.Equal("file:///test.txt", resourceRef.Uri);
     }
 
-    [Fact]
+    [Test]
     public void ResourceContents_DeserializationWithUnknownProperty_SkipsProperty()
     {
         // Arrange
@@ -151,7 +151,7 @@ public class UnknownPropertiesTests
         Assert.Equal("text/plain", textResource.MimeType);
     }
 
-    [Fact]
+    [Test]
     public void ProgressNotificationParams_DeserializationWithUnknownProperty_SkipsProperty()
     {
         // Arrange
@@ -173,7 +173,7 @@ public class UnknownPropertiesTests
         Assert.Equal(50.0f, deserialized.Progress.Progress);
     }
 
-    [Fact]
+    [Test]
     public void PrimitiveSchemaDefinition_DeserializationWithUnknownProperty_SkipsProperty()
     {
         // Arrange
@@ -195,7 +195,7 @@ public class UnknownPropertiesTests
         Assert.Equal("A test string", stringSchema.Description);
     }
 
-    [Fact]
+    [Test]
     public void CallToolResult_WithContentBlockContainingUnknownProperties_Succeeds()
     {
         // Arrange - Simulates the real-world bug scenario: a malformed response where
@@ -226,7 +226,7 @@ public class UnknownPropertiesTests
         Assert.False(deserialized.IsError);
     }
 
-    [Fact]
+    [Test]
     public void CallToolResult_WithStructuredContentAtCorrectLevel_PreservesProperty()
     {
         // Arrange - Correct placement of structuredContent at CallToolResult level

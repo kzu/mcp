@@ -14,7 +14,7 @@ using System.Text.Json.Nodes;
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelInMemoryTest(testOutputHelper)
+public abstract class MapMcpTests : KestrelInMemoryTest
 {
     protected abstract bool UseStreamableHttp { get; }
     protected abstract bool Stateless { get; }
@@ -38,10 +38,10 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
             TransportMode = UseStreamableHttp ? HttpTransportMode.StreamableHttp : HttpTransportMode.Sse,
         }, HttpClient, LoggerFactory);
 
-        return await McpClient.CreateAsync(transport, clientOptions, LoggerFactory, TestContext.Current.CancellationToken);
+        return await McpClient.CreateAsync(transport, clientOptions, LoggerFactory, TestContext.CurrentContext.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task MapMcp_ThrowsInvalidOperationException_IfWithHttpTransportIsNotCalled()
     {
         Builder.Services.AddMcpServer();
@@ -50,7 +50,7 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
         Assert.StartsWith("You must call WithHttpTransport()", exception.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task Can_UseIHttpContextAccessor_InTool()
     {
         Builder.Services.AddMcpServer().WithHttpTransport(ConfigureStateless).WithTools<EchoHttpContextUserTools>();
@@ -70,20 +70,20 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
 
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var mcpClient = await ConnectAsync();
 
         var response = await mcpClient.CallToolAsync(
             "echo_with_user_name",
             new Dictionary<string, object?>() { ["message"] = "Hello world!" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var content = Assert.Single(response.Content.OfType<TextContentBlock>());
         Assert.Equal("TestUser: Hello world!", content.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task Messages_FromNewUser_AreRejected()
     {
         Assert.SkipWhen(Stateless, "User validation across requests is not applicable in stateless mode.");
@@ -108,13 +108,13 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
 
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         var httpRequestException = await Assert.ThrowsAsync<HttpRequestException>(() => ConnectAsync());
         Assert.Equal(HttpStatusCode.Forbidden, httpRequestException.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task ClaimsPrincipal_CanBeInjected_IntoToolMethod()
     {
         Builder.Services.AddMcpServer().WithHttpTransport(ConfigureStateless).WithTools<ClaimsPrincipalTools>();
@@ -129,20 +129,20 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
 
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var client = await ConnectAsync();
 
         var response = await client.CallToolAsync(
             "echo_claims_principal",
             new Dictionary<string, object?>() { ["message"] = "Hello world!" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var content = Assert.Single(response.Content.OfType<TextContentBlock>());
         Assert.Equal("TestUser: Hello world!", content.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task Sampling_DoesNotCloseStreamPrematurely()
     {
         Assert.SkipWhen(Stateless, "Sampling is not supported in stateless mode.");
@@ -153,7 +153,7 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
 
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         var sampleCount = 0;
         var clientOptions = new McpClientOptions()
@@ -183,7 +183,7 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
         var result = await mcpClient.CallToolAsync("sampling-tool", new Dictionary<string, object?>
         {
             ["prompt"] = "Test prompt for sampling"
-        }, cancellationToken: TestContext.Current.CancellationToken);
+        }, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Null(result.IsError);
@@ -204,7 +204,7 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
             m.Message.Contains("request '2' for method 'sampling/createMessage'"));
     }
 
-    [Fact]
+    [Test]
     public async Task Server_ShutsDownQuickly_WhenClientIsConnected()
     {
         Builder.Services.AddMcpServer().WithHttpTransport(ConfigureStateless).WithTools<ClaimsPrincipalTools>();
@@ -212,18 +212,18 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
         await using var app = Builder.Build();
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         // Connect a client which will open a long-running GET request (SSE or Streamable HTTP)
         await using var mcpClient = await ConnectAsync();
 
         // Verify the client is connected
-        var tools = await mcpClient.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await mcpClient.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.NotEmpty(tools);
 
         // Now measure how long it takes to stop the server
         var stopwatch = Stopwatch.StartNew();
-        await app.StopAsync(TestContext.Current.CancellationToken);
+        await app.StopAsync(TestContext.CurrentContext.CancellationToken);
         stopwatch.Stop();
 
         // The server should shut down quickly (within a few seconds). We use 5 seconds as a generous threshold.
@@ -233,7 +233,7 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
             "This suggests the GET request is not respecting ApplicationStopping token.");
     }
 
-    [Fact]
+    [Test]
     public async Task LongRunningToolCall_DoesNotTimeout_WhenNoEventStreamStore()
     {
         // Regression test for: Tool calls that last over HttpClient timeout without producing
@@ -245,7 +245,7 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         // Retry a couple of times to reduce occasional flakiness on low-resource machines.
         // If the server regresses to flushing only after tool completion, each attempt should still fail
@@ -271,14 +271,14 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
                     TransportMode = transportMode,
                 }, shortTimeoutClient, LoggerFactory);
 
-                await using var mcpClient = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+                await using var mcpClient = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
                 // Call a tool that takes 2 seconds - this should succeed despite the 1 second HttpClient timeout
                 // because the response stream is flushed immediately after receiving the request
                 var response = await mcpClient.CallToolAsync(
                     "long_running_operation",
                     new Dictionary<string, object?>() { ["durationMs"] = 2000 },
-                    cancellationToken: TestContext.Current.CancellationToken);
+                    cancellationToken: TestContext.CurrentContext.CancellationToken);
 
                 var content = Assert.Single(response.Content.OfType<TextContentBlock>());
                 Assert.Equal("Operation completed after 2000ms", content.Text);
@@ -292,7 +292,7 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
 
     }
 
-    [Fact]
+    [Test]
     public async Task IncomingFilter_SeesClientRequests()
     {
         var observedMethods = new List<string>();
@@ -314,21 +314,21 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var client = await ConnectAsync();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         await client.CallToolAsync("echo_with_user_name",
             new Dictionary<string, object?> { ["message"] = "hi" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Contains(RequestMethods.Initialize, observedMethods);
         Assert.Contains(RequestMethods.ToolsList, observedMethods);
         Assert.Contains(RequestMethods.ToolsCall, observedMethods);
     }
 
-    [Fact]
+    [Test]
     public async Task OutgoingFilter_SeesResponsesAndRequests()
     {
         Assert.SkipWhen(Stateless, "Server-originated requests are not supported in stateless mode.");
@@ -360,7 +360,7 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         var clientOptions = new McpClientOptions
         {
@@ -377,13 +377,13 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
 
         await using var client = await ConnectAsync(clientOptions: clientOptions);
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         await client.CallToolAsync("echo_claims_principal",
             new Dictionary<string, object?> { ["message"] = "hi" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
         await client.CallToolAsync("sampling-tool",
             new Dictionary<string, object?> { ["prompt"] = "Hello" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Contains("initialize-response", observedMessageTypes);
         Assert.Contains("tools-list-response", observedMessageTypes);
@@ -391,7 +391,7 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
         Assert.Contains($"request:{RequestMethods.SamplingCreateMessage}", observedMessageTypes);
     }
 
-    [Fact]
+    [Test]
     public async Task OutgoingFilter_MultipleFilters_ExecuteInOrder()
     {
         var executionOrder = new List<string>();
@@ -436,24 +436,24 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var client = await ConnectAsync();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // The outermost filter's "after" callback runs after the response has been
         // sent to the client, so ListToolsAsync may return before it executes.
         // Wait for it to complete before asserting, but use a timeout to avoid hanging
         // the test indefinitely if the filter pipeline regresses.
-        using var allFiltersCts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        using var allFiltersCts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.CurrentContext.CancellationToken);
         allFiltersCts.CancelAfter(TestConstants.DefaultTimeout);
         await allFiltersComplete.Task.WaitAsync(allFiltersCts.Token);
 
         Assert.Equal(["filter1-before", "filter2-before", "filter2-after", "filter1-after"], executionOrder);
     }
 
-    [Fact]
+    [Test]
     public async Task OutgoingFilter_CanSendAdditionalMessages()
     {
         Builder.Services.AddMcpServer()
@@ -479,7 +479,7 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var client = await ConnectAsync();
 
@@ -490,9 +490,9 @@ public abstract class MapMcpTests(ITestOutputHelper testOutputHelper) : KestrelI
             return default;
         });
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
-        var extraMessage = await extraReceived.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        var extraMessage = await extraReceived.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.CurrentContext.CancellationToken);
         Assert.Equal("injected", extraMessage);
     }
 

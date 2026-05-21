@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ReadResourceRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void ReadResourceRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ReadResourceRequestParams
@@ -24,7 +24,7 @@ public static class ReadResourceRequestParamsTests
         Assert.Equal("tok-1", (string)deserialized.Meta["progressToken"]!);
     }
 
-    [Fact]
+    [Test]
     public static void ReadResourceRequestParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ReadResourceRequestParams

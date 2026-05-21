@@ -1,17 +1,18 @@
 ﻿using Microsoft.Extensions.Logging;
+using NUnit.Framework;
 
 namespace ModelContextProtocol.Tests.Utils;
 
+[CancelAfter(60_000)]
 public class LoggedTest : IDisposable
 {
-    private readonly DelegatingTestOutputHelper _delegatingTestOutputHelper;
+    private readonly DelegatingTestOutputHelper _delegatingTestOutputHelper = new();
 
-    public LoggedTest(ITestOutputHelper testOutputHelper)
+    [SetUp]
+    public virtual void SetUp()
     {
-        _delegatingTestOutputHelper = new()
-        {
-            CurrentTestOutputHelper = testOutputHelper,
-        };
+        MockLoggerProvider.Clear();
+        _delegatingTestOutputHelper.CurrentTestOutputHelper = new NUnitTestOutputHelper();
         XunitLoggerProvider = new XunitLoggerProvider(_delegatingTestOutputHelper);
         LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
         {
@@ -21,9 +22,16 @@ public class LoggedTest : IDisposable
         });
     }
 
+    [TearDown]
+    public virtual void TearDown()
+    {
+        _delegatingTestOutputHelper.CurrentTestOutputHelper = null;
+        LoggerFactory.Dispose();
+    }
+
     public ITestOutputHelper TestOutputHelper => _delegatingTestOutputHelper;
-    public ILoggerFactory LoggerFactory { get; set; }
-    public ILoggerProvider XunitLoggerProvider { get; }
+    public ILoggerFactory LoggerFactory { get; set; } = null!;
+    public ILoggerProvider XunitLoggerProvider { get; private set; } = null!;
     public MockLoggerProvider MockLoggerProvider { get; } = new();
 
     public virtual void Dispose()

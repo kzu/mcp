@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ElicitResultTests
 {
-    [Fact]
+    [Test]
     public static void ElicitResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ElicitResult
@@ -34,7 +34,7 @@ public static class ElicitResultTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void ElicitResult_SerializationRoundTrip_WithDefaultAction()
     {
         var original = new ElicitResult();

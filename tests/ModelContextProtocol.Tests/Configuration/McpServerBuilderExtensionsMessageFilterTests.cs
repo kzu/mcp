@@ -9,7 +9,7 @@ using System.Text.Json.Nodes;
 
 namespace ModelContextProtocol.Tests.Configuration;
 
-public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper testOutputHelper) : ClientServerTestBase(testOutputHelper, startServer: false)
+public class McpServerBuilderExtensionsMessageFilterTests : ClientServerTestBase
 {
     private static ILogger GetLogger(IServiceProvider? services, string categoryName)
     {
@@ -17,7 +17,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
         return loggerFactory.CreateLogger(categoryName);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Logs_For_Request()
     {
         List<string> messageTypes = [];
@@ -54,7 +54,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var beforeMessages = MockLoggerProvider.LogMessages.Where(m => m.Message == "MessageFilter1 before").ToList();
         Assert.True(beforeMessages.Count > 0);
@@ -67,7 +67,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
         Assert.Equal("MessageFilter1", afterMessages[0].Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Intercepts_Request_Messages()
     {
         List<string> messageTypes = [];
@@ -85,13 +85,13 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // The message filter should intercept JsonRpcRequest messages
         Assert.Contains("JsonRpcRequest", messageTypes);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Multiple_Filters_Execute_In_Order()
     {
         McpServerBuilder
@@ -119,7 +119,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessages = MockLoggerProvider.LogMessages
             .Where(m => m.Category.StartsWith("MessageFilter"))
@@ -144,7 +144,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
         Assert.True(idx2After < idx1After);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Has_Access_To_Server()
     {
         McpServer? capturedServer = null;
@@ -161,14 +161,14 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // The captured server is a per-destination wrapper that provides the same functionality
         Assert.NotNull(capturedServer);
         Assert.NotNull(capturedServer.ServerOptions);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Items_Dictionary_Can_Be_Used()
     {
         string? capturedValue = null;
@@ -197,12 +197,12 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal("testValue", capturedValue);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Can_Access_JsonRpcMessage_Details()
     {
         string? capturedMethod = null;
@@ -222,12 +222,12 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(RequestMethods.ToolsList, capturedMethod);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Exception_Propagates_Properly()
     {
         McpServerBuilder
@@ -248,13 +248,13 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
         {
-            await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         });
 
         Assert.Contains("error", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Runs_Before_Request_Specific_Filters()
     {
         var executionOrder = new List<string>();
@@ -279,7 +279,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Message filter should run before the request-specific filter
         Assert.Equal(2, executionOrder.Count);
@@ -287,7 +287,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
         Assert.Equal("ListToolsFilter", executionOrder[1]);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Can_Skip_Default_Handlers()
     {
         McpServerBuilder
@@ -316,7 +316,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
         });
     }
 
-    [Fact]
+    [Test]
     public async Task AddOutgoingMessageFilter_Sees_Responses_Notifications_And_Requests()
     {
         var observedMessages = new List<string>();
@@ -367,10 +367,10 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
         await using McpClient client = await CreateMcpClientForServer(clientOptions);
 
         IProgress<ProgressNotificationValue> progress = new Progress<ProgressNotificationValue>(_ => { });
-        await client.CallToolAsync("progress-tool", progress: progress, cancellationToken: TestContext.Current.CancellationToken);
+        await client.CallToolAsync("progress-tool", progress: progress, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         await client.CallToolAsync("sampling-tool", new Dictionary<string, object?> { ["prompt"] = "Hello" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         int initializeIndex = observedMessages.IndexOf("initialize");
         int progressIndex = observedMessages.IndexOf("progress");
@@ -383,7 +383,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
         Assert.True(requestIndex >= 0);
     }
 
-    [Fact]
+    [Test]
     public async Task AddOutgoingMessageFilter_Can_Skip_Sending_Messages()
     {
         McpServerBuilder
@@ -409,7 +409,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
         });
     }
 
-    [Fact]
+    [Test]
     public async Task AddOutgoingMessageFilter_Can_Send_Additional_Messages()
     {
         McpServerBuilder
@@ -443,14 +443,14 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
             return default;
         });
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
-        var extraMessage = await extraNotificationReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        var extraMessage = await extraNotificationReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal("extra", extraMessage);
     }
 
-    [Fact]
+    [Test]
     public async Task AddOutgoingMessageFilter_SkipNext_DoesNotLogSending()
     {
         ServiceCollection.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug));
@@ -486,7 +486,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
             m.Category.Contains("McpServer") && m.Message.Contains("sending message", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Test]
     public async Task AddOutgoingMessageFilter_CallsNext_LogsSending()
     {
         ServiceCollection.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug));
@@ -501,14 +501,14 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
         // Clear any logs from initialization
         while (MockLoggerProvider.LogMessages.TryDequeue(out _)) { }
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // The response should have been sent, producing a "sending message" log from the server
         Assert.Contains(MockLoggerProvider.LogMessages, m =>
             m.Category.Contains("McpServer") && m.Message.Contains("sending message", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_SkipNext_DoesNotLogSendingResponse()
     {
         ServiceCollection.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug));
@@ -544,7 +544,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
             m.Category.Contains("McpServer") && m.Message.Contains("sending message", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_CallsNext_LogsSendingResponse()
     {
         ServiceCollection.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug));
@@ -564,14 +564,14 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
         // Clear any logs from initialization
         while (MockLoggerProvider.LogMessages.TryDequeue(out _)) { }
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // The handler ran and sent a response, producing a "sending message" log from the server
         Assert.Contains(MockLoggerProvider.LogMessages, m =>
             m.Category.Contains("McpServer") && m.Message.Contains("sending message", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Items_Flow_To_Request_Filters()
     {
         string? capturedValue = null;
@@ -601,12 +601,12 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal("messageFilterValue", capturedValue);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Items_Flow_To_CallTool_Handler()
     {
         object? capturedValue = null;
@@ -636,12 +636,12 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.CallToolAsync("simple-tool", cancellationToken: TestContext.Current.CancellationToken);
+        await client.CallToolAsync("simple-tool", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(42, capturedValue);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_User_Flows_To_CallTool_Handler()
     {
         ClaimsPrincipal? capturedUser = null;
@@ -670,14 +670,14 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.CallToolAsync("simple-tool", cancellationToken: TestContext.Current.CancellationToken);
+        await client.CallToolAsync("simple-tool", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(capturedUser);
         Assert.Equal("TestUser", capturedUser.Identity?.Name);
         Assert.True(capturedUser.IsInRole("Admin"));
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Items_Preserved_When_Context_Replaced()
     {
         object? firstFilterValue = null;
@@ -731,13 +731,13 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Null(firstFilterValue);
         Assert.Equal("secondFilterValue", secondFilterValue);
     }
 
-    [Fact]
+    [Test]
     public async Task AddIncomingMessageFilter_Items_Flow_Through_Multiple_Request_Filters()
     {
         var observedValues = new List<string>();
@@ -780,7 +780,7 @@ public class McpServerBuilderExtensionsMessageFilterTests(ITestOutputHelper test
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(2, observedValues.Count);
         Assert.Equal("fromMessageFilter", observedValues[0]);

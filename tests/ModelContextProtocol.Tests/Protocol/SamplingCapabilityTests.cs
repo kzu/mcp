@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class SamplingCapabilityTests
 {
-    [Fact]
+    [Test]
     public static void SamplingCapability_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new SamplingCapability
@@ -22,7 +22,7 @@ public static class SamplingCapabilityTests
         Assert.NotNull(deserialized.Tools);
     }
 
-    [Fact]
+    [Test]
     public static void SamplingCapability_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new SamplingCapability();
