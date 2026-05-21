@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public class ContentBlockTests
 {
-    [Fact]
+    [Test]
     public void ResourceLinkBlock_SerializationRoundTrip_PreservesAllProperties()
     {
         // Arrange
@@ -44,7 +44,7 @@ public class ContentBlockTests
         Assert.Equal("image/png", resourceLink.Icons[0].MimeType);
     }
 
-    [Fact]
+    [Test]
     public void ResourceLinkBlock_DeserializationWithMinimalProperties_Succeeds()
     {
         // Arrange - JSON with only required properties
@@ -73,7 +73,7 @@ public class ContentBlockTests
         Assert.Equal("resource_link", resourceLink.Type);
     }
 
-    [Fact]
+    [Test]
     public void ResourceLinkBlock_DeserializationWithoutName_ThrowsJsonException()
     {
         // Arrange - JSON missing the required "name" property
@@ -91,7 +91,7 @@ public class ContentBlockTests
         Assert.Contains("Name must be provided for 'resource_link' type", exception.Message);
     }
 
-    [Fact]
+    [Test]
     public void ResourceLinkBlock_DeserializationWithTitleAndIcons_Succeeds()
     {
         // Arrange - JSON with title and icons properties per spec
@@ -129,7 +129,7 @@ public class ContentBlockTests
         Assert.Equal("image/svg+xml", resourceLink.Icons[1].MimeType);
     }
 
-    [Fact]
+    [Test]
     public void Deserialize_IgnoresUnknownArrayProperty()
     {
         // This is a regression test where a server returned an unexpected response with
@@ -152,7 +152,7 @@ public class ContentBlockTests
         Assert.Contains("1234567890", textBlock.Text);
     }
 
-    [Fact]
+    [Test]
     public void Deserialize_IgnoresUnknownObjectProperties()
     {
         string responseJson = @"{
@@ -173,7 +173,7 @@ public class ContentBlockTests
         Assert.Contains("Sample text", textBlock.Text);
     }
 
-    [Fact]
+    [Test]
     public void ToolResultContentBlock_WithError_SerializationRoundtrips()
     {
         ToolResultContentBlock toolResult = new()
@@ -194,7 +194,7 @@ public class ContentBlockTests
         Assert.Equal("Error: City not found", textBlock.Text);
     }
 
-    [Fact]
+    [Test]
     public void ToolResultContentBlock_WithStructuredContent_SerializationRoundtrips()
     {
         ToolResultContentBlock toolResult = new()
@@ -222,7 +222,7 @@ public class ContentBlockTests
         Assert.False(result.IsError);
     }
 
-    [Fact]
+    [Test]
     public void ToolResultContentBlock_SerializationRoundTrip()
     {
         ToolResultContentBlock toolResult = new()
@@ -254,7 +254,7 @@ public class ContentBlockTests
         Assert.False(result.IsError);
     }
 
-    [Fact]
+    [Test]
     public void ToolUseContentBlock_SerializationRoundTrip()
     {
         ToolUseContentBlock toolUse = new()
@@ -273,26 +273,22 @@ public class ContentBlockTests
         Assert.Equal("Paris", result.Input.GetProperty("city").GetString());
         Assert.Equal("metric", result.Input.GetProperty("units").GetString());
     }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase(" ")]
     public void ImageContentBlock_FromBytes_ThrowsForNullOrWhiteSpaceMimeType(string? mimeType)
     {
         Assert.ThrowsAny<ArgumentException>(() => ImageContentBlock.FromBytes((byte[])[1, 2, 3], mimeType!));
     }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase(" ")]
     public void AudioContentBlock_FromBytes_ThrowsForNullOrWhiteSpaceMimeType(string? mimeType)
     {
         Assert.ThrowsAny<ArgumentException>(() => AudioContentBlock.FromBytes((byte[])[1, 2, 3], mimeType!));
     }
 
-    [Fact]
+    [Test]
     public void ImageContentBlock_Deserialization_HandlesEscapedForwardSlashInBase64()
     {
         // Base64 uses '/' which some JSON encoders escape as '\/' (valid JSON).
@@ -310,7 +306,7 @@ public class ContentBlockTests
         Assert.Equal(originalBytes, image.DecodedData.ToArray());
     }
 
-    [Fact]
+    [Test]
     public void AudioContentBlock_Deserialization_HandlesEscapedForwardSlashInBase64()
     {
         byte[] originalBytes = [0xFF, 0xD8, 0xFF, 0xE0];
@@ -331,17 +327,14 @@ public class ContentBlockTests
     /// - Various lengths producing 0, 1, or 2 padding characters
     /// - Bytes that produce all 64 base64 alphabet characters including '+' and '/'
     /// </summary>
-    public static TheoryData<byte[]> Base64TestData()
+    public static IEnumerable<byte[]> Base64TestData()
     {
-        var data = new TheoryData<byte[]>
-        {
-            Array.Empty<byte>(),       // empty: ""
-            new byte[] { 0x00 },       // 1 byte, 2 padding chars: "AA=="
-            new byte[] { 0x00, 0x01 }, // 2 bytes, 1 padding char: "AAE="
-            new byte[] { 0x00, 0x01, 0x02 }, // 3 bytes, no padding: "AAEC"
-            new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 }, // produces '/' in base64: "/9j/4A=="
-            new byte[] { 0xFB, 0xEF, 0xBE }, // produces '+' in base64: "++++"
-        };
+        yield return Array.Empty<byte>();
+        yield return [0x00];
+        yield return [0x00, 0x01];
+        yield return [0x00, 0x01, 0x02];
+        yield return [0xFF, 0xD8, 0xFF, 0xE0];
+        yield return [0xFB, 0xEF, 0xBE];
 
         // All 256 byte values to exercise the full base64 alphabet
         byte[] allBytes = new byte[256];
@@ -349,18 +342,14 @@ public class ContentBlockTests
         {
             allBytes[i] = (byte)i;
         }
-        data.Add(allBytes);
+        yield return allBytes;
 
         // Larger payload (1024 bytes)
         byte[] largePayload = new byte[1024];
         new Random(42).NextBytes(largePayload);
-        data.Add(largePayload);
-
-        return data;
+        yield return largePayload;
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void ImageContentBlock_FromBytes_RoundtripsCorrectly(byte[] originalBytes)
     {
         string expectedBase64 = Convert.ToBase64String(originalBytes);
@@ -371,9 +360,7 @@ public class ContentBlockTests
         Assert.Equal(originalBytes, image.DecodedData.ToArray());
         Assert.Equal(expectedBase64, Encoding.UTF8.GetString(image.Data.ToArray()));
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void ImageContentBlock_DataSetter_RoundtripsCorrectly(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -384,9 +371,7 @@ public class ContentBlockTests
         Assert.Equal(base64Utf8, image.Data.ToArray());
         Assert.Equal(originalBytes, image.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void ImageContentBlock_JsonRoundtrip_PreservesData(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -400,9 +385,7 @@ public class ContentBlockTests
         Assert.Equal(base64Utf8, deserialized.Data.ToArray());
         Assert.Equal(originalBytes, deserialized.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void ImageContentBlock_FromBytes_JsonRoundtrip_PreservesData(byte[] originalBytes)
     {
         string expectedBase64 = Convert.ToBase64String(originalBytes);
@@ -415,9 +398,7 @@ public class ContentBlockTests
         Assert.Equal(expectedBase64, Encoding.UTF8.GetString(deserialized.Data.ToArray()));
         Assert.Equal(originalBytes, deserialized.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void ImageContentBlock_EscapedJsonRoundtrip_PreservesData(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -432,7 +413,7 @@ public class ContentBlockTests
         Assert.Equal(originalBytes, deserialized.DecodedData.ToArray());
     }
 
-    [Fact]
+    [Test]
     public void ImageContentBlock_DataSetterInvalidatesCachedDecodedData()
     {
         byte[] bytes1 = [1, 2, 3];
@@ -448,9 +429,7 @@ public class ContentBlockTests
 
         Assert.Equal(newBytes, image.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void AudioContentBlock_FromBytes_RoundtripsCorrectly(byte[] originalBytes)
     {
         string expectedBase64 = Convert.ToBase64String(originalBytes);
@@ -461,9 +440,7 @@ public class ContentBlockTests
         Assert.Equal(originalBytes, audio.DecodedData.ToArray());
         Assert.Equal(expectedBase64, Encoding.UTF8.GetString(audio.Data.ToArray()));
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void AudioContentBlock_DataSetter_RoundtripsCorrectly(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -474,9 +451,7 @@ public class ContentBlockTests
         Assert.Equal(base64Utf8, audio.Data.ToArray());
         Assert.Equal(originalBytes, audio.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void AudioContentBlock_JsonRoundtrip_PreservesData(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -490,9 +465,7 @@ public class ContentBlockTests
         Assert.Equal(base64Utf8, deserialized.Data.ToArray());
         Assert.Equal(originalBytes, deserialized.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void AudioContentBlock_FromBytes_JsonRoundtrip_PreservesData(byte[] originalBytes)
     {
         string expectedBase64 = Convert.ToBase64String(originalBytes);
@@ -505,9 +478,7 @@ public class ContentBlockTests
         Assert.Equal(expectedBase64, Encoding.UTF8.GetString(deserialized.Data.ToArray()));
         Assert.Equal(originalBytes, deserialized.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void AudioContentBlock_EscapedJsonRoundtrip_PreservesData(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -521,7 +492,7 @@ public class ContentBlockTests
         Assert.Equal(originalBytes, deserialized.DecodedData.ToArray());
     }
 
-    [Fact]
+    [Test]
     public void AudioContentBlock_DataSetterInvalidatesCachedDecodedData()
     {
         byte[] bytes1 = [1, 2, 3];
@@ -535,9 +506,7 @@ public class ContentBlockTests
 
         Assert.Equal(newBytes, audio.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void ImageContentBlock_FromBytes_LazilyEncodesData(byte[] originalBytes)
     {
         // FromBytes should only decode when Data is accessed
@@ -550,9 +519,7 @@ public class ContentBlockTests
         string expectedBase64 = Convert.ToBase64String(originalBytes);
         Assert.Equal(expectedBase64, Encoding.UTF8.GetString(image.Data.ToArray()));
     }
-
-    [Theory]
-    [MemberData(nameof(Base64TestData))]
+    [TestCaseSource(nameof(Base64TestData))]
     public void AudioContentBlock_FromBytes_LazilyEncodesData(byte[] originalBytes)
     {
         var audio = AudioContentBlock.FromBytes(originalBytes, "audio/wav");

@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ImplementationTests
 {
-    [Fact]
+    [Test]
     public static void Implementation_SerializationRoundTrip_PreservesAllProperties()
     {
         // Arrange
@@ -47,7 +47,7 @@ public static class ImplementationTests
         }
     }
 
-    [Fact]
+    [Test]
     public static void Implementation_SerializationRoundTrip_WithoutOptionalProperties()
     {
         // Arrange
@@ -73,7 +73,7 @@ public static class ImplementationTests
         Assert.Equal(original.WebsiteUrl, deserialized.WebsiteUrl);
     }
 
-    [Fact]
+    [Test]
     public static void Implementation_HasCorrectJsonPropertyNames()
     {
         var implementation = new Implementation
@@ -95,14 +95,12 @@ public static class ImplementationTests
         Assert.Contains("\"icons\":", json);
         Assert.Contains("\"websiteUrl\":", json);
     }
-
-    [Theory]
-    [InlineData("""{}""")]
-    [InlineData("""{"title":"Test Server"}""")]
-    [InlineData("""{"name":"test-server"}""")]
-    [InlineData("""{"version":"1.0.0"}""")]
-    [InlineData("""{"title":"Test Server","version":"1.0.0"}""")]
-    [InlineData("""{"name":"test-server","title":"Test Server"}""")]
+    [TestCase("""{}""")]
+    [TestCase("""{"title":"Test Server"}""")]
+    [TestCase("""{"name":"test-server"}""")]
+    [TestCase("""{"version":"1.0.0"}""")]
+    [TestCase("""{"title":"Test Server","version":"1.0.0"}""")]
+    [TestCase("""{"name":"test-server","title":"Test Server"}""")]
     public static void Implementation_DeserializationWithMissingRequiredProperties_ThrowsJsonException(string invalidJson)
     {
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<Implementation>(invalidJson, McpJsonUtilities.DefaultOptions));

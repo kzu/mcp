@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ListRootsResultTests
 {
-    [Fact]
+    [Test]
     public static void ListRootsResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ListRootsResult

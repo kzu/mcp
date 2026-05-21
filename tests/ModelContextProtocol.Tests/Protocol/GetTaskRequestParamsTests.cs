@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class GetTaskRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void GetTaskRequestParams_SerializationRoundTrip()
     {
         // Arrange

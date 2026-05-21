@@ -1,4 +1,4 @@
-﻿using ModelContextProtocol.Protocol;
+using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using System.Runtime.InteropServices;
 
@@ -13,7 +13,7 @@ public class McpServerHandlerTests
 #endif
     }
 
-    [Fact]
+    [Test]
     public void AllPropertiesAreSettable()
     {
         var handlers = new McpServerHandlers();

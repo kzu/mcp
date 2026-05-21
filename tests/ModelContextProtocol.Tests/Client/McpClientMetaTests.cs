@@ -8,8 +8,7 @@ namespace ModelContextProtocol.Tests.Client;
 
 public class McpClientMetaTests : ClientServerTestBase
 {
-    public McpClientMetaTests(ITestOutputHelper outputHelper)
-        : base(outputHelper)
+    public McpClientMetaTests()
     {
     }
 
@@ -30,7 +29,7 @@ public class McpClientMetaTests : ClientServerTestBase
         });
     }
 
-    [Fact]
+    [Test]
     public async Task ToolCallWithMetaFields()
     {
         Server.ServerOptions.ToolCollection?.Add(McpServerTool.Create(
@@ -56,7 +55,7 @@ public class McpClientMetaTests : ClientServerTestBase
             }
         };
 
-        var result = await client.CallToolAsync("meta_tool", options: requestOptions, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("meta_tool", options: requestOptions, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Null(result.IsError);
@@ -66,7 +65,7 @@ public class McpClientMetaTests : ClientServerTestBase
         Assert.Contains("bar baz", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ResourceReadWithMetaFields()
     {
         Server.ServerOptions.ResourceCollection?.Add(McpServerResource.Create(
@@ -92,7 +91,7 @@ public class McpClientMetaTests : ClientServerTestBase
             }
         };
 
-        var result = await client.ReadResourceAsync("test://meta_resource", options: requestOptions, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.ReadResourceAsync("test://meta_resource", options: requestOptions, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
 
@@ -102,7 +101,7 @@ public class McpClientMetaTests : ClientServerTestBase
     }
 
 
-    [Fact]
+    [Test]
     public async Task PromptGetWithMetaFields()
     {
         Server.ServerOptions.PromptCollection?.Add(McpServerPrompt.Create(
@@ -128,7 +127,7 @@ public class McpClientMetaTests : ClientServerTestBase
             }
         };
 
-        var result = await client.GetPromptAsync("meta_prompt", options: requestOptions, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.GetPromptAsync("meta_prompt", options: requestOptions, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
         Assert.NotEmpty(result.Messages);

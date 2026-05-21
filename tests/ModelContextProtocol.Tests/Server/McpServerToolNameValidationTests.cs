@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Server;
 
 public class McpServerToolNameValidationTests
 {
-    [Fact]
+    [Test]
     public void WithValidCharacters_Succeeds()
     {
         const string AllValidChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-";
@@ -27,7 +27,7 @@ public class McpServerToolNameValidationTests
         }
     }
 
-    [Fact]
+    [Test]
     public void WithInvalidCharacters_Throws()
     {
         Validate("café");
@@ -55,23 +55,19 @@ public class McpServerToolNameValidationTests
             Assert.Contains(toolName, ex.Message, StringComparison.OrdinalIgnoreCase);
         }
     }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(10)]
-    [InlineData(127)]
-    [InlineData(128)]
+    [TestCase(1)]
+    [TestCase(10)]
+    [TestCase(127)]
+    [TestCase(128)]
     public void WithValidLengths_Succeeds(int length)
     {
         string validName = new('a', length);
         var tool = McpServerTool.Create(() => "result", new McpServerToolCreateOptions { Name = validName });
         Assert.Equal(validName, tool.ProtocolTool.Name);
     }
-
-    [Theory]
-    [InlineData(0)]
-    [InlineData(129)]
-    [InlineData(130)]
+    [TestCase(0)]
+    [TestCase(129)]
+    [TestCase(130)]
     public void WithInvalidLengths_ThrowsArgumentException(int length)
     {
         string invalidName = new('a', length);
@@ -79,7 +75,7 @@ public class McpServerToolNameValidationTests
         Assert.Contains(invalidName, ex.Message);
     }
 
-    [Fact]
+    [Test]
     public void UsingAttribute_ValidatesToolName()
     {
         var validTool = McpServerTool.Create([McpServerTool(Name = "valid_tool")] () => "result");
@@ -89,7 +85,7 @@ public class McpServerToolNameValidationTests
         Assert.Contains("invalid@tool", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public void UsingAttributeWithInvalidCharacters_ThrowsArgumentException()
     {
         var validTool = McpServerTool.Create([McpServerTool(Name = "tool")] () => "result");
@@ -99,7 +95,7 @@ public class McpServerToolNameValidationTests
         Assert.Contains("tööl", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public void FromMethodInfo_ValidatesToolName()
     {
         Assert.Equal(nameof(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa), McpServerTool.Create(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa).ProtocolTool.Name);
@@ -108,7 +104,7 @@ public class McpServerToolNameValidationTests
         Assert.Contains(nameof(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa), ex.Message);
     }
 
-    [Fact]
+    [Test]
     public void FromAIFunction_ValidatesToolName()
     {
         var validTool = McpServerTool.Create(AIFunctionFactory.Create(() => "result", new AIFunctionFactoryOptions { Name = "valid_ai" }));
@@ -119,7 +115,7 @@ public class McpServerToolNameValidationTests
         Assert.Contains("invalid ai", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public void FromNullAIFunctionName_ThrowsArgumentNullException()
     {
         AIFunction f = new NullNameAIFunction();

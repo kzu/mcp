@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using System.Text.Json;
@@ -7,8 +7,7 @@ namespace ModelContextProtocol.Tests.Configuration;
 
 public partial class ElicitationTests : ClientServerTestBase
 {
-    public ElicitationTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public ElicitationTests()
     {
     }
 
@@ -68,7 +67,7 @@ public partial class ElicitationTests : ClientServerTestBase
         });
     }
 
-    [Fact]
+    [Test]
     public async Task Can_Elicit_Information()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -143,7 +142,7 @@ public partial class ElicitationTests : ClientServerTestBase
             }
         });
 
-        var result = await client.CallToolAsync("TestElicitation", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("TestElicitation", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal("success", (result.Content[0] as TextContentBlock)?.Text);
     }

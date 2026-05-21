@@ -6,7 +6,7 @@ using ModelContextProtocol.Server;
 
 namespace ModelContextProtocol.Tests.Configuration;
 
-public class McpServerBuilderExtensionsRequestFilterTests(ITestOutputHelper testOutputHelper) : ClientServerTestBase(testOutputHelper)
+public class McpServerBuilderExtensionsRequestFilterTests : ClientServerTestBase
 {
     private static ILogger GetLogger(IServiceProvider? services, string categoryName)
     {
@@ -142,48 +142,48 @@ public class McpServerBuilderExtensionsRequestFilterTests(ITestOutputHelper test
             });
     }
 
-    [Fact]
+    [Test]
     public async Task AddListResourceTemplatesFilter_Logs_When_ListResourceTemplates_Called()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListResourceTemplatesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListResourceTemplatesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessage = Assert.Single(MockLoggerProvider.LogMessages, m => m.Message == "ListResourceTemplatesFilter executed");
         Assert.Equal(LogLevel.Information, logMessage.LogLevel);
         Assert.Equal("ListResourceTemplatesFilter", logMessage.Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddListToolsFilter_Logs_When_ListTools_Called()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessage = Assert.Single(MockLoggerProvider.LogMessages, m => m.Message == "ListToolsFilter executed");
         Assert.Equal(LogLevel.Information, logMessage.LogLevel);
         Assert.Equal("ListToolsFilter", logMessage.Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddCallToolFilter_Logs_When_CallTool_Called()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.CallToolAsync("test_tool_method", cancellationToken: TestContext.Current.CancellationToken);
+        await client.CallToolAsync("test_tool_method", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessage = Assert.Single(MockLoggerProvider.LogMessages, m => m.Message == "CallToolFilter executed for tool: test_tool_method");
         Assert.Equal(LogLevel.Information, logMessage.LogLevel);
         Assert.Equal("CallToolFilter", logMessage.Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddCallToolFilter_Catches_Exception_From_Tool()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var result = await client.CallToolAsync("throwing_tool_method", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("throwing_tool_method", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.True(result.IsError);
         Assert.NotNull(result.Content);
@@ -192,109 +192,109 @@ public class McpServerBuilderExtensionsRequestFilterTests(ITestOutputHelper test
         Assert.Equal("Error from filter: This tool always throws an exception", textBlock.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task AddListPromptsFilter_Logs_When_ListPrompts_Called()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessage = Assert.Single(MockLoggerProvider.LogMessages, m => m.Message == "ListPromptsFilter executed");
         Assert.Equal(LogLevel.Information, logMessage.LogLevel);
         Assert.Equal("ListPromptsFilter", logMessage.Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddGetPromptFilter_Logs_When_GetPrompt_Called()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.GetPromptAsync("test_prompt_method", cancellationToken: TestContext.Current.CancellationToken);
+        await client.GetPromptAsync("test_prompt_method", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessage = Assert.Single(MockLoggerProvider.LogMessages, m => m.Message == "GetPromptFilter executed for prompt: test_prompt_method");
         Assert.Equal(LogLevel.Information, logMessage.LogLevel);
         Assert.Equal("GetPromptFilter", logMessage.Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddListResourcesFilter_Logs_When_ListResources_Called()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListResourcesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessage = Assert.Single(MockLoggerProvider.LogMessages, m => m.Message == "ListResourcesFilter executed");
         Assert.Equal(LogLevel.Information, logMessage.LogLevel);
         Assert.Equal("ListResourcesFilter", logMessage.Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddReadResourceFilter_Logs_When_ReadResource_Called()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ReadResourceAsync("test://resource/123", cancellationToken: TestContext.Current.CancellationToken);
+        await client.ReadResourceAsync("test://resource/123", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessage = Assert.Single(MockLoggerProvider.LogMessages, m => m.Message == "ReadResourceFilter executed for resource: test://resource/{id}");
         Assert.Equal(LogLevel.Information, logMessage.LogLevel);
         Assert.Equal("ReadResourceFilter", logMessage.Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddCompleteFilter_Logs_When_Complete_Called()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         var reference = new PromptReference { Name = "test_prompt_method" };
-        await client.CompleteAsync(reference, "argument", "value", cancellationToken: TestContext.Current.CancellationToken);
+        await client.CompleteAsync(reference, "argument", "value", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessage = Assert.Single(MockLoggerProvider.LogMessages, m => m.Message == "CompleteFilter executed");
         Assert.Equal(LogLevel.Information, logMessage.LogLevel);
         Assert.Equal("CompleteFilter", logMessage.Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddSubscribeToResourcesFilter_Logs_When_SubscribeToResources_Called()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.SubscribeToResourceAsync("test://resource/123", cancellationToken: TestContext.Current.CancellationToken);
+        await client.SubscribeToResourceAsync("test://resource/123", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessage = Assert.Single(MockLoggerProvider.LogMessages, m => m.Message == "SubscribeToResourcesFilter executed");
         Assert.Equal(LogLevel.Information, logMessage.LogLevel);
         Assert.Equal("SubscribeToResourcesFilter", logMessage.Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddUnsubscribeFromResourcesFilter_Logs_When_UnsubscribeFromResources_Called()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.UnsubscribeFromResourceAsync("test://resource/123", cancellationToken: TestContext.Current.CancellationToken);
+        await client.UnsubscribeFromResourceAsync("test://resource/123", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessage = Assert.Single(MockLoggerProvider.LogMessages, m => m.Message == "UnsubscribeFromResourcesFilter executed");
         Assert.Equal(LogLevel.Information, logMessage.LogLevel);
         Assert.Equal("UnsubscribeFromResourcesFilter", logMessage.Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddSetLoggingLevelFilter_Logs_When_SetLoggingLevel_Called()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.SetLoggingLevelAsync(LoggingLevel.Info, cancellationToken: TestContext.Current.CancellationToken);
+        await client.SetLoggingLevelAsync(LoggingLevel.Info, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessage = Assert.Single(MockLoggerProvider.LogMessages, m => m.Message == "SetLoggingLevelFilter executed");
         Assert.Equal(LogLevel.Information, logMessage.LogLevel);
         Assert.Equal("SetLoggingLevelFilter", logMessage.Category);
     }
 
-    [Fact]
+    [Test]
     public async Task AddListToolsFilter_Multiple_Filters_Log_In_Expected_Order()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var logMessages = MockLoggerProvider.LogMessages
             .Where(m => m.Category.StartsWith("ListToolsOrder"))

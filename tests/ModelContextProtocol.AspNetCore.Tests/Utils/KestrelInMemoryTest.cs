@@ -1,17 +1,22 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Tests.Utils;
+using NUnit.Framework;
 
 namespace ModelContextProtocol.AspNetCore.Tests.Utils;
 
+[CancelAfter(60_000)]
 public abstract class KestrelInMemoryTest : LoggedTest
 {
-    public KestrelInMemoryTest(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    [SetUp]
+    public override void SetUp()
     {
+        base.SetUp();
+        KestrelInMemoryTransport = new();
+        SocketsHttpHandler = new();
         Builder = WebApplication.CreateEmptyBuilder(new());
         Builder.Services.AddSingleton<IConnectionListenerFactory>(KestrelInMemoryTransport);
         Builder.WebHost.UseKestrelCore();
@@ -31,23 +36,24 @@ public abstract class KestrelInMemoryTest : LoggedTest
         ConfigureHttpClient(HttpClient);
     }
 
-    public WebApplicationBuilder Builder { get; }
+    [TearDown]
+    public void TearDownHttp()
+    {
+        HttpClient.Dispose();
+        SocketsHttpHandler.Dispose();
+    }
 
-    public HttpClient HttpClient { get; set; }
+    public WebApplicationBuilder Builder { get; private set; } = null!;
 
-    public SocketsHttpHandler SocketsHttpHandler { get; } = new();
+    public HttpClient HttpClient { get; protected set; } = null!;
 
-    public KestrelInMemoryTransport KestrelInMemoryTransport { get; } = new();
+    public SocketsHttpHandler SocketsHttpHandler { get; private set; } = null!;
+
+    public KestrelInMemoryTransport KestrelInMemoryTransport { get; private set; } = null!;
 
     protected static void ConfigureHttpClient(HttpClient httpClient)
     {
         httpClient.BaseAddress = new Uri("http://localhost:5000/");
         httpClient.Timeout = TestConstants.HttpClientTimeout;
-    }
-
-    public override void Dispose()
-    {
-        HttpClient.Dispose();
-        base.Dispose();
     }
 }

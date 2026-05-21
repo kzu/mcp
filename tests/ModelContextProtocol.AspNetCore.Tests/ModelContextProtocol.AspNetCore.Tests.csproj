@@ -10,12 +10,6 @@
   </PropertyGroup>
 
 
-  <PropertyGroup>
-    <!-- Without this, tests are currently not showing results until all tests complete
-         https://xunit.net/docs/getting-started/v3/microsoft-testing-platform
-    -->
-    <DisableTestingPlatformServerCapability>true</DisableTestingPlatformServerCapability>
-  </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="..\Common\**\*.cs" />
@@ -38,8 +32,8 @@
     <PackageReference Include="Moq" />
     <PackageReference Include="OpenTelemetry" />
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
-    <PackageReference Include="xunit.v3" />
-    <PackageReference Include="xunit.runner.visualstudio">
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

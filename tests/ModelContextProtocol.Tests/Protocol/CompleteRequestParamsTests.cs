@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class CompleteRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void CompleteRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new CompleteRequestParams
@@ -35,7 +35,7 @@ public static class CompleteRequestParamsTests
         Assert.Equal("tok-1", (string)deserialized.Meta["progressToken"]!);
     }
 
-    [Fact]
+    [Test]
     public static void CompleteRequestParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new CompleteRequestParams

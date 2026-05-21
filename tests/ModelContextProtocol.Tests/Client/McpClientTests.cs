@@ -14,8 +14,7 @@ namespace ModelContextProtocol.Tests.Client;
 
 public class McpClientTests : ClientServerTestBase
 {
-    public McpClientTests(ITestOutputHelper outputHelper)
-        : base(outputHelper)
+    public McpClientTests()
     {
     }
 
@@ -46,7 +45,7 @@ public class McpClientTests : ClientServerTestBase
         });
     }
 
-    [Fact]
+    [Test]
     public async Task CanReadServerInfo()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -72,7 +71,7 @@ public class McpClientTests : ClientServerTestBase
         Assert.Equal("dark", icon1.Theme);
     }
 
-    [Fact]
+    [Test]
     public async Task ServerCanReadClientInfo()
     {
         var clientOptions = new McpClientOptions
@@ -94,11 +93,9 @@ public class McpClientTests : ClientServerTestBase
         Assert.Equal("2.0.0", clientInfo.Version);
         Assert.Equal("A test client for validating client-server communication", clientInfo.Description);
     }
-
-    [Theory]
-    [InlineData(null, 10)]
-    [InlineData(0.7f, 50)]
-    [InlineData(1.0f, 100)]
+    [TestCase(null, 10)]
+    [TestCase(0.7f, 50)]
+    [TestCase(1.0f, 100)]
     public async Task CreateSamplingHandler_ShouldHandleTextMessages(float? temperature, int maxTokens)
     {
         // Arrange
@@ -148,7 +145,7 @@ public class McpClientTests : ClientServerTestBase
         Assert.Equal("endTurn", result.StopReason);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateSamplingHandler_ShouldHandleImageMessages()
     {
         // Arrange
@@ -199,7 +196,7 @@ public class McpClientTests : ClientServerTestBase
         Assert.Equal("endTurn", result.StopReason);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateSamplingHandler_ShouldHandleResourceMessages()
     {
         // Arrange
@@ -257,7 +254,7 @@ public class McpClientTests : ClientServerTestBase
         Assert.Equal("endTurn", result.StopReason);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateSamplingHandler_ShouldUseToolRoleForToolResultMessages()
     {
         // Arrange
@@ -354,15 +351,15 @@ public class McpClientTests : ClientServerTestBase
         Assert.Contains(messagesList[3].Contents, c => c is TextContent);
     }
 
-    [Fact]
+    [Test]
     public async Task ListToolsAsync_AllToolsReturned()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal(12, tools.Count);
         var echo = tools.Single(t => t.Name == "Method4");
-        var result = await echo.InvokeAsync(new() { ["i"] = 42 }, TestContext.Current.CancellationToken);
+        var result = await echo.InvokeAsync(new() { ["i"] = 42 }, TestContext.CurrentContext.CancellationToken);
         Assert.Contains("Method4 Result 42", result?.ToString());
 
         var valuesSetViaAttr = tools.Single(t => t.Name == "ValuesSetViaAttr");
@@ -380,40 +377,40 @@ public class McpClientTests : ClientServerTestBase
         Assert.False(valuesSetViaOptions.ProtocolTool.Annotations?.OpenWorldHint);
     }
 
-    [Fact]
+    [Test]
     public async Task SendRequestAsync_HonorsJsonSerializerOptions()
     {
         JsonSerializerOptions emptyOptions = new() { TypeInfoResolver = JsonTypeInfoResolver.Combine() };
         await using McpClient client = await CreateMcpClientForServer();
 
-        await Assert.ThrowsAsync<NotSupportedException>(async () => await client.SendRequestAsync<CallToolRequestParams, CallToolResult>("Method4", new() { Name = "tool" }, emptyOptions, cancellationToken: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<NotSupportedException>(async () => await client.SendRequestAsync<CallToolRequestParams, CallToolResult>("Method4", new() { Name = "tool" }, emptyOptions, cancellationToken: TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task SendNotificationAsync_HonorsJsonSerializerOptions()
     {
         JsonSerializerOptions emptyOptions = new() { TypeInfoResolver = JsonTypeInfoResolver.Combine() };
         await using McpClient client = await CreateMcpClientForServer();
 
-        await Assert.ThrowsAsync<NotSupportedException>(() => client.SendNotificationAsync("Method4", new { Value = 42 }, emptyOptions, cancellationToken: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<NotSupportedException>(() => client.SendNotificationAsync("Method4", new { Value = 42 }, emptyOptions, cancellationToken: TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task GetPromptsAsync_HonorsJsonSerializerOptions()
     {
         JsonSerializerOptions emptyOptions = new() { TypeInfoResolver = JsonTypeInfoResolver.Combine() };
         await using McpClient client = await CreateMcpClientForServer();
 
-        await Assert.ThrowsAsync<NotSupportedException>(async () => await client.GetPromptAsync("Prompt", new Dictionary<string, object?> { ["i"] = 42 }, new RequestOptions { JsonSerializerOptions = emptyOptions }, cancellationToken: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<NotSupportedException>(async () => await client.GetPromptAsync("Prompt", new Dictionary<string, object?> { ["i"] = 42 }, new RequestOptions { JsonSerializerOptions = emptyOptions }, cancellationToken: TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task WithName_ChangesToolName()
     {
         JsonSerializerOptions options = new(JsonSerializerOptions.Default);
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tool = (await client.ListToolsAsync(new RequestOptions { JsonSerializerOptions = options }, TestContext.Current.CancellationToken)).First();
+        var tool = (await client.ListToolsAsync(new RequestOptions { JsonSerializerOptions = options }, TestContext.CurrentContext.CancellationToken)).First();
         var originalName = tool.Name;
         var renamedTool = tool.WithName("RenamedTool");
 
@@ -422,12 +419,12 @@ public class McpClientTests : ClientServerTestBase
         Assert.Equal(originalName, tool?.Name);
     }
 
-    [Fact]
+    [Test]
     public async Task WithDescription_ChangesToolDescription()
     {
         JsonSerializerOptions options = new(JsonSerializerOptions.Default);
         await using McpClient client = await CreateMcpClientForServer();
-        var tool = (await client.ListToolsAsync(new RequestOptions { JsonSerializerOptions = options }, TestContext.Current.CancellationToken)).FirstOrDefault();
+        var tool = (await client.ListToolsAsync(new RequestOptions { JsonSerializerOptions = options }, TestContext.CurrentContext.CancellationToken)).FirstOrDefault();
         var originalDescription = tool?.Description;
         var redescribedTool = tool?.WithDescription("ToolWithNewDescription");
         Assert.NotNull(redescribedTool);
@@ -435,7 +432,7 @@ public class McpClientTests : ClientServerTestBase
         Assert.Equal(originalDescription, tool?.Description);
     }
 
-    [Fact]
+    [Test]
     public async Task WithProgress_ProgressReported()
     {
         const int TotalNotifications = 3;
@@ -457,7 +454,7 @@ public class McpClientTests : ClientServerTestBase
 
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tool = (await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken)).First(t => t.Name == "ProgressReporter");
+        var tool = (await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken)).First(t => t.Name == "ProgressReporter");
 
         IProgress<ProgressNotificationValue> progress = new SynchronousProgress(value =>
         {
@@ -471,7 +468,7 @@ public class McpClientTests : ClientServerTestBase
 
         Assert.Throws<ArgumentNullException>("progress", () => tool.WithProgress(null!));
 
-        var result = await tool.WithProgress(progress).InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.WithProgress(progress).InvokeAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Contains("42", result?.ToString());
     }
 
@@ -480,7 +477,7 @@ public class McpClientTests : ClientServerTestBase
         public void Report(ProgressNotificationValue value) => callback(value);
     }
 
-    [Fact]
+    [Test]
     public async Task AsClientLoggerProvider_MessagesSentToClient()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -501,12 +498,12 @@ public class McpClientTests : ClientServerTestBase
         Assert.False(logger.IsEnabled(LogLevel.Error));
         Assert.False(logger.IsEnabled(LogLevel.Critical));
 
-        await client.SetLoggingLevelAsync(LoggingLevel.Info, options: null, TestContext.Current.CancellationToken);
+        await client.SetLoggingLevelAsync(LoggingLevel.Info, options: null, TestContext.CurrentContext.CancellationToken);
 
         DateTime start = DateTime.UtcNow;
         while (Server.LoggingLevel is null)
         {
-            await Task.Delay(1, TestContext.Current.CancellationToken);
+            await Task.Delay(1, TestContext.CurrentContext.CancellationToken);
             Assert.True(DateTime.UtcNow - start < TimeSpan.FromSeconds(10), "Timed out waiting for logging level to be set");
         }
 
@@ -537,7 +534,7 @@ public class McpClientTests : ClientServerTestBase
 
             for (int i = 0; i < 4; i++)
             {
-                var m = await channel.Reader.ReadAsync(TestContext.Current.CancellationToken);
+                var m = await channel.Reader.ReadAsync(TestContext.CurrentContext.CancellationToken);
                 Assert.NotNull(m);
                 Assert.Equal("TestLogger", m.Logger);
 
@@ -567,27 +564,26 @@ public class McpClientTests : ClientServerTestBase
             channel.Writer.Complete();
         }
 
-        Assert.False(await channel.Reader.WaitToReadAsync(TestContext.Current.CancellationToken));
+        Assert.False(await channel.Reader.WaitToReadAsync(TestContext.CurrentContext.CancellationToken));
         Assert.Equal(
-            [
+            new[]
+            {
                 "Critical message",
                 "Error message",
                 "Information message",
                 "Warning message",
-            ],
+            },
             data.OrderBy(s => s));
     }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("2025-06-18")]
+    [TestCase(null)]
+    [TestCase("2025-06-18")]
     public async Task ReturnsNegotiatedProtocolVersion(string? protocolVersion)
     {
         await using McpClient client = await CreateMcpClientForServer(new() { ProtocolVersion = protocolVersion });
         Assert.Equal(protocolVersion ?? "2025-11-25", client.NegotiatedProtocolVersion);
     }
 
-    [Fact]
+    [Test]
     public async Task EndToEnd_SamplingWithTools_ServerUsesIChatClientWithFunctionInvocation_ClientHandlesSamplingWithIChatClient()
     {
         int getWeatherToolCallCount = 0;
@@ -666,7 +662,7 @@ public class McpClientTests : ClientServerTestBase
         var result = await client.CallToolAsync(
             "ask_client",
             new Dictionary<string, object?> { ["query"] = "What's the weather in Paris?" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(result);
         Assert.Null(result.IsError);
 
@@ -703,28 +699,28 @@ public class McpClientTests : ClientServerTestBase
         void IDisposable.Dispose() { }
     }
 
-    [Fact]
+    [Test]
     public async Task ListToolsAsync_WithRequestParams_ReturnsTools()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var result = await client.ListToolsAsync(new ListToolsRequestParams(), TestContext.Current.CancellationToken);
+        var result = await client.ListToolsAsync(new ListToolsRequestParams(), TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(12, result.Tools.Count);
         Assert.Contains(result.Tools, t => t.Name == "Method4");
     }
 
-    [Fact]
+    [Test]
     public async Task ListToolsAsync_WithRequestParams_NullThrows()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         await Assert.ThrowsAsync<ArgumentNullException>("requestParams",
-            () => client.ListToolsAsync((ListToolsRequestParams)null!, TestContext.Current.CancellationToken).AsTask());
+            () => client.ListToolsAsync((ListToolsRequestParams)null!, TestContext.CurrentContext.CancellationToken).AsTask());
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolAsync_WithRequestParams_ExecutesTool()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -738,22 +734,22 @@ public class McpClientTests : ClientServerTestBase
                     ["i"] = JsonSerializer.SerializeToElement(42, McpJsonUtilities.DefaultOptions)
                 }
             },
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Contains("Method4 Result 42", result.Content.OfType<TextContentBlock>().FirstOrDefault()?.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolAsync_WithRequestParams_NullThrows()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         await Assert.ThrowsAsync<ArgumentNullException>("requestParams",
-            () => client.CallToolAsync((CallToolRequestParams)null!, TestContext.Current.CancellationToken).AsTask());
+            () => client.CallToolAsync((CallToolRequestParams)null!, TestContext.CurrentContext.CancellationToken).AsTask());
     }
 
-    [Fact]
+    [Test]
     public async Task SetLoggingLevelAsync_WithRequestParams_SetsLevel()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -761,41 +757,41 @@ public class McpClientTests : ClientServerTestBase
         // Should not throw
         await client.SetLoggingLevelAsync(
             new SetLevelRequestParams { Level = LoggingLevel.Warning },
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Wait a bit for the server to process
         DateTime start = DateTime.UtcNow;
         while (Server.LoggingLevel is null)
         {
-            await Task.Delay(1, TestContext.Current.CancellationToken);
+            await Task.Delay(1, TestContext.CurrentContext.CancellationToken);
             Assert.True(DateTime.UtcNow - start < TimeSpan.FromSeconds(10), "Timed out waiting for logging level to be set");
         }
 
         Assert.Equal(LoggingLevel.Warning, Server.LoggingLevel);
     }
 
-    [Fact]
+    [Test]
     public async Task SetLoggingLevelAsync_WithRequestParams_NullThrows()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         await Assert.ThrowsAsync<ArgumentNullException>("requestParams",
-            () => client.SetLoggingLevelAsync((SetLevelRequestParams)null!, TestContext.Current.CancellationToken));
+            () => client.SetLoggingLevelAsync((SetLevelRequestParams)null!, TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task ServerCanPingClient()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         var pingRequest = new JsonRpcRequest { Method = RequestMethods.Ping };
-        var response = await Server.SendRequestAsync(pingRequest, TestContext.Current.CancellationToken);
+        var response = await Server.SendRequestAsync(pingRequest, TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(response);
         Assert.NotNull(response.Result);
     }
 
-    [Fact]
+    [Test]
     public async Task Completion_GracefulDisposal_CompletesWithNoException()
     {
         var client = await CreateMcpClientForServer();

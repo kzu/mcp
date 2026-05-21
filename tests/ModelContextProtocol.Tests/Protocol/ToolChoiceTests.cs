@@ -5,18 +5,16 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public class ToolChoiceTests
 {
-    [Fact]
+    [Test]
     public void DefaultModeIsNull()
     {
         Assert.Null(new ToolChoice().Mode);
     }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("none")]
-    [InlineData("required")]
-    [InlineData("auto")]
-    [InlineData("something_custom")]
+    [TestCase(null)]
+    [TestCase("none")]
+    [TestCase("required")]
+    [TestCase("auto")]
+    [TestCase("something_custom")]
     public void SerializesWithMode(string? mode)
     {
         ToolChoice toolChoice = new() { Mode = mode };

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using ModelContextProtocol.Tests.Utils;
@@ -13,8 +13,7 @@ public class StdioServerTransportTests : LoggedTest
 {
     private readonly McpServerOptions _serverOptions;
 
-    public StdioServerTransportTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public StdioServerTransportTests()
     {
         _serverOptions = new McpServerOptions
         {
@@ -24,7 +23,7 @@ public class StdioServerTransportTests : LoggedTest
         };
     }
 
-    [Fact]
+    [Test]
     public async Task Constructor_Should_Initialize_With_Valid_Parameters()
     {
         // Use StreamServerTransport with Stream.Null rather than StdioServerTransport.
@@ -37,7 +36,7 @@ public class StdioServerTransportTests : LoggedTest
         Assert.NotNull(transport);
     }
 
-    [Fact]
+    [Test]
     public void Constructor_Throws_For_Null_Options()
     {
         Assert.Throws<ArgumentNullException>("serverName", () => new StdioServerTransport((string)null!));
@@ -45,7 +44,7 @@ public class StdioServerTransportTests : LoggedTest
         Assert.Throws<ArgumentNullException>("serverOptions", () => new StdioServerTransport((McpServerOptions)null!));
     }
 
-    [Fact]
+    [Test]
     public async Task Should_Start_In_Connected_State()
     {
         await using var transport = new StreamServerTransport(new Pipe().Reader.AsStream(), Stream.Null, loggerFactory: LoggerFactory);
@@ -53,7 +52,7 @@ public class StdioServerTransportTests : LoggedTest
         Assert.True(transport.IsConnected);
     }
 
-    [Fact]
+    [Test]
     public async Task SendMessageAsync_Should_Send_Message()
     {
         using var output = new MemoryStream();
@@ -68,7 +67,7 @@ public class StdioServerTransportTests : LoggedTest
 
         var message = new JsonRpcRequest { Method = "test", Id = new RequestId(44) };
 
-        await transport.SendMessageAsync(message, TestContext.Current.CancellationToken);
+        await transport.SendMessageAsync(message, TestContext.CurrentContext.CancellationToken);
 
         var result = Encoding.UTF8.GetString(output.ToArray()).Trim();
         var expected = JsonSerializer.Serialize(message, McpJsonUtilities.DefaultOptions);
@@ -76,7 +75,7 @@ public class StdioServerTransportTests : LoggedTest
         Assert.Equal(expected, result);
     }
 
-    [Fact]
+    [Test]
     public async Task DisposeAsync_Should_Dispose_Resources()
     {
         await using var transport = new StreamServerTransport(Stream.Null, Stream.Null, loggerFactory: LoggerFactory);
@@ -86,7 +85,7 @@ public class StdioServerTransportTests : LoggedTest
         Assert.False(transport.IsConnected);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadMessagesAsync_Should_Read_Messages()
     {
         var message = new JsonRpcRequest { Method = "test", Id = new RequestId(44) };
@@ -105,9 +104,9 @@ public class StdioServerTransportTests : LoggedTest
         Assert.True(transport.IsConnected, "Transport should be connected after StartListeningAsync");
 
         // Write the message to the reader
-        await pipe.Writer.WriteAsync(Encoding.UTF8.GetBytes($"{json}\n"), TestContext.Current.CancellationToken);
+        await pipe.Writer.WriteAsync(Encoding.UTF8.GetBytes($"{json}\n"), TestContext.CurrentContext.CancellationToken);
 
-        var canRead = await transport.MessageReader.WaitToReadAsync(TestContext.Current.CancellationToken);
+        var canRead = await transport.MessageReader.WaitToReadAsync(TestContext.CurrentContext.CancellationToken);
 
         Assert.True(canRead, "Nothing to read here from transport message reader");
         Assert.True(transport.MessageReader.TryPeek(out var readMessage));
@@ -116,7 +115,7 @@ public class StdioServerTransportTests : LoggedTest
         Assert.Equal("44", ((JsonRpcRequest)readMessage).Id.ToString());
     }
 
-    [Fact]
+    [Test]
     public async Task CleanupAsync_Should_Cleanup_Resources()
     {
         var transport = new StreamServerTransport(Stream.Null, Stream.Null, loggerFactory: LoggerFactory);
@@ -126,7 +125,7 @@ public class StdioServerTransportTests : LoggedTest
         Assert.False(transport.IsConnected);
     }
 
-    [Fact]
+    [Test]
     public async Task SendMessageAsync_Should_Preserve_Unicode_Characters()
     {
         // Use a reader that won't terminate
@@ -154,7 +153,7 @@ public class StdioServerTransportTests : LoggedTest
 
         // Clear output and send message
         output.SetLength(0);
-        await transport.SendMessageAsync(chineseMessage, TestContext.Current.CancellationToken);
+        await transport.SendMessageAsync(chineseMessage, TestContext.CurrentContext.CancellationToken);
 
         // Verify Chinese characters preserved but encoded
         var chineseResult = Encoding.UTF8.GetString(output.ToArray()).Trim();
@@ -176,7 +175,7 @@ public class StdioServerTransportTests : LoggedTest
 
         // Clear output and send message
         output.SetLength(0);
-        await transport.SendMessageAsync(emojiMessage, TestContext.Current.CancellationToken);
+        await transport.SendMessageAsync(emojiMessage, TestContext.CurrentContext.CancellationToken);
 
         // Verify emoji preserved - might be as either direct characters or escape sequences
         var emojiResult = Encoding.UTF8.GetString(output.ToArray()).Trim();
@@ -198,7 +197,7 @@ public class StdioServerTransportTests : LoggedTest
         Assert.True(rocketFound, "Rocket emoji not found in result");
     }
 
-    [Fact]
+    [Test]
     public async Task SendMessageAsync_Should_Log_At_Trace_Level()
     {
         // Arrange
@@ -219,7 +218,7 @@ public class StdioServerTransportTests : LoggedTest
 
         // Act
         var message = new JsonRpcRequest { Method = "test", Id = new RequestId(44) };
-        await transport.SendMessageAsync(message, TestContext.Current.CancellationToken);
+        await transport.SendMessageAsync(message, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         var traceLogMessages = mockLoggerProvider.LogMessages
@@ -230,7 +229,7 @@ public class StdioServerTransportTests : LoggedTest
         Assert.Contains(traceLogMessages, x => x.Message.Contains("\"method\":\"test\"") && x.Message.Contains("\"id\":44"));
     }
 
-    [Fact]
+    [Test]
     public async Task SendMessageAsync_Should_Use_LF_Not_CRLF()
     {
         using var output = new MemoryStream();
@@ -242,7 +241,7 @@ public class StdioServerTransportTests : LoggedTest
 
         var message = new JsonRpcRequest { Method = "test", Id = new RequestId(44) };
 
-        await transport.SendMessageAsync(message, TestContext.Current.CancellationToken);
+        await transport.SendMessageAsync(message, TestContext.CurrentContext.CancellationToken);
 
         byte[] bytes = output.ToArray();
 
@@ -252,7 +251,7 @@ public class StdioServerTransportTests : LoggedTest
         Assert.NotEqual((byte)'\r', bytes[^2]);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadMessagesAsync_Should_Accept_CRLF_Delimited_Messages()
     {
         var message = new JsonRpcRequest { Method = "test", Id = new RequestId(44) };
@@ -267,9 +266,9 @@ public class StdioServerTransportTests : LoggedTest
             loggerFactory: LoggerFactory);
 
         // Write the message with \r\n line ending
-        await pipe.Writer.WriteAsync(Encoding.UTF8.GetBytes($"{json}\r\n"), TestContext.Current.CancellationToken);
+        await pipe.Writer.WriteAsync(Encoding.UTF8.GetBytes($"{json}\r\n"), TestContext.CurrentContext.CancellationToken);
 
-        var canRead = await transport.MessageReader.WaitToReadAsync(TestContext.Current.CancellationToken);
+        var canRead = await transport.MessageReader.WaitToReadAsync(TestContext.CurrentContext.CancellationToken);
 
         Assert.True(canRead, "Should be able to read a \\r\\n-delimited message");
         Assert.True(transport.MessageReader.TryPeek(out var readMessage));
@@ -278,7 +277,7 @@ public class StdioServerTransportTests : LoggedTest
         Assert.Equal("44", ((JsonRpcRequest)readMessage).Id.ToString());
     }
 
-    [Fact]
+    [Test]
     public async Task ReadMessagesAsync_Should_Log_Received_At_Trace_Level()
     {
         // Arrange
@@ -302,10 +301,10 @@ public class StdioServerTransportTests : LoggedTest
             loggerFactory: traceLoggerFactory);
 
         // Act
-        await pipe.Writer.WriteAsync(Encoding.UTF8.GetBytes($"{json}\n"), TestContext.Current.CancellationToken);
+        await pipe.Writer.WriteAsync(Encoding.UTF8.GetBytes($"{json}\n"), TestContext.CurrentContext.CancellationToken);
 
         // Wait for the message to be processed
-        var canRead = await transport.MessageReader.WaitToReadAsync(TestContext.Current.CancellationToken);
+        var canRead = await transport.MessageReader.WaitToReadAsync(TestContext.CurrentContext.CancellationToken);
         Assert.True(canRead, "Nothing to read here from transport message reader");
 
         // Assert

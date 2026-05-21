@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.AI;
+using Microsoft.Extensions.AI;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Tests.Protocol;
 using System.Text.Json;
@@ -8,7 +8,7 @@ namespace ModelContextProtocol.Tests;
 
 public class AIContentExtensionsTests
 {
-    [Fact]
+    [Test]
     public void CallToolResult_ToChatMessage_ProducesExpectedAIContent()
     {
         CallToolResult toolResult = new() { Content = [new TextContentBlock { Text = "This is a test message." }] };
@@ -28,7 +28,7 @@ public class AIContentExtensionsTests
         Assert.Contains("This is a test message.", result.ToString());
     }
 
-    [Fact]
+    [Test]
     public void ToAIContent_ConvertsToolUseContentBlock()
     {
         Dictionary<string, object?> inputDict = new() { ["city"] = "Paris", ["units"] = "metric" };
@@ -52,7 +52,7 @@ public class AIContentExtensionsTests
         Assert.Equal("metric", unitsArg.GetString());
     }
 
-    [Fact]
+    [Test]
     public void ToAIContent_ConvertsToolResultContentBlock()
     {
         ToolResultContentBlock toolResult = new()
@@ -70,7 +70,7 @@ public class AIContentExtensionsTests
         Assert.NotNull(functionResult.Result);
     }
 
-    [Fact]
+    [Test]
     public void ToAIContent_ConvertsToolResultContentBlockWithError()
     {
         ToolResultContentBlock toolResult = new()
@@ -87,7 +87,7 @@ public class AIContentExtensionsTests
         Assert.NotNull(functionResult.Exception);
     }
 
-    [Fact]
+    [Test]
     public void ToAIContent_ConvertsToolResultWithMultipleContent()
     {
         ToolResultContentBlock toolResult = new()
@@ -111,7 +111,7 @@ public class AIContentExtensionsTests
         Assert.IsType<DataContent>(resultList[1]);
     }
 
-    [Fact]
+    [Test]
     public void ToAIContent_ToolUseToFunctionCallRoundTrip()
     {
         Dictionary<string, object?> inputDict = new() { ["param1"] = "value1", ["param2"] = 42 };
@@ -134,7 +134,7 @@ public class AIContentExtensionsTests
         Assert.Equal(42, param2.GetInt32());
     }
 
-    [Fact]
+    [Test]
     public void ToAIContent_ToolResultToFunctionResultRoundTrip()
     {
         ToolResultContentBlock original = new()
@@ -154,7 +154,7 @@ public class AIContentExtensionsTests
     // Tests for anonymous types in AdditionalProperties (sampling pipeline regression fix)
     // These tests require reflection-based serialization and will be skipped when reflection is disabled.
 
-    [Fact]
+    [Test]
     public void ToContentBlock_WithAnonymousTypeInAdditionalProperties_DoesNotThrow()
     {
         if (!JsonSerializer.IsReflectionEnabledByDefault)
@@ -179,7 +179,7 @@ public class AIContentExtensionsTests
         Assert.True(contentBlock.Meta.ContainsKey("data"));
     }
 
-    [Fact]
+    [Test]
     public void ToContentBlock_WithMultipleAnonymousTypes_DoesNotThrow()
     {
         if (!JsonSerializer.IsReflectionEnabledByDefault)
@@ -204,7 +204,7 @@ public class AIContentExtensionsTests
         Assert.Equal(3, contentBlock.Meta.Count);
     }
 
-    [Fact]
+    [Test]
     public void ToContentBlock_WithNestedAnonymousTypes_DoesNotThrow()
     {
         if (!JsonSerializer.IsReflectionEnabledByDefault)
@@ -231,7 +231,7 @@ public class AIContentExtensionsTests
         Assert.True(contentBlock.Meta.ContainsKey("outer"));
     }
 
-    [Fact]
+    [Test]
     public void ToContentBlock_WithMixedTypesInAdditionalProperties_DoesNotThrow()
     {
         if (!JsonSerializer.IsReflectionEnabledByDefault)
@@ -258,7 +258,7 @@ public class AIContentExtensionsTests
         Assert.Equal(5, contentBlock.Meta.Count);
     }
 
-    [Fact]
+    [Test]
     public void TextContent_ToContentBlock_WithAnonymousTypeInAdditionalProperties_PreservesData()
     {
         if (!JsonSerializer.IsReflectionEnabledByDefault)
@@ -282,7 +282,7 @@ public class AIContentExtensionsTests
         Assert.True(textBlock.Meta.ContainsKey("location"));
     }
 
-    [Fact]
+    [Test]
     public void DataContent_ToContentBlock_WithAnonymousTypeInAdditionalProperties_PreservesData()
     {
         if (!JsonSerializer.IsReflectionEnabledByDefault)
@@ -308,7 +308,7 @@ public class AIContentExtensionsTests
         Assert.True(imageBlock.Meta.ContainsKey("dimensions"));
     }
 
-    [Fact]
+    [Test]
     public void ToContentBlock_WithCustomSerializerOptions_UsesProvidedOptions()
     {
         if (!JsonSerializer.IsReflectionEnabledByDefault)
@@ -340,7 +340,7 @@ public class AIContentExtensionsTests
         Assert.Contains("my_property", json.ToLowerInvariant());
     }
 
-    [Fact]
+    [Test]
     public void ToContentBlock_WithNamedUserDefinedTypeInAdditionalProperties_Works()
     {
         // This test should work regardless of reflection being enabled/disabled
@@ -377,7 +377,7 @@ public class AIContentExtensionsTests
         Assert.Contains("2", json);
     }
 
-    [Fact]
+    [Test]
     public void ToChatMessage_CallToolResult_WithAnonymousTypeInContent_Works()
     {
         if (!JsonSerializer.IsReflectionEnabledByDefault)
@@ -403,9 +403,7 @@ public class AIContentExtensionsTests
         
         Assert.Null(exception);
     }
-
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public void ImageContentBlock_ToAIContent_RoundTrips(byte[] originalBytes)
     {
         var image = ImageContentBlock.FromBytes(originalBytes, "image/png");
@@ -418,9 +416,7 @@ public class AIContentExtensionsTests
         Assert.Equal("image/png", roundTripped.MimeType);
         Assert.Equal(originalBytes, roundTripped.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public void ImageContentBlock_DataSetter_ToAIContent_RoundTrips(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -438,9 +434,7 @@ public class AIContentExtensionsTests
         Assert.Equal("image/jpeg", roundTripped.MimeType);
         Assert.Equal(originalBytes, roundTripped.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public void AudioContentBlock_ToAIContent_RoundTrips(byte[] originalBytes)
     {
         var audio = AudioContentBlock.FromBytes(originalBytes, "audio/wav");
@@ -453,9 +447,7 @@ public class AIContentExtensionsTests
         Assert.Equal("audio/wav", roundTripped.MimeType);
         Assert.Equal(originalBytes, roundTripped.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public void AudioContentBlock_DataSetter_ToAIContent_RoundTrips(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -473,9 +465,7 @@ public class AIContentExtensionsTests
         Assert.Equal("audio/mp3", roundTripped.MimeType);
         Assert.Equal(originalBytes, roundTripped.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public void BlobResourceContents_ToAIContent_RoundTrips(byte[] originalBytes)
     {
         var blob = BlobResourceContents.FromBytes(originalBytes, "file:///test.bin", "application/octet-stream");
@@ -490,9 +480,7 @@ public class AIContentExtensionsTests
         Assert.Equal("application/octet-stream", roundTrippedBlob.MimeType);
         Assert.Equal(originalBytes, roundTrippedBlob.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public void BlobResourceContents_BlobSetter_ToAIContent_RoundTrips(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -513,9 +501,7 @@ public class AIContentExtensionsTests
         Assert.Equal("application/octet-stream", roundTrippedBlob.MimeType);
         Assert.Equal(originalBytes, roundTrippedBlob.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public void ImageContentBlock_JsonDeserialized_ToAIContent_RoundTrips(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -529,9 +515,7 @@ public class AIContentExtensionsTests
         var roundTripped = Assert.IsType<ImageContentBlock>(aiContent.ToContentBlock());
         Assert.Equal(originalBytes, roundTripped.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public void ImageContentBlock_EscapedJsonDeserialized_ToAIContent_RoundTrips(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -545,9 +529,7 @@ public class AIContentExtensionsTests
         var roundTripped = Assert.IsType<ImageContentBlock>(aiContent.ToContentBlock());
         Assert.Equal(originalBytes, roundTripped.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public void AudioContentBlock_EscapedJsonDeserialized_ToAIContent_RoundTrips(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -561,9 +543,7 @@ public class AIContentExtensionsTests
         var roundTripped = Assert.IsType<AudioContentBlock>(aiContent.ToContentBlock());
         Assert.Equal(originalBytes, roundTripped.DecodedData.ToArray());
     }
-
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public void BlobResourceContents_EscapedJsonDeserialized_ToAIContent_RoundTrips(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);

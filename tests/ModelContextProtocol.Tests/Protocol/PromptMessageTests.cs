@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class PromptMessageTests
 {
-    [Fact]
+    [Test]
     public static void PromptMessage_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new PromptMessage
@@ -23,7 +23,7 @@ public static class PromptMessageTests
         Assert.Equal("Hello, world!", textBlock.Text);
     }
 
-    [Fact]
+    [Test]
     public static void PromptMessage_SerializationRoundTrip_WithImageContent()
     {
         var original = new PromptMessage

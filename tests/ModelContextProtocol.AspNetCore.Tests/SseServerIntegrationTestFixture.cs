@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.AspNetCore.Tests.Utils;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Tests.Utils;
@@ -14,8 +14,8 @@ public class SseServerIntegrationTestFixture : IAsyncDisposable
     private readonly Task _serverTask;
     private readonly CancellationTokenSource _stopCts = new();
 
-    // XUnit's ITestOutputHelper is created per test, while this fixture is used for
-    // multiple tests, so this dispatches the output to the current test.
+    // Test output helpers are created per test, while this fixture is shared,
+    // so this dispatches output to the current test.
     private readonly DelegatingTestOutputHelper _delegatingTestOutputHelper = new();
 
     private HttpClientTransportOptions DefaultTransportOptions { get; set; } = new()
@@ -50,7 +50,7 @@ public class SseServerIntegrationTestFixture : IAsyncDisposable
             new HttpClientTransport(DefaultTransportOptions, HttpClient, loggerFactory),
             options,
             loggerFactory,
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
     }
 
     public void Initialize(ITestOutputHelper output, HttpClientTransportOptions clientTransportOptions)

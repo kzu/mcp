@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ToolsCapabilityTests
 {
-    [Fact]
+    [Test]
     public static void ToolsCapability_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ToolsCapability
@@ -20,7 +20,7 @@ public static class ToolsCapabilityTests
         Assert.True(deserialized.ListChanged);
     }
 
-    [Fact]
+    [Test]
     public static void ToolsCapability_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ToolsCapability();

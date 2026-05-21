@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Net;
 
 namespace ModelContextProtocol.AspNetCore.Tests.Utils;

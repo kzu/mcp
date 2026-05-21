@@ -10,8 +10,10 @@ namespace ModelContextProtocol.Tests.Configuration;
 /// Tests are based on RFC 6570 (URI Template) specification.
 /// Since UriTemplate is internal, we test it indirectly through the MCP server resource routing mechanism.
 /// </summary>
-public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHelper) : ClientServerTestBase(testOutputHelper, startServer: false)
+public sealed class McpServerResourceRoutingTests : ClientServerTestBase
 {
+    protected override bool StartServerOnSetUp => false;
+
     /// <summary>
     /// Starts the server with the specified resources and creates a client.
     /// </summary>
@@ -34,7 +36,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
         var resource = McpServerResource.Create(options: new() { UriTemplate = uriTemplate }, method: method);
         var client = await CreateClientWithResourcesAsync(resource);
 
-        var result = await client.ReadResourceAsync(uri, null, TestContext.Current.CancellationToken);
+        var result = await client.ReadResourceAsync(uri, null, TestContext.CurrentContext.CancellationToken);
         var text = ((TextResourceContents)result.Contents[0]).Text;
         Assert.Equal(expectedResult, text);
     }
@@ -51,7 +53,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
         var client = await CreateClientWithResourcesAsync(resource);
 
         var ex = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.ReadResourceAsync(uri, null, TestContext.Current.CancellationToken));
+            await client.ReadResourceAsync(uri, null, TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal(McpErrorCode.ResourceNotFound, ex.ErrorCode);
     }
@@ -60,7 +62,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// Verify that when multiple templated resources exist, the correct one is matched based on the URI pattern.
     /// Regression test for https://github.com/modelcontextprotocol/csharp-sdk/issues/821.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task MultipleTemplatedResources_MatchesCorrectResource()
     {
         // Register templates from most specific to least specific
@@ -71,34 +73,34 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             McpServerResource.Create(options: new() { UriTemplate = "file://{prefix}/{+path}" }, method: (string prefix, string path) => $"prefix: {prefix}, path: {path}"));
 
         // Non-templated URI - exact match
-        var nonTemplatedResult = await client.ReadResourceAsync("test://resource/non-templated", null, TestContext.Current.CancellationToken);
+        var nonTemplatedResult = await client.ReadResourceAsync("test://resource/non-templated", null, TestContext.CurrentContext.CancellationToken);
         Assert.Equal("static", ((TextResourceContents)nonTemplatedResult.Contents[0]).Text);
 
         // Templated URI
-        var templatedResult = await client.ReadResourceAsync("test://resource/12345", null, TestContext.Current.CancellationToken);
+        var templatedResult = await client.ReadResourceAsync("test://resource/12345", null, TestContext.CurrentContext.CancellationToken);
         Assert.Equal("template: 12345", ((TextResourceContents)templatedResult.Contents[0]).Text);
 
         // Exact match for templated URI
-        var exactTemplatedResult = await client.ReadResourceAsync("test://resource/{id}", null, TestContext.Current.CancellationToken);
+        var exactTemplatedResult = await client.ReadResourceAsync("test://resource/{id}", null, TestContext.CurrentContext.CancellationToken);
         Assert.Equal("template: {id}", ((TextResourceContents)exactTemplatedResult.Contents[0]).Text);
 
         // Templated URI with query params
-        var paramsResult = await client.ReadResourceAsync("test://params?a1=a&a2=b&a3=c", null, TestContext.Current.CancellationToken);
+        var paramsResult = await client.ReadResourceAsync("test://params?a1=a&a2=b&a3=c", null, TestContext.CurrentContext.CancellationToken);
         Assert.Equal("params: a, b, c", ((TextResourceContents)paramsResult.Contents[0]).Text);
 
         // Reserved expansion path - matches the generic {prefix}/{+path} template
-        var pathResult = await client.ReadResourceAsync("file://foo/examples/example.cs", null, TestContext.Current.CancellationToken);
+        var pathResult = await client.ReadResourceAsync("file://foo/examples/example.cs", null, TestContext.CurrentContext.CancellationToken);
         Assert.Equal("prefix: foo, path: examples/example.cs", ((TextResourceContents)pathResult.Contents[0]).Text);
 
         // Literal template braces in URI should not match (template literal is not a valid URI)
-        var mcpEx = await Assert.ThrowsAsync<McpProtocolException>(async () => await client.ReadResourceAsync("test://params{?a1,a2,a3}", null, TestContext.Current.CancellationToken));
+        var mcpEx = await Assert.ThrowsAsync<McpProtocolException>(async () => await client.ReadResourceAsync("test://params{?a1,a2,a3}", null, TestContext.CurrentContext.CancellationToken));
         Assert.Equal(McpErrorCode.ResourceNotFound, mcpEx.ErrorCode);
         Assert.Equal("Request failed (remote): Unknown resource URI: 'test://params{?a1,a2,a3}'", mcpEx.Message);
     }
 
     #region Level 1: Simple String Expansion {var}
 
-    [Fact]
+    [Test]
     public async Task SimpleExpansion_MatchesSingleVariable()
     {
         await AssertMatchAsync(
@@ -108,7 +110,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "var:value");
     }
 
-    [Fact]
+    [Test]
     public async Task SimpleExpansion_DoesNotMatchSlash()
     {
         // Simple expansion should NOT match slashes
@@ -118,7 +120,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com/foo/bar");
     }
 
-    [Fact]
+    [Test]
     public async Task SimpleExpansion_DoesNotMatchQuestionMark()
     {
         // Simple expansion should NOT match query string characters
@@ -128,7 +130,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com/foo?query");
     }
 
-    [Fact]
+    [Test]
     public async Task SimpleExpansion_DoesNotMatchFragment()
     {
         // Simple expansion should NOT match fragment delimiter
@@ -138,7 +140,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com/foo#section");
     }
 
-    [Fact]
+    [Test]
     public async Task SimpleExpansion_DoesNotMatchMissingSegment()
     {
         // Simple expansion is not optional when it's the only content of a segment
@@ -148,7 +150,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com");
     }
 
-    [Fact]
+    [Test]
     public async Task SimpleExpansion_DoesNotMatchExtraPath()
     {
         // Template requires exact match, extra segments should not match
@@ -158,7 +160,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com/value/extra");
     }
 
-    [Fact]
+    [Test]
     public async Task SimpleExpansion_MultipleVariables()
     {
         await AssertMatchAsync(
@@ -177,7 +179,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// This was the bug that caused samples://{dependency}/{+path} to fail.
     /// Per RFC 6570 Section 3.2.3, the + operator allows reserved characters including "/" to pass through.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task ReservedExpansion_MatchesSlashes()
     {
         // FIXED: {+path} should match paths containing slashes
@@ -192,7 +194,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// FIXED BUG: Reserved expansion with nested path containing slashes.
     /// This is the exact failing case from the issue.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task ReservedExpansion_MatchesNestedPath()
     {
         // FIXED: {+path} should match paths with multiple segments
@@ -206,7 +208,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// <summary>
     /// FIXED BUG: Reserved expansion with deep nested path.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task ReservedExpansion_MatchesDeeplyNestedPath()
     {
         // FIXED: {+path} should match deeply nested paths
@@ -217,7 +219,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "dependency:mylib,path:src/components/utils/helper.ts");
     }
 
-    [Fact]
+    [Test]
     public async Task ReservedExpansion_SimpleValue()
     {
         // Reserved expansion should still work for simple values without slashes
@@ -228,7 +230,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "var:value");
     }
 
-    [Fact]
+    [Test]
     public async Task ReservedExpansion_WithPathStartingWithSlash()
     {
         // Reserved expansion allows reserved URI characters like /
@@ -239,7 +241,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "path:/foo/bar");
     }
 
-    [Fact]
+    [Test]
     public async Task ReservedExpansion_StopsAtQueryString()
     {
         // Reserved expansion should stop at ? (query string delimiter)
@@ -251,7 +253,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com/foo/bar?query=test");
     }
 
-    [Fact]
+    [Test]
     public async Task ReservedExpansion_StopsAtFragment()
     {
         // Reserved expansion should stop at # (fragment delimiter)
@@ -261,7 +263,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com/foo/bar#section");
     }
 
-    [Fact]
+    [Test]
     public async Task ReservedExpansion_DoesNotMatchWrongScheme()
     {
         // Scheme must match exactly
@@ -275,7 +277,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// RFC 6570 specifies that empty values should expand to empty strings.
     /// See https://datatracker.ietf.org/doc/html/rfc6570#page-22 test cases: O{+empty}X matches OX.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task ReservedExpansion_MatchesEmptyValue()
     {
         // Per RFC 6570: O{+empty}X should match OX when empty is ""
@@ -289,7 +291,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// <summary>
     /// RFC 6570 empty expansion test - reserved expansion at end of template.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task ReservedExpansion_MatchesEmptyValueAtEnd()
     {
         // {+var} at the end should match empty string
@@ -303,7 +305,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// <summary>
     /// RFC 6570 empty expansion test - reserved expansion at start of template.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task ReservedExpansion_MatchesEmptyValueAtStart()
     {
         // {+var} at the start should match empty string
@@ -318,7 +320,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
 
     #region Level 2: Fragment Expansion {#var}
 
-    [Fact]
+    [Test]
     public async Task FragmentExpansion_MatchesWithHashPrefix()
     {
         await AssertMatchAsync(
@@ -328,7 +330,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "section:intro");
     }
 
-    [Fact]
+    [Test]
     public async Task FragmentExpansion_MatchesSlashes()
     {
         // Fragment expansion allows reserved characters including /
@@ -339,7 +341,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "path:/foo/bar");
     }
 
-    [Fact]
+    [Test]
     public async Task FragmentExpansion_MatchesWithoutHash()
     {
         // Fragment expansion prefix is optional - matches with captured value even without #
@@ -350,7 +352,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "section:intro");
     }
 
-    [Fact]
+    [Test]
     public async Task FragmentExpansion_DoesNotMatchWrongPath()
     {
         // The path must match exactly
@@ -368,7 +370,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// FIXED BUG: Label expansion {.var} should match dot-prefixed values.
     /// The . operator was falling through to the default case which didn't handle the dot prefix.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task LabelExpansion_MatchesDotPrefixedSingleValue()
     {
         // FIXED: {.var} should match .value
@@ -382,7 +384,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// <summary>
     /// FIXED BUG: Label expansion with multiple variables should use dot as separator.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task LabelExpansion_GreedilyMatchesMultipleValues()
     {
         // FIXED: {.x,y} should match .1024.768 (dot separated)
@@ -393,7 +395,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "x:example.com,y:");
     }
 
-    [Fact]
+    [Test]
     public async Task LabelExpansion_DomainStyle()
     {
         // Common use case: domain name labels
@@ -404,7 +406,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "dom:example");
     }
 
-    [Fact]
+    [Test]
     public async Task LabelExpansion_MatchesWithoutDot()
     {
         // Label expansion prefix is optional - matches with captured value even without .
@@ -415,7 +417,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "dom:example");
     }
 
-    [Fact]
+    [Test]
     public async Task LabelExpansion_DoesNotMatchSlash()
     {
         // Label expansion should not match slashes
@@ -433,7 +435,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// FIXED BUG: Path-style parameter expansion {;var} should match semicolon-prefixed name=value pairs.
     /// The ; operator was falling through to the default case which didn't handle the semicolon prefix or name=value format.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task PathParameterExpansion_MatchesSingleParameter()
     {
         // FIXED: {;x} should match ;x=1024
@@ -447,7 +449,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// <summary>
     /// FIXED BUG: Path-style parameter expansion with multiple parameters.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task PathParameterExpansion_MatchesMultipleParameters()
     {
         // FIXED: {;x,y} should match ;x=1024;y=768
@@ -458,7 +460,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "x:1024,y:768");
     }
 
-    [Fact]
+    [Test]
     public async Task PathParameterExpansion_DoesNotMatchMissingSemicolon()
     {
         // Path parameter expansion requires the ; prefix
@@ -468,7 +470,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test:///pathx=1024");
     }
 
-    [Fact]
+    [Test]
     public async Task PathParameterExpansion_DoesNotMatchWrongParamName()
     {
         // Parameter name must match
@@ -478,7 +480,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test:///path;y=1024");
     }
 
-    [Fact]
+    [Test]
     public async Task PathParameterExpansion_DoesNotMatchSlashInValue()
     {
         // Path parameter values should not contain slashes
@@ -492,7 +494,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
 
     #region Level 3: Path Segment Expansion {/var}
 
-    [Fact]
+    [Test]
     public async Task PathSegmentExpansion_MatchesSingleSegment()
     {
         await AssertMatchAsync(
@@ -502,7 +504,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "var:value");
     }
 
-    [Fact]
+    [Test]
     public async Task PathSegmentExpansion_MultipleSegments()
     {
         // Multiple comma-separated variables in path expansion with / operator
@@ -514,7 +516,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "x:1024,y:768");
     }
 
-    [Fact]
+    [Test]
     public async Task PathSegmentExpansion_ThreeSegments()
     {
         // Multiple comma-separated variables in path expansion with / operator
@@ -526,7 +528,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "x:a,y:b,z:c");
     }
 
-    [Fact]
+    [Test]
     public async Task PathSegmentExpansion_DoesNotMatchSlashInValue()
     {
         // Path segment expansion should NOT match slashes within a single variable's value
@@ -537,7 +539,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test:///foo/bar");
     }
 
-    [Fact]
+    [Test]
     public async Task PathSegmentExpansion_CombinedWithLiterals()
     {
         await AssertMatchAsync(
@@ -547,7 +549,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "id:123");
     }
 
-    [Fact]
+    [Test]
     public async Task PathSegmentExpansion_MatchesWithoutSlash()
     {
         // Path segment expansion prefix is optional - matches with captured value even without /
@@ -558,7 +560,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "var:value");
     }
 
-    [Fact]
+    [Test]
     public async Task PathSegmentExpansion_DoesNotMatchFragment()
     {
         // Path segment expansion should not match fragment
@@ -568,7 +570,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test:///value#section");
     }
 
-    [Fact]
+    [Test]
     public async Task PathSegmentExpansion_DoesNotMatchQuery()
     {
         // Path segment expansion should not match query
@@ -582,7 +584,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
 
     #region Level 3: Form-Style Query Expansion {?var}
 
-    [Fact]
+    [Test]
     public async Task QueryExpansion_MatchesSingleParameter()
     {
         await AssertMatchAsync(
@@ -592,7 +594,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "q:test");
     }
 
-    [Fact]
+    [Test]
     public async Task QueryExpansion_MatchesMultipleParameters()
     {
         await AssertMatchAsync(
@@ -602,7 +604,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "q:cat,lang:en");
     }
 
-    [Fact]
+    [Test]
     public async Task QueryExpansion_ThreeParameters()
     {
         await AssertMatchAsync(
@@ -612,7 +614,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "a1:a,a2:b,a3:c");
     }
 
-    [Fact]
+    [Test]
     public async Task QueryExpansion_DoesNotMatchWrongPath()
     {
         // The path must match exactly
@@ -622,7 +624,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com/find?q=test");
     }
 
-    [Fact]
+    [Test]
     public async Task QueryExpansion_DoesNotMatchMissingQuestionMark()
     {
         // Query expansion requires the ? prefix when parameters are present
@@ -632,7 +634,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com/searchq=test");
     }
 
-    [Fact]
+    [Test]
     public async Task QueryExpansion_DoesNotMatchSlashInValue()
     {
         // Query parameter values should not contain slashes
@@ -646,7 +648,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
 
     #region Level 3: Form-Style Query Continuation {&var}
 
-    [Fact]
+    [Test]
     public async Task QueryContinuation_MatchesWithExistingQuery()
     {
         await AssertMatchAsync(
@@ -656,7 +658,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "x:1024");
     }
 
-    [Fact]
+    [Test]
     public async Task QueryContinuation_MultipleParameters()
     {
         await AssertMatchAsync(
@@ -666,7 +668,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "x:1024,y:768");
     }
 
-    [Fact]
+    [Test]
     public async Task QueryContinuation_DoesNotMatchMissingAmpersand()
     {
         // Query continuation requires & prefix
@@ -676,7 +678,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com/search?start=0x=1024");
     }
 
-    [Fact]
+    [Test]
     public async Task QueryContinuation_DoesNotMatchMissingFixedQuery()
     {
         // The fixed query part must be present
@@ -690,7 +692,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
 
     #region Edge Cases and Special Characters
 
-    [Fact]
+    [Test]
     public async Task PctEncodedInValue_MatchesEncodedCharacters()
     {
         // MCP server automatically decodes percent-encoded characters
@@ -701,7 +703,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "var:Hello World");  // MCP decodes the %20 to a space
     }
 
-    [Fact]
+    [Test]
     public async Task EmptyTemplate_MatchesEmpty()
     {
         await AssertMatchAsync(
@@ -711,7 +713,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "matched");
     }
 
-    [Fact]
+    [Test]
     public async Task LiteralOnlyTemplate_MatchesExactly()
     {
         await AssertMatchAsync(
@@ -721,7 +723,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "matched");
     }
 
-    [Fact]
+    [Test]
     public async Task LiteralOnlyTemplate_DoesNotMatchDifferentUri()
     {
         await AssertNoMatchAsync(
@@ -730,7 +732,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com/dynamic");
     }
 
-    [Fact]
+    [Test]
     public async Task CaseInsensitiveMatching()
     {
         // URI matching should be case-insensitive for the host portion
@@ -741,7 +743,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "var:value");
     }
 
-    [Fact]
+    [Test]
     public async Task EmptyTemplate_DoesNotMatchNonEmpty()
     {
         // Empty template should only match empty string
@@ -751,7 +753,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com");
     }
 
-    [Fact]
+    [Test]
     public async Task LiteralOnlyTemplate_DoesNotMatchPartial()
     {
         // Literal template must match completely
@@ -761,7 +763,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             uri: "test://example.com/static/extra");
     }
 
-    [Fact]
+    [Test]
     public async Task LiteralOnlyTemplate_DoesNotMatchPrefix()
     {
         // Literal template must match completely
@@ -775,7 +777,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
 
     #region Complex Real-World Templates
 
-    [Fact]
+    [Test]
     public async Task RealWorld_GitHubApiStyle()
     {
         await AssertMatchAsync(
@@ -785,7 +787,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "owner:microsoft,repo:vscode,path:src/vs/editor/editor.main.ts");
     }
 
-    [Fact]
+    [Test]
     public async Task RealWorld_FileSystemPath()
     {
         await AssertMatchAsync(
@@ -795,7 +797,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "path:home/user/documents/file.txt");
     }
 
-    [Fact]
+    [Test]
     public async Task RealWorld_ResourceWithQuery()
     {
         await AssertMatchAsync(
@@ -805,7 +807,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "id:12345,format:json,version:2");
     }
 
-    [Fact]
+    [Test]
     public async Task RealWorld_NonTemplatedUri()
     {
         // Non-templated URIs should match exactly with no captures
@@ -816,7 +818,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "matched");
     }
 
-    [Fact]
+    [Test]
     public async Task RealWorld_MixedTemplateAndLiteral()
     {
         await AssertMatchAsync(
@@ -829,7 +831,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
     /// <summary>
     /// FIXED BUG: The exact case from the bug report - samples scheme with dependency and path.
     /// </summary>
-    [Fact]
+    [Test]
     public async Task RealWorld_SamplesSchemeWithDependency()
     {
         await AssertMatchAsync(
@@ -843,7 +845,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
 
     #region Operator Combinations
 
-    [Fact]
+    [Test]
     public async Task CombinedOperators_PathAndQuery()
     {
         await AssertMatchAsync(
@@ -853,7 +855,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
             expectedResult: "version:v2,page:1,limit:10");
     }
 
-    [Fact]
+    [Test]
     public async Task CombinedOperators_ReservedAndFragment()
     {
         // Reserved expansion should stop at # (fragment delimiter) so both parts are captured correctly
@@ -868,7 +870,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
 
     #region Variable Modifiers (prefix `:n`)
 
-    [Fact]
+    [Test]
     public async Task PrefixModifier_InTemplate()
     {
         // Templates with prefix modifiers should still parse and match
@@ -884,7 +886,7 @@ public sealed class McpServerResourceRoutingTests(ITestOutputHelper testOutputHe
 
     #region Explode Modifier
 
-    [Fact]
+    [Test]
     public async Task ExplodeModifier_InTemplate()
     {
         // Templates with explode modifiers should still parse and match single values

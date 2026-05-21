@@ -2,13 +2,12 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
-using Xunit;
 
 namespace ModelContextProtocol.Analyzers.Tests;
 
 public class CS1066SuppressorTests
 {
-    [Fact]
+    [Test]
     public void Suppressor_WithMcpServerToolAttribute_SuppressesCS1066()
     {
         var result = RunSuppressor("""
@@ -44,7 +43,7 @@ public class CS1066SuppressorTests
         Assert.Empty(unsuppressedCs1066);
     }
 
-    [Fact]
+    [Test]
     public void Suppressor_WithMcpServerPromptAttribute_SuppressesCS1066()
     {
         var result = RunSuppressor("""
@@ -80,7 +79,7 @@ public class CS1066SuppressorTests
         Assert.Empty(unsuppressedCs1066);
     }
 
-    [Fact]
+    [Test]
     public void Suppressor_WithMcpServerResourceAttribute_SuppressesCS1066()
     {
         var result = RunSuppressor("""
@@ -116,7 +115,7 @@ public class CS1066SuppressorTests
         Assert.Empty(unsuppressedCs1066);
     }
 
-    [Fact]
+    [Test]
     public void Suppressor_WithoutMcpAttribute_DoesNotSuppressCS1066()
     {
         var result = RunSuppressor("""
@@ -147,7 +146,7 @@ public class CS1066SuppressorTests
         Assert.DoesNotContain(result.Diagnostics, d => d.Id == "CS1066" && d.IsSuppressed);
     }
 
-    [Fact]
+    [Test]
     public void Suppressor_WithMultipleParameters_SuppressesAllCS1066()
     {
         var result = RunSuppressor("""

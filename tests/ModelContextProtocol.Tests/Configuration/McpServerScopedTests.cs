@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Server;
 using System.Text.Json;
@@ -8,8 +8,7 @@ namespace ModelContextProtocol.Tests.Configuration;
 
 public partial class McpServerScopedTests : ClientServerTestBase
 {
-    public McpServerScopedTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public McpServerScopedTests()
     {
     }
 
@@ -19,12 +18,12 @@ public partial class McpServerScopedTests : ClientServerTestBase
         services.AddScoped(_ => new ComplexObject { Name = "Scoped" });
     }
 
-    [Fact]
+    [Test]
     public async Task InjectScopedServiceAsArgument()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(new RequestOptions { JsonSerializerOptions = McpServerScopedTestsJsonContext.Default.Options }, TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(new RequestOptions { JsonSerializerOptions = McpServerScopedTestsJsonContext.Default.Options }, TestContext.CurrentContext.CancellationToken);
         var tool = tools.First(t => t.Name == "echo_complex");
         Assert.DoesNotContain("\"complex\"", JsonSerializer.Serialize(tool.JsonSchema, McpJsonUtilities.DefaultOptions));
 
@@ -33,7 +32,7 @@ public partial class McpServerScopedTests : ClientServerTestBase
 
         for (int i = 1; i <= 10; i++)
         {
-            Assert.Contains("\"Scoped\"", JsonSerializer.Serialize(await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken), McpJsonUtilities.DefaultOptions));
+            Assert.Contains("\"Scoped\"", JsonSerializer.Serialize(await tool.InvokeAsync(cancellationToken: TestContext.CurrentContext.CancellationToken), McpJsonUtilities.DefaultOptions));
 
             Assert.Equal(startingConstructed + i, ComplexObject.Constructed);
             Assert.Equal(startingDisposed + i, ComplexObject.Disposed);

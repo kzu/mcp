@@ -5,12 +5,11 @@ namespace ModelContextProtocol.AspNetCore.Tests.OAuth;
 
 public class TokenCacheTests : OAuthTestBase
 {
-    public TokenCacheTests(ITestOutputHelper outputHelper)
-        : base(outputHelper)
+    public TokenCacheTests()
     {
     }
 
-    [Fact]
+    [Test]
     public async Task GetTokenAsync_CachedAccessTokenIsUsedForOutgoingRequests()
     {
         await using var app = await StartMcpServerAsync();
@@ -35,7 +34,7 @@ public class TokenCacheTests : OAuthTestBase
             },
         }, HttpClient, LoggerFactory);
 
-        await using (var setupClient = await McpClient.CreateAsync(setupTransport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken))
+        await using (var setupClient = await McpClient.CreateAsync(setupTransport, loggerFactory: LoggerFactory, cancellationToken: TestContext.CurrentContext.CancellationToken))
         {
             // Just connecting should trigger auth and storage.
         }
@@ -62,12 +61,12 @@ public class TokenCacheTests : OAuthTestBase
             },
         }, HttpClient, LoggerFactory);
 
-        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.False(authDelegateCalledAgain, "AuthorizationRedirectDelegate should not be called when token is valid");
     }
 
-    [Fact]
+    [Test]
     public async Task StoreTokenAsync_NewlyAcquiredAccessTokenIsCached()
     {
         await using var app = await StartMcpServerAsync();
@@ -87,13 +86,13 @@ public class TokenCacheTests : OAuthTestBase
             },
         }, HttpClient, LoggerFactory);
 
-        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(tokenCache.LastStoredToken);
         Assert.False(string.IsNullOrEmpty(tokenCache.LastStoredToken.AccessToken));
     }
 
-    [Fact]
+    [Test]
     public async Task GetTokenAsync_InvalidCachedTokenTriggersAuthDelegate()
     {
         await using var app = await StartMcpServerAsync();
@@ -118,14 +117,14 @@ public class TokenCacheTests : OAuthTestBase
             },
         }, HttpClient, LoggerFactory);
 
-        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.True(authDelegateCalled, "AuthorizationRedirectDelegate should be called when cached token is invalid");
         Assert.NotNull(tokenCache.LastStoredToken);
         Assert.NotEqual("invalid-token", tokenCache.LastStoredToken.AccessToken);
     }
 
-    [Fact]
+    [Test]
     public async Task GetTokenAsync_InvalidAccessTokenTriggersRefresh()
     {
         await using var app = await StartMcpServerAsync();
@@ -150,7 +149,7 @@ public class TokenCacheTests : OAuthTestBase
             },
         }, HttpClient, LoggerFactory);
 
-        await using (var setupClient = await McpClient.CreateAsync(setupTransport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken))
+        await using (var setupClient = await McpClient.CreateAsync(setupTransport, loggerFactory: LoggerFactory, cancellationToken: TestContext.CurrentContext.CancellationToken))
         {
             // Just connecting should trigger auth and storage.
         }
@@ -180,7 +179,7 @@ public class TokenCacheTests : OAuthTestBase
             },
         }, HttpClient, LoggerFactory);
 
-        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.False(authDelegateCalledAgain, "AuthorizationRedirectDelegate should not be called when refresh token is valid");
         Assert.True(TestOAuthServer.HasRefreshedToken, "Token should have been refreshed");

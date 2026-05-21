@@ -1,15 +1,14 @@
-﻿using ModelContextProtocol.Client;
+using ModelContextProtocol.Client;
 
 namespace ModelContextProtocol.Tests;
 
 public class NotificationHandlerTests : ClientServerTestBase
 {
-    public NotificationHandlerTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public NotificationHandlerTests()
     {
     }
 
-    [Fact]
+    [Test]
     public async Task RegistrationsAreRemovedWhenDisposed()
     {
         const string NotificationName = "somethingsomething";
@@ -28,7 +27,7 @@ public class NotificationHandlerTests : ClientServerTestBase
                     return default;
                 }))
             {
-                await Server.SendNotificationAsync(NotificationName, TestContext.Current.CancellationToken);
+                await Server.SendNotificationAsync(NotificationName, TestContext.CurrentContext.CancellationToken);
                 await tcs.Task;
             }
         }
@@ -36,7 +35,7 @@ public class NotificationHandlerTests : ClientServerTestBase
         Assert.Equal(Iterations, counter);
     }
 
-    [Fact]
+    [Test]
     public async Task MultipleRegistrationsResultInMultipleCallbacks()
     {
         const string NotificationName = "somethingsomething";
@@ -64,7 +63,7 @@ public class NotificationHandlerTests : ClientServerTestBase
 
         try
         {
-            await Server.SendNotificationAsync(NotificationName, TestContext.Current.CancellationToken);
+            await Server.SendNotificationAsync(NotificationName, TestContext.CurrentContext.CancellationToken);
             await tcs.Task;
         }
         finally
@@ -76,7 +75,7 @@ public class NotificationHandlerTests : ClientServerTestBase
         }
     }
 
-    [Fact]
+    [Test]
     public async Task MultipleHandlersRunEvenIfOneThrows()
     {
         const string NotificationName = "somethingsomething";
@@ -104,7 +103,7 @@ public class NotificationHandlerTests : ClientServerTestBase
 
         try
         {
-            await Server.SendNotificationAsync(NotificationName, TestContext.Current.CancellationToken);
+            await Server.SendNotificationAsync(NotificationName, TestContext.CurrentContext.CancellationToken);
             await tcs.Task;
         }
         finally
@@ -115,10 +114,8 @@ public class NotificationHandlerTests : ClientServerTestBase
             }
         }
     }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(3)]
+    [TestCase(1)]
+    [TestCase(3)]
     public async Task DisposeAsyncDoesNotCompleteWhileNotificationHandlerRuns(int numberOfDisposals)
     {
         const string NotificationName = "somethingsomething";
@@ -133,7 +130,7 @@ public class NotificationHandlerTests : ClientServerTestBase
             await releaseHandler.Task;
         });
 
-        await Server.SendNotificationAsync(NotificationName, TestContext.Current.CancellationToken);
+        await Server.SendNotificationAsync(NotificationName, TestContext.CurrentContext.CancellationToken);
         await handlerRunning.Task;
 
         var disposals = new ValueTask[numberOfDisposals];
@@ -142,7 +139,7 @@ public class NotificationHandlerTests : ClientServerTestBase
             disposals[i] = registration.DisposeAsync();
         }
 
-        await Task.Delay(1, TestContext.Current.CancellationToken);
+        await Task.Delay(1, TestContext.CurrentContext.CancellationToken);
         
         foreach (ValueTask disposal in disposals)
         {
@@ -156,10 +153,8 @@ public class NotificationHandlerTests : ClientServerTestBase
             await disposal;
         }
     }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(3)]
+    [TestCase(1)]
+    [TestCase(3)]
     public async Task DisposeAsyncCompletesImmediatelyWhenInvokedFromHandler(int numberOfDisposals)
     {
         const string NotificationName = "somethingsomething";
@@ -182,7 +177,7 @@ public class NotificationHandlerTests : ClientServerTestBase
             handlerRunning.SetResult(true);
         });
 
-        await Server.SendNotificationAsync(NotificationName, TestContext.Current.CancellationToken);
+        await Server.SendNotificationAsync(NotificationName, TestContext.CurrentContext.CancellationToken);
         await handlerRunning.Task;
     }
 }

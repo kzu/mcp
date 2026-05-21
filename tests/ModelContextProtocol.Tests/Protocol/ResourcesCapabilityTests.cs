@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ResourcesCapabilityTests
 {
-    [Fact]
+    [Test]
     public static void ResourcesCapability_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ResourcesCapability
@@ -22,7 +22,7 @@ public static class ResourcesCapabilityTests
         Assert.True(deserialized.ListChanged);
     }
 
-    [Fact]
+    [Test]
     public static void ResourcesCapability_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ResourcesCapability();

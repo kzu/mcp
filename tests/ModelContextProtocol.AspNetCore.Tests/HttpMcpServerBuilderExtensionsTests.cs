@@ -9,9 +9,9 @@ using ModelContextProtocol.Server;
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public class HttpMcpServerBuilderExtensionsTests(ITestOutputHelper testOutputHelper) : KestrelInMemoryTest(testOutputHelper)
+public class HttpMcpServerBuilderExtensionsTests : KestrelInMemoryTest
 {
-    [Fact]
+    [Test]
     public void WithDistributedCacheEventStreamStore_RegistersStoreInDI()
     {
         Builder.Services.AddDistributedMemoryCache();
@@ -26,7 +26,7 @@ public class HttpMcpServerBuilderExtensionsTests(ITestOutputHelper testOutputHel
         Assert.IsType<DistributedCacheEventStreamStore>(store);
     }
 
-    [Fact]
+    [Test]
     public void WithDistributedCacheEventStreamStore_ConfigureCallbackIsInvoked()
     {
         DistributedCacheEventStreamStoreOptions? capturedOptions = null;
@@ -45,7 +45,7 @@ public class HttpMcpServerBuilderExtensionsTests(ITestOutputHelper testOutputHel
         Assert.NotNull(capturedOptions);
     }
 
-    [Fact]
+    [Test]
     public void WithDistributedCacheEventStreamStore_WorksWithoutDICache_WhenCacheSetViaCallback()
     {
         var explicitCache = new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()));
@@ -61,7 +61,7 @@ public class HttpMcpServerBuilderExtensionsTests(ITestOutputHelper testOutputHel
         Assert.IsType<DistributedCacheEventStreamStore>(store);
     }
 
-    [Fact]
+    [Test]
     public void WithDistributedCacheEventStreamStore_ThrowsOptionsValidationException_WhenNoCacheConfigured()
     {
         Builder.Services
@@ -76,7 +76,7 @@ public class HttpMcpServerBuilderExtensionsTests(ITestOutputHelper testOutputHel
         Assert.StartsWith($"The '{nameof(DistributedCacheEventStreamStoreOptions)}.{nameof(DistributedCacheEventStreamStoreOptions.Cache)}'", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public void EventStreamStore_IsPopulatedFromDI_ViaPostConfigure()
     {
         Builder.Services.AddDistributedMemoryCache();
@@ -91,7 +91,7 @@ public class HttpMcpServerBuilderExtensionsTests(ITestOutputHelper testOutputHel
         Assert.IsType<DistributedCacheEventStreamStore>(options.EventStreamStore);
     }
 
-    [Fact]
+    [Test]
     public void EventStreamStore_ExplicitOption_TakesPrecedenceOverDI()
     {
         var explicitStore = new TestSseEventStreamStore();
@@ -108,7 +108,7 @@ public class HttpMcpServerBuilderExtensionsTests(ITestOutputHelper testOutputHel
         Assert.Same(explicitStore, options.EventStreamStore);
     }
 
-    [Fact]
+    [Test]
     public void EventStreamStore_RemainsNull_WhenNothingIsRegistered()
     {
         Builder.Services
@@ -121,7 +121,7 @@ public class HttpMcpServerBuilderExtensionsTests(ITestOutputHelper testOutputHel
         Assert.Null(options.EventStreamStore);
     }
 
-    [Fact]
+    [Test]
     public void EventStreamStore_CanBeOverriddenToNull_AfterDIRegistration()
     {
         Builder.Services.AddDistributedMemoryCache();
@@ -138,7 +138,7 @@ public class HttpMcpServerBuilderExtensionsTests(ITestOutputHelper testOutputHel
         Assert.Null(options.EventStreamStore);
     }
 
-    [Fact]
+    [Test]
     public void SessionMigrationHandler_IsPopulatedFromDI_ViaPostConfigure()
     {
         var handler = new StubSessionMigrationHandler();
@@ -154,7 +154,7 @@ public class HttpMcpServerBuilderExtensionsTests(ITestOutputHelper testOutputHel
         Assert.Same(handler, options.SessionMigrationHandler);
     }
 
-    [Fact]
+    [Test]
     public void SessionMigrationHandler_ExplicitOption_TakesPrecedenceOverDI()
     {
         var diHandler = new StubSessionMigrationHandler();
@@ -171,7 +171,7 @@ public class HttpMcpServerBuilderExtensionsTests(ITestOutputHelper testOutputHel
         Assert.Same(explicitHandler, options.SessionMigrationHandler);
     }
 
-    [Fact]
+    [Test]
     public void SessionMigrationHandler_RemainsNull_WhenNothingIsRegistered()
     {
         Builder.Services

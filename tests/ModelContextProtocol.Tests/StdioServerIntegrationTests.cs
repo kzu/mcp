@@ -1,4 +1,4 @@
-﻿using ModelContextProtocol.Client;
+using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using ModelContextProtocol.Tests.Utils;
@@ -7,14 +7,16 @@ using System.Runtime.InteropServices;
 
 namespace ModelContextProtocol.Tests;
 
-public class StdioServerIntegrationTests(ITestOutputHelper testOutputHelper) : LoggedTest(testOutputHelper)
+public class StdioServerIntegrationTests : LoggedTest
 {
     public static bool CanSendSigInt { get; } = (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) && !PlatformDetection.IsMonoRuntime;
     private const int SIGINT = 2;
 
-    [Fact(Skip = "Platform not supported by this test.", SkipUnless = nameof(CanSendSigInt))]
+    [Test]
     public async Task SigInt_DisposesTestServerWithHosting_Gracefully()
     {
+        Assert.SkipUnless(CanSendSigInt, "Platform not supported by this test.");
+
         using var process = new Process
         {
             StartInfo = new ProcessStartInfo
@@ -38,7 +40,7 @@ public class StdioServerIntegrationTests(ITestOutputHelper testOutputHelper) : L
         await using var client = await McpClient.CreateAsync(
             new TestClientTransport(streamServerTransport),
             loggerFactory: LoggerFactory,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // I considered writing a similar test for Windows using Ctrl-C, then saw that dotnet watch doesn't even send a Ctrl-C
         // signal because it's such a pain without support for CREATE_NEW_PROCESS_GROUP in System.Diagnostics.Process.

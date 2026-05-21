@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ListResourceTemplatesRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void ListResourceTemplatesRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ListResourceTemplatesRequestParams
@@ -24,7 +24,7 @@ public static class ListResourceTemplatesRequestParamsTests
         Assert.Equal("tok-1", (string)deserialized.Meta["progressToken"]!);
     }
 
-    [Fact]
+    [Test]
     public static void ListResourceTemplatesRequestParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ListResourceTemplatesRequestParams();

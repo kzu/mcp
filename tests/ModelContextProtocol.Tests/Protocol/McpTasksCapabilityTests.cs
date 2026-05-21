@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class McpTasksCapabilityTests
 {
-    [Fact]
+    [Test]
     public static void McpTasksCapability_SerializationRoundTrip_WithAllProperties()
     {
         // Arrange
@@ -47,7 +47,7 @@ public static class McpTasksCapabilityTests
         Assert.NotNull(deserialized.Requests.Elicitation.Create);
     }
 
-    [Fact]
+    [Test]
     public static void McpTasksCapability_SerializationRoundTrip_WithMinimalProperties()
     {
         // Arrange
@@ -64,7 +64,7 @@ public static class McpTasksCapabilityTests
         Assert.Null(deserialized.Requests);
     }
 
-    [Fact]
+    [Test]
     public static void McpTasksCapability_HasCorrectJsonPropertyNames()
     {
         var capability = new McpTasksCapability

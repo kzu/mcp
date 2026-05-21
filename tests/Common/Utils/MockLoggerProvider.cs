@@ -7,6 +7,13 @@ public class MockLoggerProvider : ILoggerProvider
 {
     public ConcurrentQueue<(string Category, LogLevel LogLevel, EventId EventId, string Message, Exception? Exception)> LogMessages { get; } = [];
 
+    public void Clear()
+    {
+        while (LogMessages.TryDequeue(out _))
+        {
+        }
+    }
+
     public ILogger CreateLogger(string categoryName)
     {
         return new MockLogger(this, categoryName);

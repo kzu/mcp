@@ -20,7 +20,7 @@ namespace ModelContextProtocol.AspNetCore.Tests;
 /// events for resumability, including across simulated disconnections.
 /// </para>
 /// </remarks>
-public class DistributedCacheResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : ResumabilityIntegrationTestsBase(testOutputHelper)
+public class DistributedCacheResumabilityIntegrationTests : ResumabilityIntegrationTestsBase
 {
     /// <inheritdoc />
     protected override ValueTask<ISseEventStreamStore> CreateEventStreamStoreAsync()

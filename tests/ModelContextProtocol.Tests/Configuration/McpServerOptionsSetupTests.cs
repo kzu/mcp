@@ -8,7 +8,7 @@ namespace ModelContextProtocol.Tests.Configuration;
 public class McpServerOptionsSetupTests
 {
     #region Prompt Handler Tests
-    [Fact]
+    [Test]
     public void Configure_WithListPromptsHandler_CreatesPromptsCapability()
     {
         var services = new ServiceCollection();
@@ -21,7 +21,7 @@ public class McpServerOptionsSetupTests
         Assert.NotNull(options.Capabilities?.Prompts);
     }
 
-    [Fact]
+    [Test]
     public void Configure_WithGetPromptHandler_CreatesPromptsCapability()
     {
         var services = new ServiceCollection();
@@ -36,7 +36,7 @@ public class McpServerOptionsSetupTests
     #endregion
 
     #region Resource Handler Tests
-    [Fact]
+    [Test]
     public void Configure_WithListResourceTemplatesHandler_CreatesResourcesCapability()
     {
         var services = new ServiceCollection();
@@ -49,7 +49,7 @@ public class McpServerOptionsSetupTests
         Assert.NotNull(options.Capabilities?.Resources);
     }
 
-    [Fact]
+    [Test]
     public void Configure_WithListResourcesHandler_CreatesResourcesCapability()
     {
         var services = new ServiceCollection();
@@ -62,7 +62,7 @@ public class McpServerOptionsSetupTests
         Assert.NotNull(options.Capabilities?.Resources);
     }
 
-    [Fact]
+    [Test]
     public void Configure_WithReadResourceHandler_CreatesResourcesCapability()
     {
         var services = new ServiceCollection();
@@ -75,7 +75,7 @@ public class McpServerOptionsSetupTests
         Assert.NotNull(options.Capabilities?.Resources);
     }
 
-    [Fact]
+    [Test]
     public void Configure_WithSubscribeToResourcesHandler_And_WithOtherResourcesHandler_EnablesSubscription()
     {
         var services = new ServiceCollection();
@@ -91,7 +91,7 @@ public class McpServerOptionsSetupTests
         Assert.True(options.Capabilities.Resources.Subscribe);
     }
 
-    [Fact]
+    [Test]
     public void Configure_WithUnsubscribeFromResourcesHandler_And_WithOtherResourcesHandler_EnablesSubscription()
     {
         var services = new ServiceCollection();
@@ -107,7 +107,7 @@ public class McpServerOptionsSetupTests
         Assert.True(options.Capabilities.Resources.Subscribe);
     }
 
-    [Fact]
+    [Test]
     public void Configure_WithSubscribeToResourcesHandler_WithoutOtherResourcesHandler_DoesCreateResourcesCapability()
     {
         var services = new ServiceCollection();
@@ -121,7 +121,7 @@ public class McpServerOptionsSetupTests
         Assert.True(options.Capabilities.Resources.Subscribe);
     }
 
-    [Fact]
+    [Test]
     public void Configure_WithUnsubscribeFromResourcesHandler_WithoutOtherResourcesHandler_DoesCreateResourcesCapability()
     {
         var services = new ServiceCollection();
@@ -135,7 +135,7 @@ public class McpServerOptionsSetupTests
         Assert.True(options.Capabilities.Resources.Subscribe);
     }
 
-    [Fact]
+    [Test]
     public void Configure_WithManualResourceSubscribeCapability_AndWithResources_PreservesCapabilityAndExposesResources()
     {
         var services = new ServiceCollection();
@@ -163,7 +163,7 @@ public class McpServerOptionsSetupTests
         Assert.NotEmpty(options.ResourceCollection);
     }
 
-    [Fact]
+    [Test]
     public async Task ServerCapabilities_WithManualResourceSubscribeCapability_AndWithResources_ExposesSubscribeCapability()
     {
         // This test would require a full client-server setup, so we'll test via options validation instead
@@ -194,7 +194,7 @@ public class McpServerOptionsSetupTests
         Assert.False(options.Capabilities.Resources.ListChanged, "User's manually set ListChanged capability should be preserved in options");
     }
 
-    [Fact]
+    [Test]
     public void Configure_WithManualResourceSubscribeCapability_WithoutWithResources_PreservesCapability()
     {
         var services = new ServiceCollection();
@@ -228,7 +228,7 @@ public class McpServerOptionsSetupTests
     }
 
     #region Tool Handler Tests
-    [Fact]
+    [Test]
     public void Configure_WithListToolsHandler_CreatesToolsCapability()
     {
         var services = new ServiceCollection();
@@ -241,7 +241,7 @@ public class McpServerOptionsSetupTests
         Assert.NotNull(options.Capabilities?.Tools);
     }
 
-    [Fact]
+    [Test]
     public void Configure_WithCallToolHandler_CreatesToolsCapability()
     {
         var services = new ServiceCollection();
@@ -256,7 +256,7 @@ public class McpServerOptionsSetupTests
     #endregion
 
     #region Logging Handler Tests
-    [Fact]
+    [Test]
     public void Configure_WithSetLoggingLevelHandler_CreatesLoggingCapability()
     {
         var services = new ServiceCollection();
@@ -271,7 +271,7 @@ public class McpServerOptionsSetupTests
     #endregion
 
     #region Completion Handler Tests
-    [Fact]
+    [Test]
     public void Configure_WithCompleteHandler_CreatesCompletionsCapability()
     {
         var services = new ServiceCollection();
@@ -286,7 +286,7 @@ public class McpServerOptionsSetupTests
     #endregion
 
     #region TaskStore Tests
-    [Fact]
+    [Test]
     public void TaskStore_IsPopulatedFromDI_WhenNotExplicitlySet()
     {
         var services = new ServiceCollection();
@@ -298,7 +298,7 @@ public class McpServerOptionsSetupTests
         Assert.IsType<InMemoryMcpTaskStore>(options.TaskStore);
     }
 
-    [Fact]
+    [Test]
     public void TaskStore_ExplicitOption_TakesPrecedenceOverDI()
     {
         var explicitStore = new InMemoryMcpTaskStore();
@@ -312,7 +312,7 @@ public class McpServerOptionsSetupTests
         Assert.Same(explicitStore, options.TaskStore);
     }
 
-    [Fact]
+    [Test]
     public void TaskStore_RemainsNull_WhenNothingIsRegistered()
     {
         var services = new ServiceCollection();
@@ -323,7 +323,7 @@ public class McpServerOptionsSetupTests
         Assert.Null(options.TaskStore);
     }
 
-    [Fact]
+    [Test]
     public void TaskStore_CanBeOverriddenToNull_AfterDIRegistration()
     {
         var services = new ServiceCollection();

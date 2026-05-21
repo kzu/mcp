@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using System.Text.Json;
@@ -8,7 +8,7 @@ namespace ModelContextProtocol.Tests.Client;
 
 public partial class McpClientResourceTemplateTests : ClientServerTestBase
 {
-    public McpClientResourceTemplateTests(ITestOutputHelper outputHelper) : base(outputHelper)
+    public McpClientResourceTemplateTests()
     {
     }
 
@@ -67,15 +67,13 @@ public partial class McpClientResourceTemplateTests : ClientServerTestBase
             }
         }
     }
-
-    [Theory]
-    [MemberData(nameof(UriTemplate_InputsProduceExpectedOutputs_MemberData))]
+    [TestCaseSource(nameof(UriTemplate_InputsProduceExpectedOutputs_MemberData))]
     public async Task UriTemplate_InputsProduceExpectedOutputs(
         IReadOnlyDictionary<string, object?> variables, string uriTemplate, object expected)
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var result = await client.ReadResourceAsync(uriTemplate, variables, null, TestContext.Current.CancellationToken);
+        var result = await client.ReadResourceAsync(uriTemplate, variables, null, TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(result);
         var actualUri = Assert.IsType<TextResourceContents>(Assert.Single(result.Contents)).Text;
 
