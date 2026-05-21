@@ -5,7 +5,6 @@
     <TargetFrameworks>$(DefaultTestTargetFrameworks)</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PublishAot Condition="'$(TargetFramework)' == 'net9.0'">true</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0;net9.0;net8.0;netstandard2.0</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsPackable>true</IsPackable>
     <PackageId>ModelContextProtocol.Core</PackageId>
@@ -11,14 +11,8 @@
     <NoWarn>$(NoWarn);MCPEXP001</NoWarn>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
+  <PropertyGroup>
     <IsAotCompatible>true</IsAotCompatible>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <!-- CS0436: Allow ObsoleteAttribute to be redefined internally -->
-    <NoWarn>$(NoWarn);CS0436</NoWarn>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,25 +23,6 @@
     <Compile Include="..\Common\McpHttpHeaders.cs" Link="McpHttpHeaders.cs" />
     <Compile Include="..\Common\HttpResponseMessageExtensions.cs" Link="HttpResponseMessageExtensions.cs" />
     <Compile Include="..\Common\ServerSentEvents\**\*.cs" Link="ServerSentEvents\%(RecursiveDir)%(FileName)%(Extension)" />
-  </ItemGroup>
-
-  <!-- Dependencies only needed by netstandard2.0 -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <Compile Include="..\Common\CancellableStreamReader\**\*.cs" />
-    <PackageReference Include="Microsoft.Bcl.Memory" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" />
-    <PackageReference Include="System.Text.Json" />
-    <PackageReference Include="System.Threading.Channels" />
-  </ItemGroup>
-
-  <!-- Dependencies only needed by pre-net9.0 -->
-  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageReference Include="System.IO.Pipelines" />
-  </ItemGroup>
-  
-  <!-- Dependencies only needed pre-net10.0 -->
-  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))">
-    <PackageReference Include="System.Net.ServerSentEvents" />
   </ItemGroup>
 
   <!-- Dependencies needed by all -->
