@@ -8,7 +8,7 @@ public partial class McpMetaAttributeTests
 {
     #region Direct Attribute Instantiation Tests
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_StringConstructor_WithValue_RoundtripsCorrectly()
     {
         var attr = new McpMetaAttribute("key", "test-value");
@@ -23,7 +23,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("test-value", node.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_StringConstructor_WithNull_SerializesAsJsonNull()
     {
         var attr = new McpMetaAttribute("key", (string?)null);
@@ -36,7 +36,7 @@ public partial class McpMetaAttributeTests
         Assert.Null(node);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_StringConstructor_WithEmptyString_RoundtripsCorrectly()
     {
         var attr = new McpMetaAttribute("key", "");
@@ -49,7 +49,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("", node.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_StringConstructor_WithSpecialCharacters_RoundtripsCorrectly()
     {
         var testString = "Line1\nLine2\tTab\"Quote";
@@ -62,10 +62,10 @@ public partial class McpMetaAttributeTests
         Assert.Equal(testString, node.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_StringConstructor_WithUnicode_RoundtripsCorrectly()
     {
-        var testString = "Hello 世界 🌍";
+        var testString = "Hello ä¸–ç•Œ ðŸŒ";
         var attr = new McpMetaAttribute("key", testString);
         
         Assert.Equal("key", attr.Name);
@@ -75,7 +75,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(testString, node.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DoubleConstructor_WithPositiveValue_RoundtripsCorrectly()
     {
         var attr = new McpMetaAttribute("key", 3.14159);
@@ -88,7 +88,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(3.14159, node.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DoubleConstructor_WithNegativeValue_RoundtripsCorrectly()
     {
         var attr = new McpMetaAttribute("key", -999.999);
@@ -101,7 +101,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(-999.999, node.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DoubleConstructor_WithZero_RoundtripsCorrectly()
     {
         var attr = new McpMetaAttribute("key", 0.0);
@@ -115,7 +115,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(0.0, node.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DoubleConstructor_WithIntegerValue_RoundtripsCorrectly()
     {
         var attr = new McpMetaAttribute("key", 42.0);
@@ -128,7 +128,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(42.0, node.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DoubleConstructor_WithMaxValue_RoundtripsCorrectly()
     {
         var attr = new McpMetaAttribute("key", double.MaxValue);
@@ -140,7 +140,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(double.MaxValue, node.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DoubleConstructor_WithMinValue_RoundtripsCorrectly()
     {
         var attr = new McpMetaAttribute("key", double.MinValue);
@@ -152,7 +152,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(double.MinValue, node.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DoubleConstructor_WithVerySmallValue_RoundtripsCorrectly()
     {
         var attr = new McpMetaAttribute("key", 0.000001);
@@ -165,7 +165,7 @@ public partial class McpMetaAttributeTests
         Assert.True(Math.Abs(0.000001 - value) < 0.0000001);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_BoolConstructor_WithTrue_RoundtripsCorrectly()
     {
         var attr = new McpMetaAttribute("key", true);
@@ -179,7 +179,7 @@ public partial class McpMetaAttributeTests
         Assert.True(node.GetValue<bool>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_BoolConstructor_WithFalse_RoundtripsCorrectly()
     {
         var attr = new McpMetaAttribute("key", false);
@@ -193,7 +193,7 @@ public partial class McpMetaAttributeTests
         Assert.False(node.GetValue<bool>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_JsonValueProperty_CanBeOverridden()
     {
         var attr = new McpMetaAttribute("key", "original");
@@ -212,7 +212,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(123, obj["num"]?.GetValue<int>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_JsonValueProperty_SupportsComplexTypes()
     {
         var attr = new McpMetaAttribute("key", "placeholder")
@@ -234,7 +234,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(3, array?[2]?.GetValue<int>());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_StringConstructor_WithDefaultParameter_UsesNull()
     {
         var attr = new McpMetaAttribute("key");
@@ -246,7 +246,7 @@ public partial class McpMetaAttributeTests
         Assert.Null(node);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_Name_CanContainSpecialCharacters()
     {
         var attr = new McpMetaAttribute("my-key_with.special/chars", "value");
@@ -254,7 +254,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("my-key_with.special/chars", attr.Name);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_MultipleInstances_AreIndependent()
     {
         var attr1 = new McpMetaAttribute("key1", "value1");
@@ -277,7 +277,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("true", attr3.JsonValue);
     }
 
-    [Fact]
+    [Test]
     public void McpServerTool_Create_WithStringMeta_PopulatesToolMeta()
     {
         var method = typeof(TestToolStringMetaClass).GetMethod(nameof(TestToolStringMetaClass.ToolWithStringMeta))!;
@@ -291,7 +291,7 @@ public partial class McpMetaAttributeTests
         Assert.Null(tool.ProtocolTool.Meta["key3"]);
     }
 
-    [Fact]
+    [Test]
     public void McpServerTool_Create_WithDoubleMeta_PopulatesToolMeta()
     {
         var method = typeof(TestToolDoubleMetaClass2).GetMethod(nameof(TestToolDoubleMetaClass2.ToolWithDoubleMeta))!;
@@ -305,7 +305,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(-1.5, tool.ProtocolTool.Meta["negative"]?.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerTool_Create_WithBoolMeta_PopulatesToolMeta()
     {
         var method = typeof(TestToolBoolMetaClass).GetMethod(nameof(TestToolBoolMetaClass.ToolWithBoolMeta))!;
@@ -318,7 +318,7 @@ public partial class McpMetaAttributeTests
         Assert.False(tool.ProtocolTool.Meta["deprecated"]?.GetValue<bool>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerTool_Create_WithAllConstructorTypes_PopulatesToolMeta()
     {
         var method = typeof(TestToolAllTypesMetaClass).GetMethod(nameof(TestToolAllTypesMetaClass.ToolWithAllTypes))!;
@@ -340,7 +340,7 @@ public partial class McpMetaAttributeTests
         Assert.Null(tool.ProtocolTool.Meta["nullKey"]);
     }
 
-    [Fact]
+    [Test]
     public void McpServerPrompt_Create_WithStringMeta_PopulatesPromptMeta()
     {
         var method = typeof(TestPromptStringMetaClass).GetMethod(nameof(TestPromptStringMetaClass.PromptWithStringMeta))!;
@@ -353,7 +353,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("instruction", prompt.ProtocolPrompt.Meta["type"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerPrompt_Create_WithDoubleMeta_PopulatesPromptMeta()
     {
         var method = typeof(TestPromptDoubleMetaClass).GetMethod(nameof(TestPromptDoubleMetaClass.PromptWithDoubleMeta))!;
@@ -366,7 +366,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(100.0, prompt.ProtocolPrompt.Meta["maxTokens"]?.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerPrompt_Create_WithBoolMeta_PopulatesPromptMeta()
     {
         var method = typeof(TestPromptBoolMetaClass).GetMethod(nameof(TestPromptBoolMetaClass.PromptWithBoolMeta))!;
@@ -378,7 +378,7 @@ public partial class McpMetaAttributeTests
         Assert.True(prompt.ProtocolPrompt.Meta["stream"]?.GetValue<bool>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerPrompt_Create_WithAllConstructorTypes_PopulatesPromptMeta()
     {
         var method = typeof(TestPromptAllTypesMetaClass).GetMethod(nameof(TestPromptAllTypesMetaClass.PromptWithAllTypes))!;
@@ -393,7 +393,7 @@ public partial class McpMetaAttributeTests
         Assert.Null(prompt.ProtocolPrompt.Meta["deprecated"]);
     }
 
-    [Fact]
+    [Test]
     public void McpServerResource_Create_WithStringMeta_PopulatesResourceMeta()
     {
         var method = typeof(TestResourceStringMetaClass).GetMethod(nameof(TestResourceStringMetaClass.ResourceWithStringMeta))!;
@@ -406,7 +406,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("utf-8", resource.ProtocolResourceTemplate.Meta["encoding"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerResource_Create_WithDoubleMeta_PopulatesResourceMeta()
     {
         var method = typeof(TestResourceDoubleMetaClass).GetMethod(nameof(TestResourceDoubleMetaClass.ResourceWithDoubleMeta))!;
@@ -419,7 +419,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(3600.0, resource.ProtocolResourceTemplate.Meta["cacheDuration"]?.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerResource_Create_WithBoolMeta_PopulatesResourceMeta()
     {
         var method = typeof(TestResourceBoolMetaClass).GetMethod(nameof(TestResourceBoolMetaClass.ResourceWithBoolMeta))!;
@@ -432,7 +432,7 @@ public partial class McpMetaAttributeTests
         Assert.False(resource.ProtocolResourceTemplate.Meta["requiresAuth"]?.GetValue<bool>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerResource_Create_WithAllConstructorTypes_PopulatesResourceMeta()
     {
         var method = typeof(TestResourceAllTypesMetaClass).GetMethod(nameof(TestResourceAllTypesMetaClass.ResourceWithAllTypes))!;
@@ -447,7 +447,7 @@ public partial class McpMetaAttributeTests
         Assert.Null(resource.ProtocolResourceTemplate.Meta["owner"]);
     }
 
-    [Fact]
+    [Test]
     public void McpServerTool_Create_WithJsonValueMeta_PopulatesToolMetaWithComplexTypes()
     {
         var method = typeof(TestToolJsonValueMetaClass).GetMethod(nameof(TestToolJsonValueMetaClass.ToolWithJsonValueMeta))!;
@@ -472,7 +472,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("high", config["priority"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerPrompt_Create_WithJsonValueMeta_PopulatesPromptMetaWithComplexTypes()
     {
         var method = typeof(TestPromptJsonValueMetaClass).GetMethod(nameof(TestPromptJsonValueMetaClass.PromptWithJsonValueMeta))!;
@@ -487,7 +487,7 @@ public partial class McpMetaAttributeTests
         Assert.True(parameters["required"]?.GetValue<bool>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerResource_Create_WithJsonValueMeta_PopulatesResourceMetaWithComplexTypes()
     {
         var method = typeof(TestResourceJsonValueMetaClass).GetMethod(nameof(TestResourceJsonValueMetaClass.ResourceWithJsonValueMeta))!;
@@ -509,7 +509,7 @@ public partial class McpMetaAttributeTests
 
     #region Options Meta Interaction Tests
 
-    [Fact]
+    [Test]
     public void McpServerTool_Create_WithNullOptionsMeta_UsesAttributesOnly()
     {
         var method = typeof(TestToolStringMetaClass).GetMethod(nameof(TestToolStringMetaClass.ToolWithStringMeta))!;
@@ -524,7 +524,7 @@ public partial class McpMetaAttributeTests
         Assert.Null(tool.ProtocolTool.Meta["key3"]);
     }
 
-    [Fact]
+    [Test]
     public void McpServerTool_Create_WithEmptyOptionsMeta_UsesAttributesOnly()
     {
         var method = typeof(TestToolStringMetaClass).GetMethod(nameof(TestToolStringMetaClass.ToolWithStringMeta))!;
@@ -539,7 +539,7 @@ public partial class McpMetaAttributeTests
         Assert.Null(tool.ProtocolTool.Meta["key3"]);
     }
 
-    [Fact]
+    [Test]
     public void McpServerTool_Create_WithNonConflictingOptionsMeta_MergesBoth()
     {
         var method = typeof(TestToolStringMetaClass).GetMethod(nameof(TestToolStringMetaClass.ToolWithStringMeta))!;
@@ -567,7 +567,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(42, tool.ProtocolTool.Meta["newKey2"]?.GetValue<int>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerTool_Create_WithConflictingOptionsMeta_OptionsWin()
     {
         var method = typeof(TestToolStringMetaClass).GetMethod(nameof(TestToolStringMetaClass.ToolWithStringMeta))!;
@@ -596,7 +596,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("added", tool.ProtocolTool.Meta["newKey"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerPrompt_Create_WithNullOptionsMeta_UsesAttributesOnly()
     {
         var method = typeof(TestPromptStringMetaClass).GetMethod(nameof(TestPromptStringMetaClass.PromptWithStringMeta))!;
@@ -610,7 +610,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("instruction", prompt.ProtocolPrompt.Meta["type"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerPrompt_Create_WithEmptyOptionsMeta_UsesAttributesOnly()
     {
         var method = typeof(TestPromptStringMetaClass).GetMethod(nameof(TestPromptStringMetaClass.PromptWithStringMeta))!;
@@ -624,7 +624,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("instruction", prompt.ProtocolPrompt.Meta["type"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerPrompt_Create_WithNonConflictingOptionsMeta_MergesBoth()
     {
         var method = typeof(TestPromptStringMetaClass).GetMethod(nameof(TestPromptStringMetaClass.PromptWithStringMeta))!;
@@ -651,7 +651,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(100.0, prompt.ProtocolPrompt.Meta["maxTokens"]?.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerPrompt_Create_WithConflictingOptionsMeta_OptionsWin()
     {
         var method = typeof(TestPromptStringMetaClass).GetMethod(nameof(TestPromptStringMetaClass.PromptWithStringMeta))!;
@@ -679,7 +679,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(5, prompt.ProtocolPrompt.Meta["priority"]?.GetValue<int>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerResource_Create_WithNullOptionsMeta_UsesAttributesOnly()
     {
         var method = typeof(TestResourceStringMetaClass).GetMethod(nameof(TestResourceStringMetaClass.ResourceWithStringMeta))!;
@@ -693,7 +693,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("utf-8", resource.ProtocolResourceTemplate.Meta["encoding"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerResource_Create_WithEmptyOptionsMeta_UsesAttributesOnly()
     {
         var method = typeof(TestResourceStringMetaClass).GetMethod(nameof(TestResourceStringMetaClass.ResourceWithStringMeta))!;
@@ -707,7 +707,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("utf-8", resource.ProtocolResourceTemplate.Meta["encoding"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerResource_Create_WithNonConflictingOptionsMeta_MergesBoth()
     {
         var method = typeof(TestResourceStringMetaClass).GetMethod(nameof(TestResourceStringMetaClass.ResourceWithStringMeta))!;
@@ -734,7 +734,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(2.0, resource.ProtocolResourceTemplate.Meta["version"]?.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerResource_Create_WithConflictingOptionsMeta_OptionsWin()
     {
         var method = typeof(TestResourceStringMetaClass).GetMethod(nameof(TestResourceStringMetaClass.ResourceWithStringMeta))!;
@@ -762,7 +762,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(1024, resource.ProtocolResourceTemplate.Meta["size"]?.GetValue<int>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerTool_Create_WithOptionsMetaOnly_NoAttributes_PopulatesMeta()
     {
         var method = typeof(TestToolClass).GetMethod(nameof(TestToolClass.ToolWithoutMeta))!;
@@ -783,7 +783,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(10, tool.ProtocolTool.Meta["count"]?.GetValue<int>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerPrompt_Create_WithOptionsMetaOnly_NoAttributes_PopulatesMeta()
     {
         var method = typeof(TestPromptNoMetaClass).GetMethod(nameof(TestPromptNoMetaClass.PromptWithoutMeta))!;
@@ -804,7 +804,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(0.5, prompt.ProtocolPrompt.Meta["temperature"]?.GetValue<double>());
     }
 
-    [Fact]
+    [Test]
     public void McpServerResource_Create_WithOptionsMetaOnly_NoAttributes_PopulatesMeta()
     {
         var method = typeof(TestResourceNoMetaClass).GetMethod(nameof(TestResourceNoMetaClass.ResourceWithoutMeta))!;
@@ -827,7 +827,7 @@ public partial class McpMetaAttributeTests
 
     #endregion
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_OnTool_PopulatesMeta()
     {
         var method = typeof(TestToolClass).GetMethod(nameof(TestToolClass.ToolWithMeta))!;
@@ -839,7 +839,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("1.0", tool.ProtocolTool.Meta["version"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_OnPrompt_PopulatesMeta()
     {
         var method = typeof(TestPromptClass).GetMethod(nameof(TestPromptClass.PromptWithMeta))!;
@@ -851,7 +851,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("claude-3", prompt.ProtocolPrompt.Meta["model"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_OnResource_PopulatesMeta()
     {
         var method = typeof(TestResourceClass).GetMethod(nameof(TestResourceClass.ResourceWithMeta))!;
@@ -863,7 +863,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("cached", resource.ProtocolResourceTemplate.Meta["caching"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_WithoutAttributes_ReturnsNull()
     {
         var method = typeof(TestToolClass).GetMethod(nameof(TestToolClass.ToolWithoutMeta))!;
@@ -873,7 +873,7 @@ public partial class McpMetaAttributeTests
         Assert.Null(tool.ProtocolTool.Meta);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_SingleAttribute_PopulatesMeta()
     {
         // Arrange
@@ -888,7 +888,7 @@ public partial class McpMetaAttributeTests
         Assert.Single(tool.ProtocolTool.Meta);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_OptionsMetaTakesPrecedence()
     {
         var method = typeof(TestToolClass).GetMethod(nameof(TestToolClass.ToolWithMeta))!;
@@ -907,7 +907,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("options-extra", tool.ProtocolTool.Meta["extra"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_OptionsMetaOnly_NoAttributes()
     {
         var method = typeof(TestToolClass).GetMethod(nameof(TestToolClass.ToolWithoutMeta))!;
@@ -923,7 +923,7 @@ public partial class McpMetaAttributeTests
         Assert.Single(tool.ProtocolTool.Meta);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_PromptOptionsMetaTakesPrecedence()
     {
         var method = typeof(TestPromptClass).GetMethod(nameof(TestPromptClass.PromptWithMeta))!;
@@ -942,7 +942,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("options-extra", prompt.ProtocolPrompt.Meta["extra"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_ResourceOptionsMetaTakesPrecedence()
     {
         var method = typeof(TestResourceClass).GetMethod(nameof(TestResourceClass.ResourceWithMeta))!;
@@ -961,7 +961,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("options-extra", resource.ProtocolResourceTemplate.Meta["extra"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_ResourceOptionsMetaOnly_NoAttributes()
     {
         var method = typeof(TestResourceNoMetaClass).GetMethod(nameof(TestResourceNoMetaClass.ResourceWithoutMeta))!;
@@ -975,7 +975,7 @@ public partial class McpMetaAttributeTests
         Assert.Single(resource.ProtocolResourceTemplate.Meta!);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_PromptWithoutMeta_ReturnsNull()
     {
         var method = typeof(TestPromptNoMetaClass).GetMethod(nameof(TestPromptNoMetaClass.PromptWithoutMeta))!;
@@ -983,7 +983,7 @@ public partial class McpMetaAttributeTests
         Assert.Null(prompt.ProtocolPrompt.Meta);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DuplicateKeys_IgnoresLaterAttributes()
     {
         var method = typeof(TestToolDuplicateMetaClass).GetMethod(nameof(TestToolDuplicateMetaClass.ToolWithDuplicateMeta))!;
@@ -996,7 +996,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("other-value", tool.ProtocolTool.Meta["other"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DuplicateKeys_WithSeedMeta_SeedTakesPrecedence()
     {
         var method = typeof(TestToolDuplicateMetaClass).GetMethod(nameof(TestToolDuplicateMetaClass.ToolWithDuplicateMeta))!;
@@ -1009,7 +1009,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(2, tool.ProtocolTool.Meta!.Count);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_NullValue_SerializedAsNull()
     {
         var method = typeof(TestToolNullMetaClass).GetMethod(nameof(TestToolNullMetaClass.ToolWithNullMeta))!;
@@ -1019,7 +1019,7 @@ public partial class McpMetaAttributeTests
         Assert.Null(tool.ProtocolTool.Meta["nullable"]);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_ClassLevelAttributesIgnored()
     {
         // Since McpMetaAttribute is only valid on methods, class-level attributes are not supported.
@@ -1032,7 +1032,7 @@ public partial class McpMetaAttributeTests
         Assert.Single(tool.ProtocolTool.Meta!);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DelegateOverload_PopulatesMeta()
     {
         // Create tool using delegate overload instead of MethodInfo directly
@@ -1043,7 +1043,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("1.0", tool.ProtocolTool.Meta["version"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_ComplexObject_SerializedAsJson()
     {
         var method = typeof(TestToolComplexMetaClass).GetMethod(nameof(TestToolComplexMetaClass.ToolWithComplexMeta))!;
@@ -1059,7 +1059,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("noble", configObj["purpose"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_Array_SerializedAsJson()
     {
         var method = typeof(TestToolArrayMetaClass).GetMethod(nameof(TestToolArrayMetaClass.ToolWithArrayMeta))!;
@@ -1077,7 +1077,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("tag3", tagsArray[2]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_JsonValueOverride_UsesProvidedJson()
     {
         var method = typeof(TestToolJsonValueOverrideClass).GetMethod(nameof(TestToolJsonValueOverrideClass.ToolWithJsonValueOverride))!;
@@ -1093,7 +1093,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal("123", configObj["value"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_MixedTypes_AllSerializedCorrectly()
     {
         var method = typeof(TestToolMixedTypesClass).GetMethod(nameof(TestToolMixedTypesClass.ToolWithMixedTypes))!;
@@ -1116,7 +1116,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(JsonValueKind.Object, objNode.GetValueKind());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DoubleValue_SerializedAsNumber()
     {
         var method = typeof(TestToolDoubleMetaClass).GetMethod(nameof(TestToolDoubleMetaClass.ToolWithDoubleMeta))!;
@@ -1130,7 +1130,7 @@ public partial class McpMetaAttributeTests
         Assert.True(Math.Abs(3.14159 - piValue) < 0.00001);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_SupportedTypes_SerializedCorrectly()
     {
         var method = typeof(TestToolSupportedTypesClass).GetMethod(nameof(TestToolSupportedTypesClass.ToolWithSupportedTypes))!;
@@ -1168,7 +1168,7 @@ public partial class McpMetaAttributeTests
         Assert.Equal(JsonValueKind.False, tool.ProtocolTool.Meta["boolFalseValue"]?.GetValueKind());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_StringEdgeCases_SerializedCorrectly()
     {
         var method = typeof(TestToolStringEdgeCasesClass).GetMethod(nameof(TestToolStringEdgeCasesClass.ToolWithStringEdgeCases))!;
@@ -1186,10 +1186,10 @@ public partial class McpMetaAttributeTests
         Assert.Equal("He said \"Hello\"", tool.ProtocolTool.Meta["withQuotes"]?.ToString());
         
         // Unicode string
-        Assert.Equal("Hello 世界 🌍", tool.ProtocolTool.Meta["unicode"]?.ToString());
+        Assert.Equal("Hello ä¸–ç•Œ ðŸŒ", tool.ProtocolTool.Meta["unicode"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_DoubleEdgeCases_SerializedCorrectly()
     {
         var method = typeof(TestToolDoubleEdgeCasesClass).GetMethod(nameof(TestToolDoubleEdgeCasesClass.ToolWithDoubleEdgeCases))!;
@@ -1215,7 +1215,7 @@ public partial class McpMetaAttributeTests
         Assert.True(Math.Abs(0.000001 - smallValue.Value) < 0.0000001);
     }
 
-    [Fact]
+    [Test]
     public void McpMetaAttribute_JsonValueForComplexTypes_SerializedCorrectly()
     {
         var method = typeof(TestToolJsonValueComplexClass).GetMethod(nameof(TestToolJsonValueComplexClass.ToolWithComplexTypes))!;
@@ -1385,7 +1385,7 @@ public partial class McpMetaAttributeTests
         [McpMeta("emptyString", "")]
         [McpMeta("specialChars", "Line1\nLine2\tTabbed")]
         [McpMeta("withQuotes", "He said \"Hello\"")]
-        [McpMeta("unicode", "Hello 世界 🌍")]
+        [McpMeta("unicode", "Hello ä¸–ç•Œ ðŸŒ")]
         public static string ToolWithStringEdgeCases(string input) => input;
     }
 

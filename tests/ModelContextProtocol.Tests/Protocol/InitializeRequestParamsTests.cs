@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class InitializeRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void InitializeRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new InitializeRequestParams

@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ToolTests
 {
-    [Fact]
+    [Test]
     public static void Tool_SerializationRoundTrip_PreservesAllProperties()
     {
         // Arrange
@@ -46,7 +46,7 @@ public static class ToolTests
         Assert.Equal(original.Annotations.ReadOnlyHint, deserialized.Annotations.ReadOnlyHint);
     }
 
-    [Fact]
+    [Test]
     public static void Tool_SerializationRoundTrip_WithMinimalProperties()
     {
         // Arrange
@@ -70,7 +70,7 @@ public static class ToolTests
         Assert.Equal(original.Annotations, deserialized.Annotations);
     }
 
-    [Fact]
+    [Test]
     public static void Tool_HasCorrectJsonPropertyNames()
     {
         var tool = new Tool
@@ -92,7 +92,7 @@ public static class ToolTests
         Assert.Contains("\"inputSchema\":", json);
     }
 
-    [Fact]
+    [Test]
     public static void ToolInputSchema_HasValidDefaultSchema()
     {
         var tool = new Tool { Name = "test" };
@@ -105,17 +105,17 @@ public static class ToolTests
         Assert.Equal("object", typeElement.GetString());
     }
 
-    [Theory]
-    [InlineData("null")]
-    [InlineData("false")]
-    [InlineData("true")]
-    [InlineData("3.5e3")]
-    [InlineData("[]")]
-    [InlineData("{}")]
-    [InlineData("""{"properties":{}}""")]
-    [InlineData("""{"type":"number"}""")]
-    [InlineData("""{"type":"array"}""")]
-    [InlineData("""{"type":["object"]}""")]
+    
+    [TestCase("null")]
+    [TestCase("false")]
+    [TestCase("true")]
+    [TestCase("3.5e3")]
+    [TestCase("[]")]
+    [TestCase("{}")]
+    [TestCase("""{"properties":{}}""")]
+    [TestCase("""{"type":"number"}""")]
+    [TestCase("""{"type":"array"}""")]
+    [TestCase("""{"type":["object"]}""")]
     public static void ToolInputSchema_RejectsInvalidSchemaDocuments(string invalidSchema)
     {
         using var document = JsonDocument.Parse(invalidSchema);
@@ -124,10 +124,10 @@ public static class ToolTests
         Assert.Throws<ArgumentException>(() => tool.InputSchema = document.RootElement);
     }
 
-    [Theory]
-    [InlineData("""{"type":"object"}""")]
-    [InlineData("""{"type":"object", "properties": {}, "required" : [] }""")]
-    [InlineData("""{"type":"object", "title": "MyAwesomeTool", "description": "It's awesome!", "properties": {}, "required" : ["NotAParam"] }""")]
+    
+    [TestCase("""{"type":"object"}""")]
+    [TestCase("""{"type":"object", "properties": {}, "required" : [] }""")]
+    [TestCase("""{"type":"object", "title": "MyAwesomeTool", "description": "It's awesome!", "properties": {}, "required" : ["NotAParam"] }""")]
     public static void ToolInputSchema_AcceptsValidSchemaDocuments(string validSchema)
     {
         using var document = JsonDocument.Parse(validSchema);

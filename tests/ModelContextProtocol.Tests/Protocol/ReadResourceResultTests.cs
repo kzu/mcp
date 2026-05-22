@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ReadResourceResultTests
 {
-    [Fact]
+    [Test]
     public static void ReadResourceResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ReadResourceResult
@@ -49,7 +49,7 @@ public static class ReadResourceResultTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void ReadResourceResult_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ReadResourceResult();

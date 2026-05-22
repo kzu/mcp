@@ -9,8 +9,8 @@ namespace ModelContextProtocol.Tests.Configuration;
 // Integration test with full client-server setup
 public class McpServerResourceCapabilityIntegrationTests : ClientServerTestBase
 {
-    public McpServerResourceCapabilityIntegrationTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public McpServerResourceCapabilityIntegrationTests()
+        : base()
     {
     }
 
@@ -31,7 +31,7 @@ public class McpServerResourceCapabilityIntegrationTests : ClientServerTestBase
         mcpServerBuilder.WithResources<SimpleResourceType>();
     }
 
-    [Fact]
+    [Test]
     public async Task Client_CanListResources_WhenSubscribeCapabilityIsManuallySet()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -41,12 +41,12 @@ public class McpServerResourceCapabilityIntegrationTests : ClientServerTestBase
         Assert.True(client.ServerCapabilities.Resources.Subscribe, "Server should advertise Subscribe capability when manually set");
 
         // The resources should be exposed and listable
-        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resources = await client.ListResourcesAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         Assert.NotEmpty(resources);
         Assert.Contains(resources, r => r.Name == "test_resource");
     }
 
-    [Fact]
+    [Test]
     public async Task Client_CanListResources_WhenCapabilitySetViaAddMcpServerCallback()
     {
         // This is a separate test using a different configuration approach
@@ -56,7 +56,7 @@ public class McpServerResourceCapabilityIntegrationTests : ClientServerTestBase
         Assert.NotNull(client.ServerCapabilities.Resources);
 
         // The resources should be exposed and listable
-        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resources = await client.ListResourcesAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         Assert.NotEmpty(resources);
     }
 
@@ -71,8 +71,8 @@ public class McpServerResourceCapabilityIntegrationTests : ClientServerTestBase
 // Test that exactly matches the issue scenario
 public class McpServerResourceCapabilityIssueReproTests : ClientServerTestBase
 {
-    public McpServerResourceCapabilityIssueReproTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public McpServerResourceCapabilityIssueReproTests()
+        : base()
     {
     }
 
@@ -84,13 +84,13 @@ public class McpServerResourceCapabilityIssueReproTests : ClientServerTestBase
         // NO call to services.Configure after AddMcpServer
     }
 
-    [Fact]
+    [Test]
     public async Task Resources_AreExposed_WhenSubscribeCapabilitySetInAddMcpServerOptions()
     {
         // Create a fresh service collection to test the exact scenario from the issue
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddSingleton(XunitLoggerProvider);
+        services.AddSingleton(TestLoggerProvider);
 
         // This matches the issue: setting capabilities in AddMcpServer callback
         var builder = services.AddMcpServer(
@@ -121,7 +121,7 @@ public class McpServerResourceCapabilityIssueReproTests : ClientServerTestBase
         Assert.Contains(mcpOptions.ResourceCollection, r => r.ProtocolResource?.Name == "live_resource");
     }
 
-    [Fact]
+    [Test]
     public async Task ResourcesCapability_IsCreated_WhenOnlyResourcesAreProvided()
     {
         // Test that ResourcesCapability is created even without handlers or manual setting

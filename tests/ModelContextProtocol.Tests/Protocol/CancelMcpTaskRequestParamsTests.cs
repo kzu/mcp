@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class CancelMcpTaskRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void CancelMcpTaskRequestParams_SerializationRoundTrip()
     {
         // Arrange

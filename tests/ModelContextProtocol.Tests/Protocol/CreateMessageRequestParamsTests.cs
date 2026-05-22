@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public class CreateMessageRequestParamsTests
 {
-    [Fact]
+    [Test]
     public void WithTools_SerializationRoundtrips()
     {
         CreateMessageRequestParams requestParams = new()
@@ -64,7 +64,7 @@ public class CreateMessageRequestParamsTests
         Assert.Equal("auto", deserialized.ToolChoice.Mode);
     }
 
-    [Fact]
+    [Test]
     public void WithToolChoiceRequired_SerializationRoundtrips()
     {
         CreateMessageRequestParams requestParams = new()
@@ -116,7 +116,7 @@ public class CreateMessageRequestParamsTests
         Assert.Equal("required", deserialized.ToolChoice.Mode);
     }
 
-    [Fact]
+    [Test]
     public void WithToolChoiceNone_SerializationRoundtrips()
     {
         CreateMessageRequestParams requestParams = new()
@@ -168,7 +168,7 @@ public class CreateMessageRequestParamsTests
         Assert.Equal("none", deserialized.ToolChoice.Mode);
     }
 
-    [Fact]
+    [Test]
     public void WithMetadata_SerializationRoundtrips()
     {
         CreateMessageRequestParams requestParams = new()

@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ToolListChangedNotificationParamsTests
 {
-    [Fact]
+    [Test]
     public static void ToolListChangedNotificationParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ToolListChangedNotificationParams
@@ -22,7 +22,7 @@ public static class ToolListChangedNotificationParamsTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void ToolListChangedNotificationParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ToolListChangedNotificationParams();

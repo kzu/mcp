@@ -1,21 +1,21 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Text;
 
 namespace ModelContextProtocol.Tests.Utils;
 
-public class XunitLoggerProvider(ITestOutputHelper output) : ILoggerProvider
+public class TestLoggerProvider(ITestOutputHelper output) : ILoggerProvider
 {
     public ILogger CreateLogger(string categoryName)
     {
-        return new XunitLogger(output, categoryName);
+        return new TestLogger(output, categoryName);
     }
 
     public void Dispose()
     {
     }
 
-    private class XunitLogger(ITestOutputHelper output, string category) : ILogger
+    private class TestLogger(ITestOutputHelper output, string category) : ILogger
     {
         public void Log<TState>(
             LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
@@ -40,13 +40,11 @@ public class XunitLoggerProvider(ITestOutputHelper output) : ILoggerProvider
             }
             catch (InvalidOperationException)
             {
-                // Ignore exceptions from xUnit's TestOutputHelper when the test has already completed.
-                // Background work may continue logging after xUnit has disposed the test context.
+                // Ignore exceptions when the test has already completed.
             }
             catch (NullReferenceException)
             {
-                // xUnit v3 may throw NullReferenceException in TestOutputHelper.QueueTestOutput()
-                // when the internal queue has been torn down after test completion.
+                // The test output helper may be torn down after test completion.
             }
         }
 

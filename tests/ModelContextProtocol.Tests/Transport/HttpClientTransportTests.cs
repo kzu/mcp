@@ -1,4 +1,4 @@
-﻿using ModelContextProtocol.Client;
+using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Tests.Utils;
 using System.Net;
@@ -10,8 +10,8 @@ public class HttpClientTransportTests : LoggedTest
 {
     private readonly HttpClientTransportOptions _transportOptions;
 
-    public HttpClientTransportTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public HttpClientTransportTests()
+        : base()
     {
         _transportOptions = new HttpClientTransportOptions
         {
@@ -26,21 +26,21 @@ public class HttpClientTransportTests : LoggedTest
         };
     }
 
-    [Fact]
+    [Test]
     public void Constructor_Throws_For_Null_Options()
     {
         var exception = Assert.Throws<ArgumentNullException>(() => new HttpClientTransport(null!, LoggerFactory));
         Assert.Equal("transportOptions", exception.ParamName);
     }
 
-    [Fact]
+    [Test]
     public void Constructor_Throws_For_Null_HttpClient()
     {
         var exception = Assert.Throws<ArgumentNullException>(() => new HttpClientTransport(_transportOptions, httpClient: null!, LoggerFactory));
         Assert.Equal("httpClient", exception.ParamName);
     }
 
-    [Fact]
+    [Test]
     public async Task ConnectAsync_Should_Connect_Successfully()
     {
         using var mockHttpHandler = new MockHttpHandler();
@@ -59,12 +59,12 @@ public class HttpClientTransportTests : LoggedTest
             });
         };
 
-        await using var session = await transport.ConnectAsync(TestContext.Current.CancellationToken);
+        await using var session = await transport.ConnectAsync(TestExecutionContext.Current.CancellationToken);
         Assert.NotNull(session);
         Assert.False(firstCall);
     }
 
-    [Fact]
+    [Test]
     public async Task ConnectAsync_Throws_Exception_On_Failure()
     {
         using var mockHttpHandler = new MockHttpHandler();
@@ -78,12 +78,12 @@ public class HttpClientTransportTests : LoggedTest
             throw new Exception("Test exception");
         };
 
-        var exception = await Assert.ThrowsAsync<Exception>(() => transport.ConnectAsync(TestContext.Current.CancellationToken));
+        var exception = await Assert.ThrowsAsync<Exception>(() => transport.ConnectAsync(TestExecutionContext.Current.CancellationToken));
         Assert.Equal("Test exception", exception.Message);
         Assert.Equal(1, retries);
     }
 
-    [Fact]
+    [Test]
     public async Task ConnectAsync_Throws_HttpRequestException_With_ResponseBody_On_ErrorStatusCode()
     {
         using var mockHttpHandler = new MockHttpHandler();
@@ -101,7 +101,7 @@ public class HttpClientTransportTests : LoggedTest
             });
         };
 
-        var httpException = await Assert.ThrowsAsync<HttpRequestException>(() => transport.ConnectAsync(TestContext.Current.CancellationToken));
+        var httpException = await Assert.ThrowsAsync<HttpRequestException>(() => transport.ConnectAsync(TestExecutionContext.Current.CancellationToken));
         Assert.Contains(errorDetails, httpException.Message);
         Assert.Contains("400", httpException.Message);
 #if NET
@@ -109,7 +109,7 @@ public class HttpClientTransportTests : LoggedTest
 #endif
     }
 
-    [Fact]
+    [Test]
     public async Task SendMessageAsync_Handles_Accepted_Response()
     {
         using var mockHttpHandler = new MockHttpHandler();
@@ -142,12 +142,12 @@ public class HttpClientTransportTests : LoggedTest
             }
         };
 
-        await using var session = await transport.ConnectAsync(TestContext.Current.CancellationToken);
+        await using var session = await transport.ConnectAsync(TestExecutionContext.Current.CancellationToken);
         await session.SendMessageAsync(new JsonRpcRequest { Method = RequestMethods.Initialize, Id = new RequestId(44) }, CancellationToken.None);
         Assert.True(true);
     }
 
-    [Fact]
+    [Test]
     public async Task SendMessageAsync_Throws_HttpRequestException_With_ResponseBody_On_ErrorStatusCode()
     {
         using var mockHttpHandler = new MockHttpHandler();
@@ -183,7 +183,7 @@ public class HttpClientTransportTests : LoggedTest
             }
         };
 
-        await using var session = await transport.ConnectAsync(TestContext.Current.CancellationToken);
+        await using var session = await transport.ConnectAsync(TestExecutionContext.Current.CancellationToken);
         var httpException = await Assert.ThrowsAsync<HttpRequestException>(() =>
             session.SendMessageAsync(new JsonRpcRequest { Method = RequestMethods.Initialize, Id = new RequestId(44) }, CancellationToken.None));
 
@@ -194,7 +194,7 @@ public class HttpClientTransportTests : LoggedTest
 #endif
     }
 
-    [Fact]
+    [Test]
     public async Task ReceiveMessagesAsync_Handles_Messages()
     {
         using var mockHttpHandler = new MockHttpHandler();
@@ -218,14 +218,14 @@ public class HttpClientTransportTests : LoggedTest
             throw new IOException("Abort");
         };
 
-        await using var session = await transport.ConnectAsync(TestContext.Current.CancellationToken);
+        await using var session = await transport.ConnectAsync(TestExecutionContext.Current.CancellationToken);
         Assert.True(session.MessageReader.TryRead(out var message));
         Assert.NotNull(message);
         Assert.IsType<JsonRpcRequest>(message);
         Assert.Equal("44", ((JsonRpcRequest)message).Id.ToString());
     }
 
-    [Fact]
+    [Test]
     public async Task DisposeAsync_Should_Dispose_Resources()
     {
         using var mockHttpHandler = new MockHttpHandler();
@@ -240,7 +240,7 @@ public class HttpClientTransportTests : LoggedTest
         };
 
         await using var transport = new HttpClientTransport(_transportOptions, httpClient, LoggerFactory);
-        await using var session = await transport.ConnectAsync(TestContext.Current.CancellationToken);
+        await using var session = await transport.ConnectAsync(TestExecutionContext.Current.CancellationToken);
 
         await session.DisposeAsync();
 
@@ -248,7 +248,7 @@ public class HttpClientTransportTests : LoggedTest
         Assert.False(transportBase.IsConnected);
     }
 
-    [Fact]
+    [Test]
     public async Task StreamableHttp_InitialGetSseConnection_DoesNotCountAgainstMaxReconnectionAttempts()
     {
         // Arrange: The initial GET SSE connection (with no Last-Event-ID) is the initial connection,
@@ -315,13 +315,13 @@ public class HttpClientTransportTests : LoggedTest
         };
 
         // Act - Connect and send the initialize request, which starts the background GET SSE task.
-        await using var session = await transport.ConnectAsync(TestContext.Current.CancellationToken);
+        await using var session = await transport.ConnectAsync(TestExecutionContext.Current.CancellationToken);
         await session.SendMessageAsync(
             new JsonRpcRequest { Method = RequestMethods.Initialize, Id = new RequestId(1) },
-            TestContext.Current.CancellationToken);
+            TestExecutionContext.Current.CancellationToken);
 
         // Wait for all expected GET requests to be made before disposing.
-        await allGetRequestsDone.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await allGetRequestsDone.Task.WaitAsync(TimeSpan.FromSeconds(10), TestExecutionContext.Current.CancellationToken);
 
         // Assert - Total GET requests = 1 initial connection + MaxReconnectionAttempts reconnections.
         Assert.Equal(1 + MaxReconnectionAttempts, getRequestCount);

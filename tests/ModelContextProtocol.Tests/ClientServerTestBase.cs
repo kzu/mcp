@@ -13,14 +13,14 @@ public abstract class ClientServerTestBase : LoggedTest, IAsyncDisposable
 {
     private readonly Pipe _clientToServerPipe = new();
     private readonly Pipe _serverToClientPipe = new();
-    private readonly CancellationTokenSource _cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+    private readonly CancellationTokenSource _cts = CancellationTokenSource.CreateLinkedTokenSource(TestExecutionContext.Current.CancellationToken);
     private Task _serverTask = Task.CompletedTask;
 
-    public ClientServerTestBase(ITestOutputHelper testOutputHelper, bool startServer = true)
-        : base(testOutputHelper)
+    public ClientServerTestBase(bool startServer = true)
+        : base()
     {
         ServiceCollection.AddLogging();
-        ServiceCollection.AddSingleton(XunitLoggerProvider);
+        ServiceCollection.AddSingleton(TestLoggerProvider);
         ServiceCollection.AddSingleton<ILoggerProvider>(MockLoggerProvider);
         McpServerBuilder = ServiceCollection
             .AddMcpServer()
@@ -93,6 +93,6 @@ public abstract class ClientServerTestBase : LoggedTest, IAsyncDisposable
                 LoggerFactory),
             clientOptions: clientOptions,
             loggerFactory: LoggerFactory,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 }

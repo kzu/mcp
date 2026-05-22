@@ -12,48 +12,52 @@ namespace ModelContextProtocol.ConformanceTests;
 /// </summary>
 public class ClientConformanceTests
 {
-    private readonly ITestOutputHelper _output;
+    private readonly ITestOutputHelper _output = new NUnitTestOutputHelper();
 
-    // Public static property required for SkipUnless attribute
     public static bool IsNodeInstalled => NodeHelpers.IsNodeInstalled();
     public static bool HasSep2243Scenarios => NodeHelpers.HasSep2243Scenarios();
 
-    public ClientConformanceTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
+    public static IEnumerable<string> ConformanceScenarios =>
+    [
+        "initialize",
+        "tools_call",
+        "elicitation-sep1034-client-defaults",
+        "sse-retry",
+        "auth/metadata-default",
+        "auth/metadata-var1",
+        "auth/metadata-var2",
+        "auth/metadata-var3",
+        "auth/basic-cimd",
+        "auth/scope-from-www-authenticate",
+        "auth/scope-from-scopes-supported",
+        "auth/scope-omitted-when-undefined",
+        "auth/scope-step-up",
+        "auth/scope-retry-limit",
+        "auth/token-endpoint-auth-basic",
+        "auth/token-endpoint-auth-post",
+        "auth/token-endpoint-auth-none",
+        "auth/resource-mismatch",
+        "auth/pre-registration",
+        // Backcompat: Legacy 2025-03-26 OAuth flows (no PRM, root-location metadata).
+        "auth/2025-03-26-oauth-metadata-backcompat",
+        "auth/2025-03-26-oauth-endpoint-fallback",
+        // Extensions: Require ES256 JWT signing (private_key_jwt) and client_credentials grant support.
+        // "auth/client-credentials-jwt",
+        // "auth/client-credentials-basic",
+    ];
 
-    [Theory(Skip = "Node.js is not installed. Skipping client conformance tests.", SkipUnless = nameof(IsNodeInstalled))]
-    [InlineData("initialize")]
-    [InlineData("tools_call")]
-    [InlineData("elicitation-sep1034-client-defaults")]
-    [InlineData("sse-retry")]
-    [InlineData("auth/metadata-default")]
-    [InlineData("auth/metadata-var1")]
-    [InlineData("auth/metadata-var2")]
-    [InlineData("auth/metadata-var3")]
-    [InlineData("auth/basic-cimd")]
-    [InlineData("auth/scope-from-www-authenticate")]
-    [InlineData("auth/scope-from-scopes-supported")]
-    [InlineData("auth/scope-omitted-when-undefined")]
-    [InlineData("auth/scope-step-up")]
-    [InlineData("auth/scope-retry-limit")]
-    [InlineData("auth/token-endpoint-auth-basic")]
-    [InlineData("auth/token-endpoint-auth-post")]
-    [InlineData("auth/token-endpoint-auth-none")]
-    [InlineData("auth/resource-mismatch")]
-    [InlineData("auth/pre-registration")]
+    public static IEnumerable<string> Sep2243Scenarios =>
+    [
+        "http-standard-headers",
+        "http-custom-headers",
+        "http-invalid-tool-headers",
+    ];
 
-    // Backcompat: Legacy 2025-03-26 OAuth flows (no PRM, root-location metadata).
-    [InlineData("auth/2025-03-26-oauth-metadata-backcompat")]
-    [InlineData("auth/2025-03-26-oauth-endpoint-fallback")]
-
-    // Extensions: Require ES256 JWT signing (private_key_jwt) and client_credentials grant support.
-    // [InlineData("auth/client-credentials-jwt")]
-    // [InlineData("auth/client-credentials-basic")]
-
+    [TestCaseSource(nameof(ConformanceScenarios))]
     public async Task RunConformanceTest(string scenario)
     {
+        Assert.SkipUnless(IsNodeInstalled, "Node.js is not installed. Skipping client conformance tests.");
+
         // Run the conformance test suite
         var result = await RunClientConformanceScenario(scenario);
 
@@ -63,12 +67,11 @@ public class ClientConformanceTests
     }
 
     // HTTP Standardization (SEP-2243)
-    [Theory(Skip = "SEP-2243 conformance scenarios not yet available.", SkipUnless = nameof(HasSep2243Scenarios))]
-    [InlineData("http-standard-headers")]
-    [InlineData("http-custom-headers")]
-    [InlineData("http-invalid-tool-headers")]
+    [TestCaseSource(nameof(Sep2243Scenarios))]
     public async Task RunConformanceTest_Sep2243(string scenario)
     {
+        Assert.SkipUnless(HasSep2243Scenarios, "SEP-2243 conformance scenarios not yet available.");
+
         // Run the conformance test suite
         var result = await RunClientConformanceScenario(scenario);
 

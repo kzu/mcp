@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ListTasksResultTests
 {
-    [Fact]
+    [Test]
     public static void ListTasksResult_SerializationRoundTrip()
     {
         // Arrange

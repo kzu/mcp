@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.AspNetCore.Tests.Utils;
 using ModelContextProtocol.Client;
@@ -10,7 +10,7 @@ using System.Net;
 namespace ModelContextProtocol.AspNetCore.Tests;
 
 [McpServerToolType]
-public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMemoryTest(outputHelper), IAsyncDisposable
+public class StatelessServerTests() : KestrelInMemoryTest(), IAsyncDisposable
 {
     private WebApplication? _app;
 
@@ -52,7 +52,7 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
 
         _app.MapMcp();
 
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         HttpClient.DefaultRequestHeaders.Accept.Add(new("application/json"));
         HttpClient.DefaultRequestHeaders.Accept.Add(new("text/event-stream"));
@@ -61,7 +61,7 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
     private Task<McpClient> ConnectMcpClientAsync(McpClientOptions? clientOptions = null)
         => McpClient.CreateAsync(
             new HttpClientTransport(DefaultTransportOptions, HttpClient, LoggerFactory),
-            clientOptions, LoggerFactory, TestContext.Current.CancellationToken);
+            clientOptions, LoggerFactory, TestExecutionContext.Current.CancellationToken);
 
     public async ValueTask DisposeAsync()
     {
@@ -72,31 +72,31 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
         base.Dispose();
     }
 
-    [Fact]
+    [Test]
     public async Task EnablingStatelessMode_Disables_SseEndpoints()
     {
         await StartAsync();
 
-        using var sseResponse = await HttpClient.GetAsync("/sse", TestContext.Current.CancellationToken);
+        using var sseResponse = await HttpClient.GetAsync("/sse", TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, sseResponse.StatusCode);
 
-        using var messageResponse = await HttpClient.PostAsync("/message", new StringContent(""), TestContext.Current.CancellationToken);
+        using var messageResponse = await HttpClient.PostAsync("/message", new StringContent(""), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, messageResponse.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task EnablingStatelessMode_Disables_GetAndDeleteEndpoints()
     {
         await StartAsync();
 
-        using var getResponse = await HttpClient.GetAsync("/", TestContext.Current.CancellationToken);
+        using var getResponse = await HttpClient.GetAsync("/", TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.MethodNotAllowed, getResponse.StatusCode);
 
-        using var deleteResponse = await HttpClient.DeleteAsync("/", TestContext.Current.CancellationToken);
+        using var deleteResponse = await HttpClient.DeleteAsync("/", TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.MethodNotAllowed, deleteResponse.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task SamplingRequest_Fails_WithInvalidOperationException()
     {
         await StartAsync();
@@ -109,12 +109,12 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
 
         await using var client = await ConnectMcpClientAsync(mcpClientOptions);
 
-        var toolResponse = await client.CallToolAsync("testSamplingErrors", cancellationToken: TestContext.Current.CancellationToken);
+        var toolResponse = await client.CallToolAsync("testSamplingErrors", cancellationToken: TestExecutionContext.Current.CancellationToken);
         var toolContent = Assert.Single(toolResponse.Content);
         Assert.Equal("Server to client requests are not supported in stateless mode.", Assert.IsType<TextContentBlock>(toolContent).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task RootsRequest_Fails_WithInvalidOperationException()
     {
         await StartAsync();
@@ -127,12 +127,12 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
 
         await using var client = await ConnectMcpClientAsync(mcpClientOptions);
 
-        var toolResponse = await client.CallToolAsync("testRootsErrors", cancellationToken: TestContext.Current.CancellationToken);
+        var toolResponse = await client.CallToolAsync("testRootsErrors", cancellationToken: TestExecutionContext.Current.CancellationToken);
         var toolContent = Assert.Single(toolResponse.Content);
         Assert.Equal("Server to client requests are not supported in stateless mode.", Assert.IsType<TextContentBlock>(toolContent).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ElicitRequest_Fails_WithInvalidOperationException()
     {
         await StartAsync();
@@ -145,12 +145,12 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
 
         await using var client = await ConnectMcpClientAsync(mcpClientOptions);
 
-        var toolResponse = await client.CallToolAsync("testElicitationErrors", cancellationToken: TestContext.Current.CancellationToken);
+        var toolResponse = await client.CallToolAsync("testElicitationErrors", cancellationToken: TestExecutionContext.Current.CancellationToken);
         var toolContent = Assert.Single(toolResponse.Content);
         Assert.Equal("Server to client requests are not supported in stateless mode.", Assert.IsType<TextContentBlock>(toolContent).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task UnsolicitedNotification_Fails_WithInvalidOperationException()
     {
         InvalidOperationException? unsolicitedNotificationException = null;
@@ -162,7 +162,7 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
                 options.RunSessionHandler = async (context, server, cancellationToken) =>
                 {
                     unsolicitedNotificationException = await Assert.ThrowsAsync<InvalidOperationException>(
-                        () => server.SendNotificationAsync(NotificationMethods.PromptListChangedNotification, TestContext.Current.CancellationToken));
+                        () => server.SendNotificationAsync(NotificationMethods.PromptListChangedNotification, TestExecutionContext.Current.CancellationToken));
 
                     await server.RunAsync(cancellationToken);
                 };
@@ -174,22 +174,22 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
         await using var client = await ConnectMcpClientAsync();
 
         Assert.NotNull(unsolicitedNotificationException);
-        Assert.Equal("Unsolicited server to client messages are not supported in stateless mode.", unsolicitedNotificationException.Message);
+        Assert.Equal("Unsolicited server to client messages are not supported in stateless mode.", unsolicitedNotificationException!.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task ScopedServices_Resolve_FromRequestScope()
     {
         await StartAsync();
 
         await using var client = await ConnectMcpClientAsync();
 
-        var toolResponse = await client.CallToolAsync("testScope", cancellationToken: TestContext.Current.CancellationToken);
+        var toolResponse = await client.CallToolAsync("testScope", cancellationToken: TestExecutionContext.Current.CancellationToken);
         var toolContent = Assert.Single(toolResponse.Content);
         Assert.Equal("From request middleware!", Assert.IsType<TextContentBlock>(toolContent).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ProgressNotifications_Work_InStatelessMode()
     {
         // Use TCS to coordinate: the tool reports progress, then waits for the test to confirm
@@ -213,7 +213,7 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
 
         _app = Builder.Build();
         _app.MapMcp();
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         HttpClient.DefaultRequestHeaders.Accept.Add(new("application/json"));
         HttpClient.DefaultRequestHeaders.Accept.Add(new("text/event-stream"));
@@ -224,10 +224,10 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
         var callTask = client.CallToolAsync(
             "progressTool",
             progress: new SynchronousProgress<ProgressNotificationValue>(_ => progressReceived.TrySetResult()),
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Wait for the progress notification to arrive at the client.
-        await progressReceived.Task.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
+        await progressReceived.Task.WaitAsync(TimeSpan.FromSeconds(30), TestExecutionContext.Current.CancellationToken);
 
         // Let the tool complete now that we've confirmed progress was received.
         toolCanComplete.SetResult();
@@ -237,7 +237,7 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
         Assert.Equal("complete", Assert.IsType<TextContentBlock>(content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ConfigureSessionOptions_RunsPerRequest_InStatelessMode()
     {
         Builder.Services.AddMcpServer()
@@ -262,7 +262,7 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
 
         _app = Builder.Build();
         _app.MapMcp();
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         HttpClient.DefaultRequestHeaders.Accept.Add(new("application/json"));
         HttpClient.DefaultRequestHeaders.Accept.Add(new("text/event-stream"));
@@ -277,7 +277,7 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
 
         await using var client1 = await ConnectMcpClientAsync();
 
-        var toolResponse1 = await client1.CallToolAsync("dynamicTool", cancellationToken: TestContext.Current.CancellationToken);
+        var toolResponse1 = await client1.CallToolAsync("dynamicTool", cancellationToken: TestExecutionContext.Current.CancellationToken);
         var content1 = Assert.Single(toolResponse1.Content);
         Assert.Equal("configured-alpha", Assert.IsType<TextContentBlock>(content1).Text);
 
@@ -287,12 +287,12 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
 
         await using var client2 = await ConnectMcpClientAsync();
 
-        var toolResponse2 = await client2.CallToolAsync("dynamicTool", cancellationToken: TestContext.Current.CancellationToken);
+        var toolResponse2 = await client2.CallToolAsync("dynamicTool", cancellationToken: TestExecutionContext.Current.CancellationToken);
         var content2 = Assert.Single(toolResponse2.Content);
         Assert.Equal("configured-beta", Assert.IsType<TextContentBlock>(content2).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task StatelessMode_DoesNotAdvertise_ListChangedCapabilities()
     {
         Builder.Services.AddMcpServer()
@@ -306,7 +306,7 @@ public class StatelessServerTests(ITestOutputHelper outputHelper) : KestrelInMem
 
         _app = Builder.Build();
         _app.MapMcp();
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         HttpClient.DefaultRequestHeaders.Accept.Add(new("application/json"));
         HttpClient.DefaultRequestHeaders.Accept.Add(new("text/event-stream"));

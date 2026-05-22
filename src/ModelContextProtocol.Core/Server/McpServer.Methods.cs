@@ -736,7 +736,16 @@ public abstract partial class McpServer : McpSession
 
         foreach (JsonPropertyInfo pi in typeInfo.Properties)
         {
-            var def = CreatePrimitiveSchema(pi.PropertyType, serializerOptions);
+            var propertyTypeInfo = serializerOptions.GetTypeInfo(pi.PropertyType);
+            if (propertyTypeInfo.Kind != JsonTypeInfoKind.None)
+            {
+                throw new McpProtocolException($"Type '{pi.PropertyType.FullName}' is not a supported property type for elicitation requests.");
+            }
+        }
+
+        foreach (JsonPropertyInfo pi in typeInfo.Properties)
+        {
+            var def = CreatePrimitiveSchema(pi, serializerOptions);
             props[pi.Name] = def;
         }
 
@@ -746,13 +755,20 @@ public abstract partial class McpServer : McpSession
     /// <summary>
     /// Creates a primitive schema definition for the specified type, if supported.
     /// </summary>
-    /// <param name="type">The type to create the schema for.</param>
+    /// <param name="propertyInfo">The property to create the schema for.</param>
     /// <param name="serializerOptions">The serializer options to use.</param>
     /// <returns>The created primitive schema definition.</returns>
     /// <exception cref="McpProtocolException">The type is not supported.</exception>
-    private static ElicitRequestParams.PrimitiveSchemaDefinition CreatePrimitiveSchema(Type type, JsonSerializerOptions serializerOptions)
+    private static ElicitRequestParams.PrimitiveSchemaDefinition CreatePrimitiveSchema(JsonPropertyInfo propertyInfo, JsonSerializerOptions serializerOptions)
     {
+        var type = propertyInfo.PropertyType;
+
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+            throw new McpProtocolException($"Type '{type.FullName}' is not a supported property type for elicitation requests. Nullable types are not supported.");
+        }
+
+        if (!type.IsValueType && propertyInfo.IsGetNullable)
         {
             throw new McpProtocolException($"Type '{type.FullName}' is not a supported property type for elicitation requests. Nullable types are not supported.");
         }

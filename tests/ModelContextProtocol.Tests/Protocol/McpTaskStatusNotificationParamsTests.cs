@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class McpTaskStatusNotificationParamsTests
 {
-    [Fact]
+    [Test]
     public static void McpTaskStatusNotificationParams_SerializationRoundTrip()
     {
         // Arrange

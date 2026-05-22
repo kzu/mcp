@@ -15,7 +15,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
-using Xunit.Sdk;
 
 namespace ModelContextProtocol.AspNetCore.Tests.OAuth;
 
@@ -23,12 +22,12 @@ public class AuthTests : OAuthTestBase
 {
     private const string ClientMetadataDocumentUrl = $"{OAuthServerUrl}/client-metadata/cimd-client.json";
 
-    public AuthTests(ITestOutputHelper outputHelper)
-         : base(outputHelper)
+    public AuthTests()
+         : base()
     {
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate()
     {
         await using var app = await StartMcpServerAsync();
@@ -46,10 +45,10 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task CannotAuthenticate_WithoutOAuthConfiguration()
     {
         await using var app = await StartMcpServerAsync();
@@ -60,12 +59,12 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         var httpEx = await Assert.ThrowsAsync<HttpRequestException>(async () => await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken));
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken));
 
         Assert.Equal(HttpStatusCode.Unauthorized, httpEx.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task CannotAuthenticate_WithUnregisteredClient()
     {
         await using var app = await StartMcpServerAsync();
@@ -78,16 +77,20 @@ public class AuthTests : OAuthTestBase
                 ClientId = "unregistered-demo-client",
                 ClientSecret = "demo-secret",
                 RedirectUri = new Uri("http://localhost:1179/callback"),
-                AuthorizationRedirectDelegate = HandleAuthorizationUrlAsync,
+                AuthorizationRedirectDelegate = async (uri, redirect, ct) =>
+                {
+                    using var response = await HttpClient.GetAsync(uri, ct);
+                    Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                    throw new InvalidOperationException("Authorization failed for unregistered client.");
+                },
             },
         }, HttpClient, LoggerFactory);
 
-        // The EqualException is thrown by HandleAuthorizationUrlAsync when the /authorize request gets a 400
-        var equalEx = await Assert.ThrowsAsync<EqualException>(async () => await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await McpClient.CreateAsync(
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithDynamicClientRegistration()
     {
         await using var app = await StartMcpServerAsync();
@@ -108,10 +111,10 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithClientMetadataDocument()
     {
         await using var app = await StartMcpServerAsync();
@@ -128,10 +131,10 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task UsesDynamicClientRegistration_WhenCimdNotSupported()
     {
         // Disable CIMD support on the test OAuth server so the client
@@ -159,10 +162,10 @@ public class AuthTests : OAuthTestBase
 
         // Should succeed via dynamic client registration.
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task DoesNotUseClientMetadataDocument_WhenClientIdIsSpecified()
     {
         await using var app = await StartMcpServerAsync();
@@ -182,12 +185,12 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 
-    [Theory]
-    [InlineData("http://localhost:7029/client-metadata/cimd-client.json")] // Non-HTTPS Scheme
-    [InlineData("http://localhost:7029")] // Missing path
+    
+    [TestCase("http://localhost:7029/client-metadata/cimd-client.json")] // Non-HTTPS Scheme
+    [TestCase("http://localhost:7029")] // Missing path
     public async Task CannotAuthenticate_WithInvalidClientMetadataDocument(string uri)
     {
         await using var app = await StartMcpServerAsync();
@@ -204,12 +207,12 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         var ex = await Assert.ThrowsAsync<McpException>(() => McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken));
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken));
 
         Assert.StartsWith("Failed to handle unauthorized response", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithTokenRefresh()
     {
         var hasForcedRefresh = false;
@@ -268,14 +271,14 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.True(TestOAuthServer.HasRefreshedToken);
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithExtraParams()
     {
         await using var app = await StartMcpServerAsync();
@@ -303,13 +306,13 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(lastAuthorizationUri?.Query);
         Assert.Contains("custom_param=custom_value", lastAuthorizationUri?.Query);
     }
 
-    [Fact]
+    [Test]
     public async Task CannotOverrideExistingParameters_WithExtraParams()
     {
         await using var app = await StartMcpServerAsync();
@@ -331,10 +334,10 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await Assert.ThrowsAsync<ArgumentException>(() => McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken));
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithoutResourceInWwwAuthenticateHeader()
     {
         await using var app = await StartMcpServerAsync(authScheme: JwtBearerDefaults.AuthenticationScheme);
@@ -352,10 +355,10 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithoutResourceInWwwAuthenticateHeader_WithPathSuffix()
     {
         const string serverPath = "/mcp";
@@ -374,10 +377,10 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task AuthorizationFlow_UsesScopeFromProtectedResourceMetadata()
     {
         Builder.Services.Configure<McpAuthenticationOptions>(McpAuthenticationDefaults.AuthenticationScheme, options =>
@@ -407,12 +410,12 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.Equal("mcp:tools files:read", requestedScope);
     }
 
-    [Fact]
+    [Test]
     public async Task AuthorizationFlow_UsesScopeFromChallengeHeader()
     {
         var challengeScopes = "challenge:read challenge:write";
@@ -436,7 +439,7 @@ public class AuthTests : OAuthTestBase
         app.UseAuthorization();
 
         app.MapMcp().RequireAuthorization();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         string? requestedScope = null;
 
@@ -458,12 +461,12 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.Equal(challengeScopes, requestedScope);
     }
 
-    [Fact]
+    [Test]
     public async Task AuthorizationFlow_UsesScopeFromForbiddenHeader()
     {
         var adminScopes = "admin:read admin:write";
@@ -547,17 +550,17 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.Equal("mcp:tools", requestedScope);
 
-        var adminResult = await client.CallToolAsync("admin-tool", cancellationToken: TestContext.Current.CancellationToken);
+        var adminResult = await client.CallToolAsync("admin-tool", cancellationToken: TestExecutionContext.Current.CancellationToken);
         Assert.Equal("Admin tool executed.", adminResult.Content[0].ToString());
 
         Assert.Equal(adminScopes, requestedScope);
     }
 
-    [Fact]
+    [Test]
     public async Task AuthorizationFails_WhenResourceMetadataPortDiffers()
     {
         Builder.Services.Configure<McpAuthenticationOptions>(McpAuthenticationDefaults.AuthenticationScheme, options =>
@@ -580,10 +583,10 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await Assert.ThrowsAsync<McpException>(() => McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken));
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task CannotAuthenticate_WhenProtectedResourceMetadataMissingResource()
     {
         TestOAuthServer.ExpectResource = false;
@@ -619,12 +622,12 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         var ex = await Assert.ThrowsAsync<McpException>(() => McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken));
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken));
 
         Assert.Contains("Resource URI in metadata", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithAuthorizationServerPathInsertionMetadata()
     {
         Builder.Services.Configure<McpAuthenticationOptions>(McpAuthenticationDefaults.AuthenticationScheme, options =>
@@ -647,13 +650,13 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var requests = TestOAuthServer.MetadataRequests.ToArray();
         Assert.Contains("/.well-known/oauth-authorization-server/tenant1", requests);
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithAuthorizationServerPathFallbacks()
     {
         const string issuerPath = "/subdir/tenant2";
@@ -680,7 +683,7 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.Equal(
             [
@@ -692,7 +695,7 @@ public class AuthTests : OAuthTestBase
             TestOAuthServer.MetadataRequests);
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithResourceMetadataPathFallbacks()
     {
         const string resourcePath = "/mcp";
@@ -727,7 +730,7 @@ public class AuthTests : OAuthTestBase
 
         app.MapMcp(resourcePath).RequireAuthorization();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         var endpoint = new Uri(new Uri(McpServerUrl), resourcePath);
 
@@ -744,7 +747,7 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.Equal(
             [
@@ -754,7 +757,7 @@ public class AuthTests : OAuthTestBase
             wellKnownRequests);
     }
 
-    [Fact]
+    [Test]
     public async Task CannotAuthenticate_WhenResourceMetadataResourceIsNonRootParentPath()
     {
         const string configuredResourcePath = "/mcp";
@@ -784,7 +787,7 @@ public class AuthTests : OAuthTestBase
 
         app.MapMcp(requestedResourcePath).RequireAuthorization();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var transport = new HttpClientTransport(new()
         {
@@ -801,13 +804,13 @@ public class AuthTests : OAuthTestBase
         var ex = await Assert.ThrowsAsync<McpException>(async () =>
         {
             await McpClient.CreateAsync(
-                transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+                transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
         });
 
         Assert.Contains("does not match", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task CannotAuthenticate_WhenWwwAuthenticateResourceMetadataIsRootPath()
     {
         const string requestedResourcePath = "/mcp/tools";
@@ -825,7 +828,7 @@ public class AuthTests : OAuthTestBase
 
         app.MapMcp(requestedResourcePath).RequireAuthorization();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var transport = new HttpClientTransport(new()
         {
@@ -842,13 +845,13 @@ public class AuthTests : OAuthTestBase
         var ex = await Assert.ThrowsAsync<McpException>(async () =>
         {
             await McpClient.CreateAsync(
-                transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+                transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
         });
 
         Assert.Contains("does not match", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task ResourceMetadata_DoesNotAddTrailingSlash()
     {
         // This test verifies that automatically derived resource URIs don't have trailing slashes
@@ -860,18 +863,18 @@ public class AuthTests : OAuthTestBase
         // First, manually check the PRM document doesn't contain a trailing slash
         using var metadataResponse = await HttpClient.GetAsync(
             "/.well-known/oauth-protected-resource",
-            TestContext.Current.CancellationToken
+            TestExecutionContext.Current.CancellationToken
         );
 
         Assert.Equal(HttpStatusCode.OK, metadataResponse.StatusCode);
 
         var metadata = await metadataResponse.Content.ReadFromJsonAsync<ProtectedResourceMetadata>(
             McpJsonUtilities.DefaultOptions,
-            TestContext.Current.CancellationToken
+            TestExecutionContext.Current.CancellationToken
         );
 
         Assert.NotNull(metadata);
-        Assert.Equal("http://localhost:5000", metadata.Resource);
+        Assert.Equal("http://localhost:5000", metadata!.Resource);
         Assert.DoesNotMatch(@"/$", metadata.Resource); // No trailing slash
 
         // Then authenticate with the client - this will use the derived resource URI
@@ -890,10 +893,10 @@ public class AuthTests : OAuthTestBase
         // This should succeed - the client should not add a trailing slash
         // If the client incorrectly added a trailing slash, ValidResources would reject it
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public void CloneResourceMetadataClonesAllProperties()
     {
         var propertyNames = typeof(ProtectedResourceMetadata).GetProperties().Select(property => property.Name).ToList();
@@ -988,7 +991,7 @@ public class AuthTests : OAuthTestBase
         Assert.Empty(propertyNames);
     }
 
-    [Fact]
+    [Test]
     public async Task ResourceMetadata_PreservesExplicitTrailingSlash()
     {
         // This test verifies that explicitly configured trailing slashes are preserved
@@ -1012,18 +1015,18 @@ public class AuthTests : OAuthTestBase
         // First, manually check the PRM document contains the trailing slash
         using var metadataResponse = await HttpClient.GetAsync(
             "/.well-known/oauth-protected-resource",
-            TestContext.Current.CancellationToken
+            TestExecutionContext.Current.CancellationToken
         );
 
         Assert.Equal(HttpStatusCode.OK, metadataResponse.StatusCode);
 
         var metadata = await metadataResponse.Content.ReadFromJsonAsync<ProtectedResourceMetadata>(
             McpJsonUtilities.DefaultOptions,
-            TestContext.Current.CancellationToken
+            TestExecutionContext.Current.CancellationToken
         );
 
         Assert.NotNull(metadata);
-        Assert.Equal(resourceWithTrailingSlash, metadata.Resource);
+        Assert.Equal(resourceWithTrailingSlash, metadata!.Resource);
         Assert.Matches(@"/$", metadata.Resource); // Has trailing slash
 
         // Then authenticate with the client
@@ -1042,10 +1045,10 @@ public class AuthTests : OAuthTestBase
         // This should succeed with the explicitly configured trailing slash
         // If the client incorrectly trimmed the slash, ValidResources would reject it
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithLegacyServerWithoutProtectedResourceMetadata()
     {
         // 2025-03-26 backcompat: server does NOT serve PRM, but DOES serve auth server metadata.
@@ -1142,7 +1145,7 @@ public class AuthTests : OAuthTestBase
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapMcp().RequireAuthorization();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var transport = new HttpClientTransport(new()
         {
@@ -1157,10 +1160,10 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task CanAuthenticate_WithLegacyServerUsingDefaultEndpointFallback()
     {
         // 2025-03-26 backcompat: server does NOT serve PRM AND does NOT serve auth server metadata.
@@ -1244,7 +1247,7 @@ public class AuthTests : OAuthTestBase
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapMcp().RequireAuthorization();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var transport = new HttpClientTransport(new()
         {
@@ -1259,10 +1262,10 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task AuthorizationFlow_AppendsOfflineAccess_WhenServerAdvertisesIt()
     {
         TestOAuthServer.IncludeOfflineAccessInMetadata = true;
@@ -1288,13 +1291,13 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(requestedScope);
         Assert.Contains("offline_access", requestedScope!.Split(' '));
     }
 
-    [Fact]
+    [Test]
     public async Task AuthorizationFlow_DoesNotAppendOfflineAccess_WhenServerDoesNotAdvertiseIt()
     {
         // IncludeOfflineAccessInMetadata defaults to false, so the AS will not advertise offline_access.
@@ -1320,13 +1323,13 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(requestedScope);
         Assert.DoesNotContain("offline_access", requestedScope!.Split(' '));
     }
 
-    [Fact]
+    [Test]
     public async Task AuthorizationFlow_DoesNotDuplicateOfflineAccess_WhenAlreadyPresent()
     {
         TestOAuthServer.IncludeOfflineAccessInMetadata = true;
@@ -1359,7 +1362,7 @@ public class AuthTests : OAuthTestBase
         }, HttpClient, LoggerFactory);
 
         await using var client = await McpClient.CreateAsync(
-            transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+            transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(requestedScope);
         var scopeTokens = requestedScope!.Split(' ');

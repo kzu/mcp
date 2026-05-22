@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class McpTaskMetadataTests
 {
-    [Fact]
+    [Test]
     public static void McpTaskMetadata_SerializationRoundTrip_WithTimeToLive()
     {
         // Arrange
@@ -23,7 +23,7 @@ public static class McpTaskMetadataTests
         Assert.Equal(original.TimeToLive, deserialized.TimeToLive);
     }
 
-    [Fact]
+    [Test]
     public static void McpTaskMetadata_SerializationRoundTrip_WithNullTimeToLive()
     {
         // Arrange
@@ -38,7 +38,7 @@ public static class McpTaskMetadataTests
         Assert.Null(deserialized.TimeToLive);
     }
 
-    [Fact]
+    [Test]
     public static void McpTaskMetadata_HasCorrectJsonPropertyNames()
     {
         var metadata = new McpTaskMetadata

@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ModelPreferencesTests
 {
-    [Fact]
+    [Test]
     public static void ModelPreferences_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ModelPreferences
@@ -33,7 +33,7 @@ public static class ModelPreferencesTests
         Assert.Equal("claude-3", deserialized.Hints[1].Name);
     }
 
-    [Fact]
+    [Test]
     public static void ModelPreferences_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ModelPreferences();
@@ -48,7 +48,7 @@ public static class ModelPreferencesTests
         Assert.Null(deserialized.Hints);
     }
 
-    [Fact]
+    [Test]
     public static void ModelHint_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ModelHint { Name = "gpt-4o" };
@@ -60,7 +60,7 @@ public static class ModelPreferencesTests
         Assert.Equal("gpt-4o", deserialized.Name);
     }
 
-    [Fact]
+    [Test]
     public static void ModelHint_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ModelHint();

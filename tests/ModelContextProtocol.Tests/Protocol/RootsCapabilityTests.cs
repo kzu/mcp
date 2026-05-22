@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class RootsCapabilityTests
 {
-    [Fact]
+    [Test]
     public static void RootsCapability_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new RootsCapability
@@ -20,7 +20,7 @@ public static class RootsCapabilityTests
         Assert.True(deserialized.ListChanged);
     }
 
-    [Fact]
+    [Test]
     public static void RootsCapability_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new RootsCapability();

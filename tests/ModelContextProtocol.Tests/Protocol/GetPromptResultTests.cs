@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class GetPromptResultTests
 {
-    [Fact]
+    [Test]
     public static void GetPromptResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new GetPromptResult
@@ -44,7 +44,7 @@ public static class GetPromptResultTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void GetPromptResult_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new GetPromptResult();

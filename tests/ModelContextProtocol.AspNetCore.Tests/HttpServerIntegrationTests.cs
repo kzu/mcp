@@ -4,21 +4,39 @@ using ModelContextProtocol.Tests.Utils;
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<SseServerIntegrationTestFixture>
+public abstract class HttpServerIntegrationTests : LoggedTest
 {
-    protected readonly SseServerIntegrationTestFixture _fixture;
+    private static SseServerIntegrationTestFixture? s_fixture;
 
-    public HttpServerIntegrationTests(SseServerIntegrationTestFixture fixture, ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    protected SseServerIntegrationTestFixture _fixture => s_fixture!;
+
+    [OneTimeSetUp]
+    public static async Task OneTimeSetUpAsync()
     {
-        _fixture = fixture;
-        _fixture.Initialize(testOutputHelper, ClientTransportOptions);
+        s_fixture = new SseServerIntegrationTestFixture();
+        await Task.CompletedTask;
     }
 
-    public override void Dispose()
+    [SetUp]
+    public void SetUp()
     {
-        _fixture.TestCompleted();
-        base.Dispose();
+        s_fixture!.Initialize(TestOutputHelper, ClientTransportOptions);
+    }
+
+    [OneTimeTearDown]
+    public static async Task OneTimeTearDownAsync()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture.DisposeAsync();
+            s_fixture = null;
+        }
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        s_fixture?.TestCompleted();
     }
 
     protected abstract HttpClientTransportOptions ClientTransportOptions { get; }
@@ -28,20 +46,20 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         return _fixture.ConnectMcpClientAsync(options, LoggerFactory);
     }
 
-    [Fact]
+    [Test]
     public async Task ConnectAndPing_Sse_TestServer()
     {
         // Arrange
 
         // Act
         await using var client = await GetClientAsync();
-        await client.PingAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.PingAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(client);
     }
 
-    [Fact]
+    [Test]
     public async Task Connect_TestServer_ShouldProvideServerFields()
     {
         // Arrange
@@ -66,20 +84,20 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         }
     }
 
-    [Fact]
+    [Test]
     public async Task ListTools_Sse_TestServer()
     {
         // arrange
 
         // act
         await using var client = await GetClientAsync();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // assert
         Assert.NotNull(tools);
     }
 
-    [Fact]
+    [Test]
     public async Task CallTool_Sse_EchoServer()
     {
         // arrange
@@ -92,7 +110,7 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
             {
                 ["message"] = "Hello MCP!"
             },
-            cancellationToken: TestContext.Current.CancellationToken
+            cancellationToken: TestExecutionContext.Current.CancellationToken
         );
 
         // assert
@@ -102,16 +120,16 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         Assert.Equal("Echo: Hello MCP!", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task CallTool_EchoSessionId_ReturnsTheSameSessionId()
     {
         // arrange
 
         // act
         await using var client = await GetClientAsync();
-        var result1 = await client.CallToolAsync("echoSessionId", cancellationToken: TestContext.Current.CancellationToken);
-        var result2 = await client.CallToolAsync("echoSessionId", cancellationToken: TestContext.Current.CancellationToken);
-        var result3 = await client.CallToolAsync("echoSessionId", cancellationToken: TestContext.Current.CancellationToken);
+        var result1 = await client.CallToolAsync("echoSessionId", cancellationToken: TestExecutionContext.Current.CancellationToken);
+        var result2 = await client.CallToolAsync("echoSessionId", cancellationToken: TestExecutionContext.Current.CancellationToken);
+        var result3 = await client.CallToolAsync("echoSessionId", cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // assert
         Assert.NotNull(result1);
@@ -131,7 +149,7 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         Assert.Equal(textContent1.Text, textContent3.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ListResources_Sse_TestServer()
     {
         // arrange
@@ -139,13 +157,13 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         // act
         await using var client = await GetClientAsync();
 
-        IList<McpClientResource> allResources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        IList<McpClientResource> allResources = await client.ListResourcesAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // The everything server provides 100 test resources
         Assert.Equal(100, allResources.Count);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadResource_Sse_TextResource()
     {
         // arrange
@@ -155,7 +173,7 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         // Odd numbered resources are text in the everything server (despite the docs saying otherwise)
         // 1 is index 0, which is "even" in the 0-based index
         // We copied this oddity to the test server
-        var result = await client.ReadResourceAsync("test://static/resource/1", null, TestContext.Current.CancellationToken);
+        var result = await client.ReadResourceAsync("test://static/resource/1", null, TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Single(result.Contents);
@@ -164,7 +182,7 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         Assert.NotNull(textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadResource_Sse_BinaryResource()
     {
         // arrange
@@ -174,7 +192,7 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         // Even numbered resources are binary in the everything server (despite the docs saying otherwise)
         // 2 is index 1, which is "odd" in the 0-based index
         // We copied this oddity to the test server
-        var result = await client.ReadResourceAsync("test://static/resource/2", null, TestContext.Current.CancellationToken);
+        var result = await client.ReadResourceAsync("test://static/resource/2", null, TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Single(result.Contents);
@@ -183,14 +201,14 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         Assert.False(blobContent.Blob.IsEmpty);
     }
 
-    [Fact]
+    [Test]
     public async Task ListPrompts_Sse_TestServer()
     {
         // arrange
 
         // act
         await using var client = await GetClientAsync();
-        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var prompts = await client.ListPromptsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // assert
         Assert.NotNull(prompts);
@@ -200,21 +218,21 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         Assert.Contains(prompts, p => p.Name == "complex_prompt");
     }
 
-    [Fact]
+    [Test]
     public async Task GetPrompt_Sse_SimplePrompt()
     {
         // arrange
 
         // act
         await using var client = await GetClientAsync();
-        var result = await client.GetPromptAsync("simple_prompt", null, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.GetPromptAsync("simple_prompt", null, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // assert
         Assert.NotNull(result);
         Assert.NotEmpty(result.Messages);
     }
 
-    [Fact]
+    [Test]
     public async Task GetPrompt_Sse_ComplexPrompt()
     {
         // arrange
@@ -226,24 +244,24 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
             { "temperature", "0.7" },
             { "style", "formal" }
         };
-        var result = await client.GetPromptAsync("complex_prompt", arguments, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.GetPromptAsync("complex_prompt", arguments, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // assert
         Assert.NotNull(result);
         Assert.NotEmpty(result.Messages);
     }
 
-    [Fact]
+    [Test]
     public async Task GetPrompt_Sse_NonExistent_ThrowsException()
     {
         // arrange
 
         // act
         await using var client = await GetClientAsync();
-        await Assert.ThrowsAsync<McpProtocolException>(async () => await client.GetPromptAsync("non_existent_prompt", null, cancellationToken: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<McpProtocolException>(async () => await client.GetPromptAsync("non_existent_prompt", null, cancellationToken: TestExecutionContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task Sampling_Sse_TestServer()
     {
         Assert.SkipWhen(GetType() == typeof(StatelessServerIntegrationTests), "Sampling is not supported in stateless mode.");
@@ -271,7 +289,7 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
             ["prompt"] = "Test prompt",
             ["maxTokens"] = 100
         },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // assert
         Assert.NotNull(result);
@@ -279,7 +297,7 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         Assert.False(string.IsNullOrEmpty(textContent.Text));
     }
 
-    [Fact]
+    [Test]
     public async Task CallTool_Sse_EchoServer_Concurrently()
     {
         await using var client1 = await GetClientAsync();
@@ -294,7 +312,7 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
                 {
                     ["message"] = $"Hello MCP! {i}"
                 },
-                cancellationToken: TestContext.Current.CancellationToken
+                cancellationToken: TestExecutionContext.Current.CancellationToken
             );
 
             Assert.NotNull(result);
@@ -304,7 +322,7 @@ public abstract class HttpServerIntegrationTests : LoggedTest, IClassFixture<Sse
         }
     }
 
-    [Fact]
+    [Test]
     public async Task Completion_GracefulDisposal_ReturnsCompletionDetails()
     {
         var client = await GetClientAsync();

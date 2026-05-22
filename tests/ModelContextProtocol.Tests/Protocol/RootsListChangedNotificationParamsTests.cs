@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class RootsListChangedNotificationParamsTests
 {
-    [Fact]
+    [Test]
     public static void RootsListChangedNotificationParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new RootsListChangedNotificationParams
@@ -22,7 +22,7 @@ public static class RootsListChangedNotificationParamsTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void RootsListChangedNotificationParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new RootsListChangedNotificationParams();

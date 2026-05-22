@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -8,7 +8,7 @@ namespace ModelContextProtocol.Tests.Configuration;
 
 public class McpServerBuilderExtensionsTransportsTests
 {
-    [Fact]
+    [Test]
     public void WithStdioServerTransport_Registers_Transport()
     {
         var services = new ServiceCollection();
@@ -22,7 +22,7 @@ public class McpServerBuilderExtensionsTransportsTests
         Assert.NotNull(transportDescriptor);
     }
 
-    [Fact]
+    [Test]
     public async Task HostExecutionShutsDownWhenSingleSessionServerExits()
     {
         Pipe clientToServerPipe = new(), serverToClientPipe = new();
@@ -34,8 +34,8 @@ public class McpServerBuilderExtensionsTransportsTests
 
         IHost host = builder.Build();
 
-        Task t = host.RunAsync(TestContext.Current.CancellationToken);
-        await Task.Delay(1, TestContext.Current.CancellationToken);
+        Task t = host.RunAsync(TestExecutionContext.Current.CancellationToken);
+        await Task.Delay(1, TestExecutionContext.Current.CancellationToken);
         Assert.False(t.IsCompleted);
 
         clientToServerPipe.Writer.Complete();
