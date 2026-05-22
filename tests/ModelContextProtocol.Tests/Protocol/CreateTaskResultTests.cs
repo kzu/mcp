@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class CreateTaskResultTests
 {
-    [Fact]
+    [Test]
     public static void CreateTaskResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new CreateTaskResult

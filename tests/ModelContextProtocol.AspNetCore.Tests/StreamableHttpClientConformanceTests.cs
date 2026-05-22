@@ -15,7 +15,7 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper) : KestrelInMemoryTest(outputHelper), IAsyncDisposable
+public class StreamableHttpClientConformanceTests() : KestrelInMemoryTest(), IAsyncDisposable
 {
     private WebApplication? _app;
     private readonly List<string> _deleteRequestSessionIds = [];
@@ -91,7 +91,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
                     Id = request.Id,
                     Result = JsonSerializer.SerializeToNode(new CallToolResult
                     {
-                        Content = [new TextContentBlock { Text = parameters.Arguments["message"].ToString() }],
+                        Content = [new TextContentBlock { Text = parameters.Arguments["message"]!.ToString() }],
                     }, McpJsonUtilities.DefaultOptions),
                 });
             }
@@ -108,7 +108,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             });
         }
 
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
     }
 
     private async Task<ResumeTestServer> StartResumeServerAsync(string expectedSessionId)
@@ -123,11 +123,11 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
         var resumeServer = new ResumeTestServer(expectedSessionId);
         resumeServer.MapEndpoints(_app);
 
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
         return resumeServer;
     }
 
-    [Fact]
+    [Test]
     public async Task CanCallToolOnSessionlessStreamableHttpServer()
     {
         await StartAsync();
@@ -138,8 +138,8 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             TransportMode = HttpTransportMode.StreamableHttp,
         }, HttpClient, LoggerFactory);
 
-        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var echoTool = Assert.Single(tools);
         Assert.Equal("echo", echoTool.Name);
@@ -147,7 +147,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
     }
 
 
-    [Fact]
+    [Test]
     public async Task CanCallToolConcurrently()
     {
         await StartAsync();
@@ -158,8 +158,8 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             TransportMode = HttpTransportMode.StreamableHttp,
         }, HttpClient, LoggerFactory);
 
-        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var echoTool = Assert.Single(tools);
         Assert.Equal("echo", echoTool.Name);
@@ -173,7 +173,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
         await Task.WhenAll(echoTasks);
     }
 
-    [Fact]
+    [Test]
     public async Task SendsDeleteRequestOnDispose()
     {
         await StartAsync(enableDelete: true);
@@ -184,7 +184,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             TransportMode = HttpTransportMode.StreamableHttp,
         }, HttpClient, LoggerFactory);
 
-        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Dispose should trigger DELETE request
         await client.DisposeAsync();
@@ -194,7 +194,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
         Assert.Equal("test-session-123", sessionId);
     }
 
-    [Fact]
+    [Test]
     public async Task DoesNotSendDeleteWhenTransportDoesNotOwnSession()
     {
         await StartAsync(enableDelete: true);
@@ -206,7 +206,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             OwnsSession = false,
         }, HttpClient, LoggerFactory);
 
-        await using (await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken))
+        await using (await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken))
         {
             // No-op. Disposing the client should not trigger a DELETE request.
         }
@@ -214,7 +214,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
         Assert.Empty(_deleteRequestSessionIds);
     }
 
-    [Fact]
+    [Test]
     public async Task ResumeSessionStartsGetImmediately()
     {
         const string sessionId = "resume-session-123";
@@ -245,12 +245,12 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             transport,
             resumeOptions,
             loggerFactory: LoggerFactory,
-            cancellationToken: TestContext.Current.CancellationToken))
+            cancellationToken: TestExecutionContext.Current.CancellationToken))
         {
-            var observedSessionId = await resumeServer.GetStarted.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+            var observedSessionId = await resumeServer.GetStarted.WaitAsync(TestConstants.DefaultTimeout, TestExecutionContext.Current.CancellationToken);
             Assert.Equal(sessionId, observedSessionId);
 
-            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
             var tool = Assert.Single(tools);
             Assert.Equal("resume-echo", tool.Name);
 
@@ -264,7 +264,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
         Assert.Equal(sessionId, Assert.Single(resumeServer.DeleteSessionIds));
     }
 
-    [Fact]
+    [Test]
     public async Task CreateAsyncWithKnownSessionIdThrows()
     {
         await StartAsync();
@@ -277,12 +277,12 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
         }, HttpClient, LoggerFactory);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken));
+            McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken));
 
         Assert.Contains(nameof(McpClient.ResumeSessionAsync), exception.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task DisposeAsync_DoesNotHang_WhenOwnsSessionIsFalse_WithActiveGetStream()
     {
         var getRequestReceived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -338,7 +338,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
         {
             context.Response.Headers.ContentType = "text/event-stream";
             getRequestReceived.TrySetResult();
-            await context.Response.Body.FlushAsync(TestContext.Current.CancellationToken);
+            await context.Response.Body.FlushAsync(TestExecutionContext.Current.CancellationToken);
 
             try
             {
@@ -349,7 +349,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             }
         });
 
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var transport = new HttpClientTransport(new()
         {
@@ -358,20 +358,20 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             OwnsSession = false,
         }, HttpClient, LoggerFactory);
 
-        await using (var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken))
+        await using (var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken))
         {
-            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
             Assert.Single(tools);
 
             // Wait for the GET SSE stream to be established on the server
-            await getRequestReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+            await getRequestReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestExecutionContext.Current.CancellationToken);
 
             // Dispose should not hang even though the GET stream is actively open
-            await client.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+            await client.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10), TestExecutionContext.Current.CancellationToken);
         }
     }
 
-    [Fact]
+    [Test]
     public async Task Completion_SessionExpiredOnPost_ReturnsHttpCompletionDetails()
     {
         bool expireSession = false;
@@ -413,7 +413,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             return Results.Accepted();
         });
 
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var transport = new HttpClientTransport(new()
         {
@@ -421,7 +421,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             TransportMode = HttpTransportMode.StreamableHttp,
         }, HttpClient, LoggerFactory);
 
-        var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+        var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
         Assert.Equal("expiry-test-session", client.SessionId);
         Assert.False(client.Completion.IsCompleted);
 
@@ -429,15 +429,15 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
         expireSession = true;
 
         await Assert.ThrowsAnyAsync<Exception>(async () =>
-            await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken));
+            await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken));
 
-        var details = await client.Completion.WaitAsync(TestContext.Current.CancellationToken);
+        var details = await client.Completion.WaitAsync(TestExecutionContext.Current.CancellationToken);
         var httpDetails = Assert.IsType<HttpClientCompletionDetails>(details);
         Assert.Equal(HttpStatusCode.NotFound, httpDetails.HttpStatusCode);
         Assert.NotNull(httpDetails.Exception);
     }
 
-    [Fact]
+    [Test]
     public async Task Completion_SessionExpiredOnGet_ReturnsHttpCompletionDetails()
     {
         var expireSession = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -481,7 +481,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             context.Response.StatusCode = StatusCodes.Status404NotFound;
         });
 
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var transport = new HttpClientTransport(new()
         {
@@ -489,19 +489,19 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             TransportMode = HttpTransportMode.StreamableHttp,
         }, HttpClient, LoggerFactory);
 
-        var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+        var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
         Assert.Equal("get-expiry-test", client.SessionId);
 
         // Trigger session expiry on the GET SSE stream
         expireSession.SetResult();
 
-        var details = await client.Completion.WaitAsync(TestContext.Current.CancellationToken);
+        var details = await client.Completion.WaitAsync(TestExecutionContext.Current.CancellationToken);
         var httpDetails = Assert.IsType<HttpClientCompletionDetails>(details);
         Assert.Equal(HttpStatusCode.NotFound, httpDetails.HttpStatusCode);
         Assert.NotNull(httpDetails.Exception);
     }
 
-    [Fact]
+    [Test]
     public async Task Completion_GracefulDisposal_ReturnsCompletionDetails()
     {
         await StartAsync(enableDelete: true);
@@ -512,7 +512,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             TransportMode = HttpTransportMode.StreamableHttp,
         }, HttpClient, LoggerFactory);
 
-        var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+        var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
         Assert.False(client.Completion.IsCompleted);
 
         await client.DisposeAsync();
@@ -526,7 +526,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
 
     private static async Task CallEchoAndValidateAsync(McpClientTool echoTool)
     {
-        var response = await echoTool.CallAsync(new Dictionary<string, object?>() { ["message"] = "Hello world!" }, cancellationToken: TestContext.Current.CancellationToken);
+        var response = await echoTool.CallAsync(new Dictionary<string, object?>() { ["message"] = "Hello world!" }, cancellationToken: TestExecutionContext.Current.CancellationToken);
         Assert.NotNull(response);
         var content = Assert.Single(response.Content);
         Assert.Equal("Hello world!", Assert.IsType<TextContentBlock>(content).Text);
@@ -551,7 +551,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
 
     #region SEP-2243 Client Header Tests
 
-    [Fact]
+    [Test]
     public async Task ListTools_FiltersToolsWithInvalidHeaderAnnotations()
     {
         // Start a mock server that returns tools with both valid and invalid x-mcp-header annotations
@@ -563,8 +563,8 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             TransportMode = HttpTransportMode.StreamableHttp,
         }, HttpClient, LoggerFactory);
 
-        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // The server returns 3 tools: valid_tool, invalid_space_tool, invalid_duplicate_tool
         // The client should filter out tools with invalid x-mcp-header annotations
@@ -574,7 +574,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
         Assert.DoesNotContain("invalid_duplicate_tool", toolNames);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_SendsCorrectHeaders_EndToEnd()
     {
         // Start a server that captures request headers for verification
@@ -587,15 +587,15 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             TransportMode = HttpTransportMode.StreamableHttp,
         }, HttpClient, LoggerFactory);
 
-        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await using var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var tool = Assert.Single(tools);
         Assert.Equal("header_tool", tool.Name);
 
-        // Call the tool — client should send Mcp-Param-* headers automatically
+        // Call the tool â€” client should send Mcp-Param-* headers automatically
         capturedHeaders.Clear();
-        await tool.CallAsync(new Dictionary<string, object?> { ["region"] = "us-west-2" }, cancellationToken: TestContext.Current.CancellationToken);
+        await tool.CallAsync(new Dictionary<string, object?> { ["region"] = "us-west-2" }, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Verify the client sent the correct headers
         Assert.True(capturedHeaders.ContainsKey("Mcp-Method"), "Expected Mcp-Method header");
@@ -637,7 +637,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
 
             if (request.Method == "tools/list")
             {
-                // Return tools with various x-mcp-header annotations — some valid, some invalid
+                // Return tools with various x-mcp-header annotations â€” some valid, some invalid
                 var toolsJson = JsonSerializer.SerializeToNode(new ListToolsResult
                 {
                     Tools =
@@ -680,7 +680,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             return Results.Accepted();
         });
 
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
     }
 
     private async Task StartHeaderCapturingServer(Dictionary<string, string> capturedHeaders)
@@ -757,7 +757,7 @@ public class StreamableHttpClientConformanceTests(ITestOutputHelper outputHelper
             return Results.Accepted();
         });
 
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
     }
 
     private static Tool CreateToolWithSchema(string name, string schemaJson)

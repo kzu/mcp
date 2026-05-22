@@ -9,8 +9,8 @@ namespace ModelContextProtocol.Tests.Client;
 
 public class McpClientResourceSubscriptionTests : ClientServerTestBase
 {
-    public McpClientResourceSubscriptionTests(ITestOutputHelper outputHelper)
-        : base(outputHelper)
+    public McpClientResourceSubscriptionTests()
+        : base()
     {
     }
 
@@ -26,7 +26,7 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
         public static string GetResource(string id) => $"Resource content: {id}";
     }
 
-    [Fact]
+    [Test]
     public async Task SubscribeToResourceAsync_WithHandler_ReceivesNotifications()
     {
         // Arrange
@@ -42,13 +42,13 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
                 notificationReceived.TrySetResult(notification);
                 return default(ValueTask);
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Send a notification from the server
         await Server.SendNotificationAsync(
             NotificationMethods.ResourceUpdatedNotification,
             new ResourceUpdatedNotificationParams { Uri = resourceUri },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert
         using var cts = new CancellationTokenSource(TestConstants.DefaultTimeout);
@@ -57,7 +57,7 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
         Assert.Equal(resourceUri, receivedNotification.Uri);
     }
 
-    [Fact]
+    [Test]
     public async Task SubscribeToResourceAsync_WithHandler_FiltersNotificationsByUri()
     {
         // Arrange
@@ -79,31 +79,31 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
                 }
                 return default(ValueTask);
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Send notifications for different resources
         await Server.SendNotificationAsync(
             NotificationMethods.ResourceUpdatedNotification,
             new ResourceUpdatedNotificationParams { Uri = otherUri },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         await Server.SendNotificationAsync(
             NotificationMethods.ResourceUpdatedNotification,
             new ResourceUpdatedNotificationParams { Uri = subscribedUri },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert
         using var cts = new CancellationTokenSource(TestConstants.DefaultTimeout);
         await correctNotificationReceived.Task.WaitAsync(cts.Token);
         
         // Give a small delay to ensure no other notifications are processed
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestExecutionContext.Current.CancellationToken);
         
         // Should only receive the notification for the subscribed URI
         Assert.Equal(1, notificationCount);
     }
 
-    [Fact]
+    [Test]
     public async Task SubscribeToResourceAsync_WithHandler_DisposalUnsubscribes()
     {
         // Arrange
@@ -119,15 +119,15 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
                 Interlocked.Increment(ref notificationCount);
                 return default(ValueTask);
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Send a notification - should be received
         await Server.SendNotificationAsync(
             NotificationMethods.ResourceUpdatedNotification,
             new ResourceUpdatedNotificationParams { Uri = resourceUri },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
-        await Task.Delay(100, TestContext.Current.CancellationToken); // Allow time for notification to be processed
+        await Task.Delay(100, TestExecutionContext.Current.CancellationToken); // Allow time for notification to be processed
 
         // Dispose the subscription
         await subscription.DisposeAsync();
@@ -136,15 +136,15 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
         await Server.SendNotificationAsync(
             NotificationMethods.ResourceUpdatedNotification,
             new ResourceUpdatedNotificationParams { Uri = resourceUri },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
-        await Task.Delay(100, TestContext.Current.CancellationToken); // Allow time to ensure notification is not processed
+        await Task.Delay(100, TestExecutionContext.Current.CancellationToken); // Allow time to ensure notification is not processed
 
         // Assert - only the first notification should have been received
         Assert.Equal(1, notificationCount);
     }
 
-    [Fact]
+    [Test]
     public async Task SubscribeToResourceAsync_WithHandler_UriOverload_ReceivesNotifications()
     {
         // Arrange
@@ -160,13 +160,13 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
                 notificationReceived.TrySetResult(notification);
                 return default(ValueTask);
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Send a notification from the server
         await Server.SendNotificationAsync(
             NotificationMethods.ResourceUpdatedNotification,
             new ResourceUpdatedNotificationParams { Uri = resourceUri.AbsoluteUri },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert
         using var cts = new CancellationTokenSource(TestConstants.DefaultTimeout);
@@ -175,7 +175,7 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
         Assert.Equal(resourceUri.AbsoluteUri, receivedNotification.Uri);
     }
 
-    [Fact]
+    [Test]
     public async Task SubscribeToResourceAsync_WithNullHandler_ThrowsArgumentNullException()
     {
         // Arrange
@@ -186,10 +186,10 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
             await client.SubscribeToResourceAsync(
                 "test://resource/1",
                 handler: null!,
-                cancellationToken: TestContext.Current.CancellationToken));
+                cancellationToken: TestExecutionContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task SubscribeToResourceAsync_WithNullUri_ThrowsArgumentNullException()
     {
         // Arrange
@@ -200,10 +200,10 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
             await client.SubscribeToResourceAsync(
                 uri: (Uri)null!,
                 handler: (notification, ct) => default,
-                cancellationToken: TestContext.Current.CancellationToken));
+                cancellationToken: TestExecutionContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task SubscribeToResourceAsync_WithEmptyUri_ThrowsArgumentException()
     {
         // Arrange
@@ -214,10 +214,10 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
             await client.SubscribeToResourceAsync(
                 uri: "",
                 handler: (notification, ct) => default,
-                cancellationToken: TestContext.Current.CancellationToken));
+                cancellationToken: TestExecutionContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task SubscribeToResourceAsync_MultipleSubscriptions_BothReceiveNotifications()
     {
         // Arrange
@@ -238,7 +238,7 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
                 }
                 return default(ValueTask);
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         await using var subscription2 = await client.SubscribeToResourceAsync(
             uri2,
@@ -250,22 +250,22 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
                 }
                 return default(ValueTask);
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Send notifications
         await Server.SendNotificationAsync(
             NotificationMethods.ResourceUpdatedNotification,
             new ResourceUpdatedNotificationParams { Uri = uri1 },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         await Server.SendNotificationAsync(
             NotificationMethods.ResourceUpdatedNotification,
             new ResourceUpdatedNotificationParams { Uri = uri2 },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert
         using var cts = new CancellationTokenSource(TestConstants.DefaultTimeout);
-        var combined = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, TestContext.Current.CancellationToken);
+        var combined = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, TestExecutionContext.Current.CancellationToken);
         await Task.WhenAll(
             notification1Received.Task.WaitAsync(combined.Token),
             notification2Received.Task.WaitAsync(combined.Token));
@@ -274,7 +274,7 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
         Assert.True(await notification2Received.Task);
     }
 
-    [Fact]
+    [Test]
     public async Task SubscribeToResourceAsync_DisposalIsIdempotent()
     {
         // Arrange
@@ -284,7 +284,7 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
         var subscription = await client.SubscribeToResourceAsync(
             resourceUri,
             (notification, ct) => default,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Act - dispose multiple times
         await subscription.DisposeAsync();
@@ -295,7 +295,7 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
         Assert.True(true);
     }
 
-    [Fact]
+    [Test]
     public async Task SubscribeToResourceAsync_MultipleHandlersSameUri_BothReceiveNotifications()
     {
         // Arrange
@@ -316,7 +316,7 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
                 handler1Called.TrySetResult(true);
                 return default;
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         await using var subscription2 = await client.SubscribeToResourceAsync(
             resourceUri,
@@ -333,17 +333,17 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
                 }
                 return default;
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Send a single notification
         await Server.SendNotificationAsync(
             NotificationMethods.ResourceUpdatedNotification,
             new ResourceUpdatedNotificationParams { Uri = resourceUri },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert - Both handlers should be invoked
         using var cts = new CancellationTokenSource(TestConstants.DefaultTimeout);
-        var combined = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, TestContext.Current.CancellationToken);
+        var combined = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, TestExecutionContext.Current.CancellationToken);
         await Task.WhenAll(
             handler1Called.Task.WaitAsync(combined.Token),
             handler2Called.Task.WaitAsync(combined.Token));
@@ -358,11 +358,11 @@ public class McpClientResourceSubscriptionTests : ClientServerTestBase
         await Server.SendNotificationAsync(
             NotificationMethods.ResourceUpdatedNotification,
             new ResourceUpdatedNotificationParams { Uri = resourceUri },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Wait for handler2 to be called again
         using var cts2 = new CancellationTokenSource(TestConstants.DefaultTimeout);
-        var combined2 = CancellationTokenSource.CreateLinkedTokenSource(cts2.Token, TestContext.Current.CancellationToken);
+        var combined2 = CancellationTokenSource.CreateLinkedTokenSource(cts2.Token, TestExecutionContext.Current.CancellationToken);
         await handler2CalledAgain.Task.WaitAsync(combined2.Token);
 
         // Assert - Only the second handler should still receive notifications

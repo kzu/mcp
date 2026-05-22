@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class SubscribeRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void SubscribeRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new SubscribeRequestParams
@@ -24,7 +24,7 @@ public static class SubscribeRequestParamsTests
         Assert.Equal("tok-1", (string)deserialized.Meta["progressToken"]!);
     }
 
-    [Fact]
+    [Test]
     public static void SubscribeRequestParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new SubscribeRequestParams

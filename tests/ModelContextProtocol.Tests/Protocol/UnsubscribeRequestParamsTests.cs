@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class UnsubscribeRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void UnsubscribeRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new UnsubscribeRequestParams
@@ -24,7 +24,7 @@ public static class UnsubscribeRequestParamsTests
         Assert.Equal("tok-1", (string)deserialized.Meta["progressToken"]!);
     }
 
-    [Fact]
+    [Test]
     public static void UnsubscribeRequestParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new UnsubscribeRequestParams

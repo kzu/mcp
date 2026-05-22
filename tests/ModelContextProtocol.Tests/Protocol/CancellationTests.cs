@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -10,8 +10,8 @@ namespace ModelContextProtocol.Tests;
 
 public class CancellationTests : ClientServerTestBase
 {
-    public CancellationTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public CancellationTests()
+        : base()
     {
     }
 
@@ -33,7 +33,7 @@ public class CancellationTests : ClientServerTestBase
         }
     }
 
-    [Fact]
+    [Test]
     public async Task PrecancelRequest_CancelsBeforeSending()
     {
         await using var client = await CreateMcpClientForServer();
@@ -51,26 +51,26 @@ public class CancellationTests : ClientServerTestBase
         Assert.False(gotCancellation);
     }
 
-    [Fact]
+    [Test]
     public async Task CancellationPropagation_RequestingCancellationCancelsPendingRequest()
     {
         await using var client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var waitTool = tools.First(t => t.Name == "wait_for_cancellation");
 
         CancellationTokenSource cts = new();
         var waitTask = waitTool.InvokeAsync(cancellationToken: cts.Token);
         Assert.False(waitTask.IsCompleted);
 
-        await Task.Delay(1, TestContext.Current.CancellationToken);
+        await Task.Delay(1, TestExecutionContext.Current.CancellationToken);
         Assert.False(waitTask.IsCompleted);
 
         cts.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await waitTask);
     }
 
-    [Fact]
+    [Test]
     public async Task InitializeTimeout_DoesNotSendCancellationNotification()
     {
         // Arrange: Create a transport where the server never responds, so the client will time out.
@@ -93,7 +93,7 @@ public class CancellationTests : ClientServerTestBase
         await Assert.ThrowsAsync<TimeoutException>(async () =>
         {
             await McpClient.CreateAsync(clientTransport, clientOptions: clientOptions, loggerFactory: LoggerFactory,
-                cancellationToken: TestContext.Current.CancellationToken);
+                cancellationToken: TestExecutionContext.Current.CancellationToken);
         });
 
         // Assert: Read what was written to serverInput.

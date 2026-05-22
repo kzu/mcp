@@ -12,7 +12,7 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMemoryTest(outputHelper), IAsyncDisposable
+public class SessionMigrationTests() : KestrelInMemoryTest(), IAsyncDisposable
 {
     private static McpServerTool[] Tools { get; } = [McpServerTool.Create(EchoAsync), McpServerTool.Create(GetClientInfoAsync)];
 
@@ -31,7 +31,7 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
             """;
     }
 
-    [Fact]
+    [Test]
     public async Task OnSessionInitializedAsync_IsCalled_AfterInitializeHandshake()
     {
         InitializeRequestParams? capturedParams = null;
@@ -53,12 +53,12 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
 
         Assert.NotNull(capturedParams);
         Assert.Equal(sessionId, capturedSessionId);
-        Assert.Equal("IntegrationTestClient", capturedParams.ClientInfo.Name);
+        Assert.Equal("IntegrationTestClient", capturedParams!.ClientInfo.Name);
         Assert.Equal("1.0.0", capturedParams.ClientInfo.Version);
         Assert.NotNull(capturedParams.Capabilities);
     }
 
-    [Fact]
+    [Test]
     public async Task AllowSessionMigrationAsync_IsCalled_WhenSessionNotFound()
     {
         string? requestedSessionId = null;
@@ -89,11 +89,11 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
         // Verify the migrated client info was applied to the session.
         var clientInfo = await CallGetClientInfoAsync();
         Assert.NotNull(clientInfo);
-        Assert.Equal("MigratedClient", clientInfo.Name);
+        Assert.Equal("MigratedClient", clientInfo!.Name);
         Assert.Equal("2.0.0", clientInfo.Version);
     }
 
-    [Fact]
+    [Test]
     public async Task MigratedSession_PreservesSessionId()
     {
         var handler = new TestMigrationHandler
@@ -115,7 +115,7 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
         const string OriginalSessionId = "preserved-session-id";
         SetSessionId(OriginalSessionId);
 
-        using var response = await HttpClient.PostAsync("", JsonContent(MakeEchoRequest()), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(MakeEchoRequest()), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         // The response should echo back the same session ID.
@@ -123,7 +123,7 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
         Assert.Equal(OriginalSessionId, returnedSessionId);
     }
 
-    [Fact]
+    [Test]
     public async Task MigratedSession_CanHandleSubsequentRequests()
     {
         var migrationCount = 0;
@@ -155,7 +155,7 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
         Assert.Equal(1, migrationCount);
     }
 
-    [Fact]
+    [Test]
     public async Task AllowSessionMigrationAsync_ReturnsNull_ResultsIn404()
     {
         var handler = new TestMigrationHandler
@@ -169,23 +169,23 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
 
         SetSessionId("non-migratable-session");
 
-        using var response = await HttpClient.PostAsync("", JsonContent(MakeEchoRequest()), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(MakeEchoRequest()), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task NoMigrationHandler_UnknownSession_Returns404()
     {
-        // Start without any migration handler — backward compatibility.
+        // Start without any migration handler â€” backward compatibility.
         await StartAsync(migrationHandler: null);
 
         SetSessionId("unknown-session");
 
-        using var response = await HttpClient.PostAsync("", JsonContent(MakeEchoRequest()), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(MakeEchoRequest()), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task GetRequest_WithMigratedSession_Works()
     {
         var handler = new TestMigrationHandler
@@ -209,7 +209,7 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
         await CallEchoAndValidateAsync();
 
         // Now the GET request should work with the migrated session
-        using var getResponse = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        using var getResponse = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
     }
 
@@ -231,7 +231,7 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
 
         _app = Builder.Build();
         _app.MapMcp();
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         HttpClient.DefaultRequestHeaders.Accept.Add(new("application/json"));
         HttpClient.DefaultRequestHeaders.Accept.Add(new("text/event-stream"));
@@ -252,7 +252,7 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
     private async Task<string> CallInitializeAndValidateAsync()
     {
         HttpClient.DefaultRequestHeaders.Remove("mcp-session-id");
-        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestExecutionContext.Current.CancellationToken);
         var rpcResponse = await AssertSingleSseResponseAsync(response);
 
         var sessionId = Assert.Single(response.Headers.GetValues("mcp-session-id"));
@@ -268,12 +268,12 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
 
     private async Task CallEchoAndValidateAsync()
     {
-        using var response = await HttpClient.PostAsync("", JsonContent(MakeEchoRequest()), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(MakeEchoRequest()), TestExecutionContext.Current.CancellationToken);
         var rpcResponse = await AssertSingleSseResponseAsync(response);
 
         var callToolResult = JsonSerializer.Deserialize(rpcResponse.Result, GetJsonTypeInfo<CallToolResult>());
         Assert.NotNull(callToolResult);
-        var content = Assert.Single(callToolResult.Content);
+        var content = Assert.Single(callToolResult!.Content);
         Assert.IsType<TextContentBlock>(content);
     }
 
@@ -284,12 +284,12 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
             {"jsonrpc":"2.0","id":{{{{id}}}},"method":"tools/call","params":{"name":"getClientInfo","arguments":{}}}
             """;
 
-        using var response = await HttpClient.PostAsync("", JsonContent(request), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(request), TestExecutionContext.Current.CancellationToken);
         var rpcResponse = await AssertSingleSseResponseAsync(response);
 
         var callToolResult = JsonSerializer.Deserialize(rpcResponse.Result, GetJsonTypeInfo<CallToolResult>());
         Assert.NotNull(callToolResult);
-        var textContent = Assert.IsType<TextContentBlock>(Assert.Single(callToolResult.Content));
+        var textContent = Assert.IsType<TextContentBlock>(Assert.Single(callToolResult!.Content));
         return JsonSerializer.Deserialize(textContent.Text, GetJsonTypeInfo<Implementation>());
     }
 
@@ -299,8 +299,8 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
         Assert.Equal("text/event-stream", response.Content.Headers.ContentType?.MediaType);
 
         var sseItems = new List<string>();
-        var responseStream = await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
-        await foreach (var sseItem in SseParser.Create(responseStream).EnumerateAsync(TestContext.Current.CancellationToken))
+        var responseStream = await response.Content.ReadAsStreamAsync(TestExecutionContext.Current.CancellationToken);
+        await foreach (var sseItem in SseParser.Create(responseStream).EnumerateAsync(TestExecutionContext.Current.CancellationToken))
         {
             if (sseItem.EventType == "message")
             {
@@ -311,7 +311,7 @@ public class SessionMigrationTests(ITestOutputHelper outputHelper) : KestrelInMe
         var data = Assert.Single(sseItems);
         var jsonRpcResponse = JsonSerializer.Deserialize(data, GetJsonTypeInfo<JsonRpcResponse>());
         Assert.NotNull(jsonRpcResponse);
-        return jsonRpcResponse;
+        return jsonRpcResponse!;
     }
 
     [McpServerTool(Name = "echo")]

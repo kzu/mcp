@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class InitializeResultTests
 {
-    [Fact]
+    [Test]
     public static void InitializeResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new InitializeResult
@@ -42,7 +42,7 @@ public static class InitializeResultTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void InitializeResult_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new InitializeResult

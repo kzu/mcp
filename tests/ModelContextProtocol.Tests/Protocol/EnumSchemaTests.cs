@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public class EnumSchemaTests
 {
-    [Fact]
+    [Test]
     public void UntitledSingleSelectEnumSchema_Serializes_Correctly()
     {
         // Arrange
@@ -35,7 +35,7 @@ public class EnumSchemaTests
         Assert.DoesNotContain("oneOf", json);
     }
 
-    [Fact]
+    [Test]
     public void TitledSingleSelectEnumSchema_Serializes_Correctly()
     {
         // Arrange
@@ -73,7 +73,7 @@ public class EnumSchemaTests
         Assert.DoesNotContain("enumNames", json);
     }
 
-    [Fact]
+    [Test]
     public void UntitledMultiSelectEnumSchema_Serializes_Correctly()
     {
         // Arrange
@@ -114,7 +114,7 @@ public class EnumSchemaTests
         Assert.DoesNotContain("anyOf", json);
     }
 
-    [Fact]
+    [Test]
     public void TitledMultiSelectEnumSchema_Serializes_Correctly()
     {
         // Arrange
@@ -158,7 +158,7 @@ public class EnumSchemaTests
         Assert.Contains("\"title\":\"Authentication\"", json);
     }
 
-    [Fact]
+    [Test]
     public void SingleSelectEnum_WithEnum_Deserializes_As_UntitledSingleSelect()
     {
         // Arrange - JSON with enum should deserialize as UntitledSingleSelectEnumSchema
@@ -183,7 +183,7 @@ public class EnumSchemaTests
         Assert.Equal("draft", result.Default);
     }
 
-    [Fact]
+    [Test]
     public void SingleSelectEnum_WithOneOf_Deserializes_As_TitledSingleSelect()
     {
         // Arrange - JSON with oneOf should deserialize as TitledSingleSelectEnumSchema
@@ -214,7 +214,7 @@ public class EnumSchemaTests
         Assert.Equal("p1", result.Default);
     }
 
-    [Fact]
+    [Test]
     public void MultiSelectEnum_WithEnum_Deserializes_As_UntitledMultiSelect()
     {
         // Arrange - JSON with items.enum should deserialize as UntitledMultiSelectEnumSchema
@@ -243,7 +243,7 @@ public class EnumSchemaTests
         Assert.Equal(["tech"], result.Default);
     }
 
-    [Fact]
+    [Test]
     public void MultiSelectEnum_WithAnyOf_Deserializes_As_TitledMultiSelect()
     {
         // Arrange - JSON with items.anyOf should deserialize as TitledMultiSelectEnumSchema
@@ -279,7 +279,7 @@ public class EnumSchemaTests
     }
 
 #pragma warning disable MCP9001 // EnumSchema and LegacyTitledEnumSchema are deprecated but supported for backward compatibility
-    [Fact]
+    [Test]
     public void LegacyTitledEnumSchema_Serializes_Correctly()
     {
         // Arrange
@@ -308,7 +308,7 @@ public class EnumSchemaTests
         Assert.Contains("\"enumNames\":[\"Development\",\"Staging\",\"Production\"]", json);
     }
 
-    [Fact]
+    [Test]
     public void LegacyTitledEnumSchema_Direct_Serializes_Correctly()
     {
         // Arrange
@@ -337,7 +337,7 @@ public class EnumSchemaTests
         Assert.Contains("\"enumNames\":[\"Development\",\"Staging\",\"Production\"]", json);
     }
 
-    [Fact]
+    [Test]
     public void Enum_WithEnumNames_Deserializes_As_LegacyTitledEnumSchema()
     {
         // Arrange - JSON with enumNames should deserialize as (deprecated) LegacyTitledEnumSchema

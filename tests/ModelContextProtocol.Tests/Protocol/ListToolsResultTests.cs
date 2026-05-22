@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ListToolsResultTests
 {
-    [Fact]
+    [Test]
     public static void ListToolsResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ListToolsResult
@@ -34,7 +34,7 @@ public static class ListToolsResultTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void ListToolsResult_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ListToolsResult();

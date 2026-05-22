@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using System.Runtime.InteropServices;
@@ -14,7 +14,7 @@ public class McpServerLoggingLevelTests
 #endif
     }
 
-    [Fact]
+    [Test]
     public async Task CanCreateServerWithLoggingLevelHandler()
     {
         var services = new ServiceCollection();
@@ -28,7 +28,7 @@ public class McpServerLoggingLevelTests
         provider.GetRequiredService<McpServer>();
     }
 
-    [Fact]
+    [Test]
     public async Task AddingLoggingLevelHandlerSetsLoggingCapability()
     {
         var services = new ServiceCollection();
@@ -45,7 +45,7 @@ public class McpServerLoggingLevelTests
         Assert.NotNull(server.ServerOptions.Handlers.SetLoggingLevelHandler);
     }
 
-    [Fact]
+    [Test]
     public async Task ServerWithoutCallingLoggingLevelHandlerDoesNotSetLoggingCapability()
     {
         var services = new ServiceCollection();

@@ -5,7 +5,7 @@ public static class ProcessExtensions
     public static async Task WaitForExitAsync(this Process process, TimeSpan timeout)
     {
 #if NET
-        using var shutdownCts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        using var shutdownCts = CancellationTokenSource.CreateLinkedTokenSource(TestExecutionContext.Current.CancellationToken);
         shutdownCts.CancelAfter(timeout);
         await process.WaitForExitAsync(shutdownCts.Token);
 #else

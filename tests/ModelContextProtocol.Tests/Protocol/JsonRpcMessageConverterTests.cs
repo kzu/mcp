@@ -9,7 +9,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 /// </summary>
 public static class JsonRpcMessageConverterTests
 {
-    [Fact]
+    [Test]
     public static void Deserialize_JsonRpcRequest_WithAllProperties()
     {
         // Arrange
@@ -29,7 +29,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("value", request.Params["key"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_JsonRpcRequest_WithStringId()
     {
         // Arrange
@@ -47,7 +47,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("test/method", request.Method);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_JsonRpcNotification_WithParams()
     {
         // Arrange
@@ -66,7 +66,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal(50, notification.Params["progress"]?.GetValue<int>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_JsonRpcResponse_WithResult()
     {
         // Arrange
@@ -85,7 +85,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("success", response.Result["status"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_JsonRpcResponse_WithNullResult()
     {
         // Arrange
@@ -103,7 +103,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Null(response.Result);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_JsonRpcError_WithErrorDetails()
     {
         // Arrange
@@ -124,7 +124,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("Additional error info", error.Error.Data?.ToString());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_JsonRpcMessage_IgnoresUnknownProperties()
     {
         // Arrange - JSON with unknown properties
@@ -140,7 +140,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("test", request.Method);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_InvalidJsonRpcVersion_ThrowsException()
     {
         // Arrange
@@ -152,7 +152,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Contains("jsonrpc version", exception.Message);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_MissingJsonRpcVersion_ThrowsException()
     {
         // Arrange
@@ -164,7 +164,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Contains("jsonrpc version", exception.Message);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ResponseWithoutResultOrError_ThrowsException()
     {
         // Arrange
@@ -176,7 +176,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Contains("result or error", exception.Message);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_InvalidMessageFormat_ThrowsException()
     {
         // Arrange - neither request nor response nor notification
@@ -188,7 +188,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Contains("Invalid JSON-RPC message format", exception.Message);
     }
 
-    [Fact]
+    [Test]
     public static void Serialize_JsonRpcRequest_ProducesCorrectJson()
     {
         // Arrange
@@ -210,7 +210,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Contains("\"key\":\"value\"", json);
     }
 
-    [Fact]
+    [Test]
     public static void Serialize_JsonRpcNotification_ProducesCorrectJson()
     {
         // Arrange
@@ -229,7 +229,7 @@ public static class JsonRpcMessageConverterTests
         Assert.DoesNotContain("\"id\"", json);
     }
 
-    [Fact]
+    [Test]
     public static void RoundTrip_Request_PreservesData()
     {
         // Arrange
@@ -253,7 +253,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal(42, deserialized.Params?["nested"]?["value"]?.GetValue<int>());
     }
 
-    [Fact]
+    [Test]
     public static void RoundTrip_Response_PreservesData()
     {
         // Arrange
@@ -275,7 +275,7 @@ public static class JsonRpcMessageConverterTests
         Assert.True(deserialized.Result?["success"]?.GetValue<bool>());
     }
 
-    [Fact]
+    [Test]
     public static void RoundTrip_Error_PreservesData()
     {
         // Arrange
@@ -303,7 +303,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal(original.Error.Message, deserialized.Error.Message);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ResponseWithExplicitNullError_TreatedAsSuccessResponse()
     {
         // Arrange - Some implementations may include "error": null in success responses.
@@ -323,7 +323,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("value", response.Result["data"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ResponseWithNullResultAndNullError_TreatedAsSuccessWithNullResult()
     {
         // Arrange - Both result and error are explicitly null.
@@ -341,7 +341,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Null(response.Result);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ResponseWithBothErrorAndResult_ErrorTakesPrecedence()
     {
         // Arrange - JSON-RPC 2.0 spec says a response should have either result OR error, not both.
@@ -360,7 +360,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal(-32600, error.Error.Code);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ResponseWithBothResultAndError_ErrorTakesPrecedenceRegardlessOfOrder()
     {
         // Arrange - Same as above but with result appearing before error in the JSON.
@@ -378,7 +378,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal(-32600, error.Error.Code);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_RequestWithEmptyStringId_IsValidRequest()
     {
         // Arrange - Empty string is a valid ID per JSON-RPC 2.0
@@ -395,7 +395,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("test", request.Method);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_RequestWithZeroId_IsValidRequest()
     {
         // Arrange - Zero is a valid numeric ID
@@ -411,7 +411,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal(new RequestId(0), request.Id);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_RequestWithNegativeId_IsValidRequest()
     {
         // Arrange - Negative numbers are valid IDs
@@ -427,7 +427,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal(new RequestId(-42), request.Id);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_RequestWithLargeNumericId_IsValidRequest()
     {
         // Arrange - Large number ID
@@ -443,7 +443,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal(new RequestId(long.MaxValue), request.Id);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_NotificationWithExplicitNullParams_IsValidNotification()
     {
         // Arrange - params: null is valid
@@ -460,7 +460,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Null(notification.Params);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_RequestWithEmptyObjectParams_IsValidRequest()
     {
         // Arrange - Empty object params
@@ -477,7 +477,7 @@ public static class JsonRpcMessageConverterTests
         Assert.IsType<JsonObject>(request.Params);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_RequestWithArrayParams_IsValidRequest()
     {
         // Arrange - Array params (positional arguments per JSON-RPC 2.0)
@@ -499,7 +499,7 @@ public static class JsonRpcMessageConverterTests
         Assert.True(array[2]?.GetValue<bool>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ErrorWithNullData_IsValidError()
     {
         // Arrange - Error with explicit null data
@@ -517,7 +517,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Null(error.Error.Data);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ErrorWithComplexData_IsValidError()
     {
         // Arrange - Error with complex object data
@@ -533,7 +533,7 @@ public static class JsonRpcMessageConverterTests
         Assert.NotNull(error.Error.Data);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_RequestWithPropertiesInUnusualOrder_IsValidRequest()
     {
         // Arrange - Properties in unusual order (params, method, id, jsonrpc)
@@ -552,7 +552,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("value", request.Params?["key"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ResponseWithPropertiesInUnusualOrder_IsValidResponse()
     {
         // Arrange - Properties in unusual order (result, id, jsonrpc)
@@ -570,11 +570,11 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("ok", response.Result?["status"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_MessageWithUnicodeInStringValues_PreservesUnicode()
     {
         // Arrange - Unicode characters in method name, ID, and params
-        string json = """{"jsonrpc":"2.0","id":"请求-123","method":"日本語/メソッド","params":{"emoji":"🚀","text":"Ελληνικά"}}""";
+        string json = """{"jsonrpc":"2.0","id":"è¯·æ±‚-123","method":"æ—¥æœ¬èªž/ãƒ¡ã‚½ãƒƒãƒ‰","params":{"emoji":"ðŸš€","text":"Î•Î»Î»Î·Î½Î¹ÎºÎ¬"}}""";
 
         // Act
         var message = JsonSerializer.Deserialize<JsonRpcMessage>(json, McpJsonUtilities.DefaultOptions);
@@ -583,13 +583,13 @@ public static class JsonRpcMessageConverterTests
         Assert.NotNull(message);
         Assert.IsType<JsonRpcRequest>(message);
         var request = (JsonRpcRequest)message;
-        Assert.Equal(new RequestId("请求-123"), request.Id);
-        Assert.Equal("日本語/メソッド", request.Method);
-        Assert.Equal("🚀", request.Params?["emoji"]?.GetValue<string>());
-        Assert.Equal("Ελληνικά", request.Params?["text"]?.GetValue<string>());
+        Assert.Equal(new RequestId("è¯·æ±‚-123"), request.Id);
+        Assert.Equal("æ—¥æœ¬èªž/ãƒ¡ã‚½ãƒƒãƒ‰", request.Method);
+        Assert.Equal("ðŸš€", request.Params?["emoji"]?.GetValue<string>());
+        Assert.Equal("Î•Î»Î»Î·Î½Î¹ÎºÎ¬", request.Params?["text"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_MessageWithEscapedCharacters_HandlesEscaping()
     {
         // Arrange - JSON with escaped characters
@@ -606,7 +606,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("He said \"hello\"", request.Params?["quote"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ResponseWithPrimitiveResult_IsValid()
     {
         // Arrange - Result is a primitive string, not an object
@@ -623,7 +623,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("simple string result", response.Result.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ResponseWithNumericResult_IsValid()
     {
         // Arrange - Result is a number
@@ -640,7 +640,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal(42, response.Result.GetValue<int>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ResponseWithBooleanResult_IsValid()
     {
         // Arrange - Result is a boolean
@@ -657,7 +657,7 @@ public static class JsonRpcMessageConverterTests
         Assert.True(response.Result.GetValue<bool>());
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ResponseWithArrayResult_IsValid()
     {
         // Arrange - Result is an array
@@ -676,7 +676,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal(4, array.Count);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_MessageWithMultipleUnknownPropertiesInterspersed_IgnoresUnknown()
     {
         // Arrange - Unknown properties interspersed with known ones
@@ -694,7 +694,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("test", request.Method);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_NotificationWithMethodOnly_NoParams_IsValid()
     {
         // Arrange - Minimal notification with no params
@@ -711,7 +711,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Null(notification.Params);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_RequestWithNestedComplexParams_IsValid()
     {
         // Arrange - Deeply nested params structure
@@ -729,7 +729,7 @@ public static class JsonRpcMessageConverterTests
         Assert.Equal("deep", deepValue);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ErrorWithNumericData_IsValid()
     {
         // Arrange - Error with numeric data (not object or string)
@@ -745,7 +745,7 @@ public static class JsonRpcMessageConverterTests
         Assert.NotNull(error.Error.Data);
     }
 
-    [Fact]
+    [Test]
     public static void Deserialize_ErrorWithArrayData_IsValid()
     {
         // Arrange - Error with array data

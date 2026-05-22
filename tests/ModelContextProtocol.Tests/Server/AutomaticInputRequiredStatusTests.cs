@@ -14,14 +14,14 @@ namespace ModelContextProtocol.Tests.Server;
 /// </summary>
 public class AutomaticInputRequiredStatusTests : LoggedTest
 {
-    public AutomaticInputRequiredStatusTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public AutomaticInputRequiredStatusTests()
+        : base()
     {
     }
 
 #pragma warning disable MCPEXP001 // Tasks feature is experimental
 
-    [Fact]
+    [Test]
     public async Task TaskStatus_TransitionsToInputRequired_DuringSampleAsync()
     {
         // Arrange
@@ -92,15 +92,15 @@ public class AutomaticInputRequiredStatusTests : LoggedTest
             arguments: new Dictionary<string, object?> { ["prompt"] = "Hello" },
             taskMetadata: new McpTaskMetadata(),
             progress: null,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Wait for the sampling request to be received by the client
-        await samplingRequestReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await samplingRequestReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestExecutionContext.Current.CancellationToken);
 
         // Check the task status while sampling is in progress
         var statusDuringSampling = await taskStore.GetTaskAsync(
             mcpTask.TaskId, 
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         if (statusDuringSampling is not null)
         {
@@ -115,8 +115,8 @@ public class AutomaticInputRequiredStatusTests : LoggedTest
         int maxAttempts = 50;
         do
         {
-            await Task.Delay(100, TestContext.Current.CancellationToken);
-            finalStatus = await taskStore.GetTaskAsync(mcpTask.TaskId, cancellationToken: TestContext.Current.CancellationToken);
+            await Task.Delay(100, TestExecutionContext.Current.CancellationToken);
+            finalStatus = await taskStore.GetTaskAsync(mcpTask.TaskId, cancellationToken: TestExecutionContext.Current.CancellationToken);
             maxAttempts--;
         }
         while (finalStatus?.Status is not McpTaskStatus.Completed && maxAttempts > 0);
@@ -129,7 +129,7 @@ public class AutomaticInputRequiredStatusTests : LoggedTest
         Assert.Equal(McpTaskStatus.Completed, finalStatus.Status);
     }
 
-    [Fact]
+    [Test]
     public async Task TaskStatus_TransitionsToInputRequired_DuringElicitAsync()
     {
         // Arrange
@@ -191,15 +191,15 @@ public class AutomaticInputRequiredStatusTests : LoggedTest
             arguments: new Dictionary<string, object?> { ["message"] = "Please confirm" },
             taskMetadata: new McpTaskMetadata(),
             progress: null,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Wait for the elicitation request to be received
-        await elicitationRequestReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await elicitationRequestReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestExecutionContext.Current.CancellationToken);
 
         // Check the task status while elicitation is in progress
         var statusDuringElicitation = await taskStore.GetTaskAsync(
             mcpTask.TaskId,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         if (statusDuringElicitation is not null)
         {
@@ -214,8 +214,8 @@ public class AutomaticInputRequiredStatusTests : LoggedTest
         int maxAttempts = 50;
         do
         {
-            await Task.Delay(100, TestContext.Current.CancellationToken);
-            finalStatus = await taskStore.GetTaskAsync(mcpTask.TaskId, cancellationToken: TestContext.Current.CancellationToken);
+            await Task.Delay(100, TestExecutionContext.Current.CancellationToken);
+            finalStatus = await taskStore.GetTaskAsync(mcpTask.TaskId, cancellationToken: TestExecutionContext.Current.CancellationToken);
             maxAttempts--;
         }
         while (finalStatus?.Status is not McpTaskStatus.Completed && maxAttempts > 0);
@@ -228,7 +228,7 @@ public class AutomaticInputRequiredStatusTests : LoggedTest
         Assert.Equal(McpTaskStatus.Completed, finalStatus.Status);
     }
 
-    [Fact]
+    [Test]
     public async Task TaskStatus_ReturnsToWorking_AfterSamplingCompletes()
     {
         // Arrange
@@ -298,16 +298,16 @@ public class AutomaticInputRequiredStatusTests : LoggedTest
             arguments: new Dictionary<string, object?> { ["prompt"] = "Hello" },
             taskMetadata: new McpTaskMetadata(),
             progress: null,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Wait for sampling to complete inside the tool
-        await samplingCompleted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await samplingCompleted.Task.WaitAsync(TestConstants.DefaultTimeout, TestExecutionContext.Current.CancellationToken);
 
         // Small delay to ensure status update is processed
-        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await Task.Delay(50, TestExecutionContext.Current.CancellationToken);
 
         // Check status after sampling completed (should be back to Working)
-        var taskAfterSampling = await taskStore.GetTaskAsync(mcpTask.TaskId, cancellationToken: TestContext.Current.CancellationToken);
+        var taskAfterSampling = await taskStore.GetTaskAsync(mcpTask.TaskId, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Allow tool to complete
         checkStatusAfterSampling.TrySetResult(true);
@@ -317,7 +317,7 @@ public class AutomaticInputRequiredStatusTests : LoggedTest
         Assert.Equal(McpTaskStatus.Working, taskAfterSampling.Status);
     }
 
-    [Fact]
+    [Test]
     public async Task TaskStatus_DoesNotChangeToInputRequired_ForNonTaskExecution()
     {
         // Arrange - When a tool is NOT executed as a task, SampleAsync should not change any task status
@@ -378,12 +378,12 @@ public class AutomaticInputRequiredStatusTests : LoggedTest
         var result = await fixture.Client.CallToolAsync(
             "sampling-tool",
             arguments: new Dictionary<string, object?> { ["prompt"] = "Hello" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
-        await samplingCompleted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await samplingCompleted.Task.WaitAsync(TestConstants.DefaultTimeout, TestExecutionContext.Current.CancellationToken);
 
         // Assert - No task should exist (tool was not called as a task)
-        var tasks = await taskStore.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tasks = await taskStore.ListTasksAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         Assert.Empty(tasks.Tasks);
         
         // And the result should still work
@@ -443,7 +443,7 @@ public class AutomaticInputRequiredStatusTests : LoggedTest
                     loggerFactory),
                 clientOptions: clientOptions,
                 loggerFactory: loggerFactory,
-                cancellationToken: TestContext.Current.CancellationToken).GetAwaiter().GetResult();
+                cancellationToken: TestExecutionContext.Current.CancellationToken).GetAwaiter().GetResult();
         }
 
         public async ValueTask DisposeAsync()

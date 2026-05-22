@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class CompletionTests
 {
-    [Fact]
+    [Test]
     public static void Completion_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new Completion
@@ -27,7 +27,7 @@ public static class CompletionTests
         Assert.True(deserialized.HasMore);
     }
 
-    [Fact]
+    [Test]
     public static void Completion_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new Completion();

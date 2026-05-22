@@ -19,7 +19,7 @@ namespace ModelContextProtocol.AspNetCore.Tests;
 /// - Empty string header validation
 /// - Invalid header character rejection
 /// </summary>
-public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : KestrelInMemoryTest(outputHelper), IAsyncDisposable
+public class HttpHeaderConformanceTests() : KestrelInMemoryTest(), IAsyncDisposable
 {
     private WebApplication? _app;
 
@@ -36,7 +36,7 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
 
         _app = Builder.Build();
         _app.MapMcp();
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         HttpClient.DefaultRequestHeaders.Accept.Add(new("application/json"));
         HttpClient.DefaultRequestHeaders.Accept.Add(new("text/event-stream"));
@@ -88,7 +88,7 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
 
     #region Server-side validation tests
 
-    [Fact]
+    [Test]
     public async Task Server_AcceptsWhitespaceAroundMcpNameHeaderValue()
     {
         await StartAsync();
@@ -108,11 +108,11 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         request.Headers.Add("Mcp-Param-Verbose", "false");
         request.Headers.Add("Mcp-Param-EmptyVal", "");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task Server_AcceptsWhitespaceAroundMcpMethodHeaderValue()
     {
         await StartAsync();
@@ -131,11 +131,11 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         request.Headers.Add("Mcp-Param-Verbose", "false");
         request.Headers.Add("Mcp-Param-EmptyVal", "");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task Server_ValidatesEmptyStringHeaderValue_AgainstBodyValue()
     {
         await StartAsync();
@@ -155,11 +155,11 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         request.Headers.Add("Mcp-Param-Verbose", "false");
         request.Headers.Add("Mcp-Param-EmptyVal", "");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task Server_RejectsHeaderMismatch_WhenEmptyHeaderDoesNotMatchBody()
     {
         await StartAsync();
@@ -178,11 +178,11 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         request.Headers.Add("Mcp-Param-Verbose", "false");
         request.Headers.Add("Mcp-Param-EmptyVal", "");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task Server_AcceptsBase64EncodedHeaderWithControlChars()
     {
         await StartAsync();
@@ -204,11 +204,11 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         request.Headers.Add("Mcp-Param-Verbose", "false");
         request.Headers.Add("Mcp-Param-EmptyVal", "");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task Server_AcceptsLargeIntegerWithFullPrecision()
     {
         await StartAsync();
@@ -229,14 +229,14 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         request.Headers.Add("Mcp-Param-Verbose", "false");
         request.Headers.Add("Mcp-Param-EmptyVal", "");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData("42", 42)]       // "42" header vs 42 body → exact integer match
-    [InlineData("42.0", 42)]     // "42.0" header vs 42 body → numeric equivalence
-    [InlineData("42", 42.0)]     // "42" header vs 42.0 body → numeric equivalence
+    
+    [TestCase("42", 42)]       // "42" header vs 42 body â†’ exact integer match
+    [TestCase("42.0", 42)]     // "42.0" header vs 42 body â†’ numeric equivalence
+    [TestCase("42", 42.0)]     // "42" header vs 42.0 body â†’ numeric equivalence
     public async Task Server_AcceptsNumericEquivalentHeaderValues(string headerValue, double bodyValue)
     {
         await StartAsync();
@@ -254,17 +254,17 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         request.Headers.Add("Mcp-Param-Verbose", "false");
         request.Headers.Add("Mcp-Param-EmptyVal", "");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task Server_RejectsNonNumericMismatch_ForIntegerParam()
     {
         await StartAsync();
         await InitializeWithDraftVersionAsync();
 
-        // Header says "99" but body says priority:42 — must reject even with numeric comparison
+        // Header says "99" but body says priority:42 â€” must reject even with numeric comparison
         var callJson = CallTool("header_test", """{"region":"test","priority":42,"verbose":false,"emptyVal":""}""");
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "");
@@ -277,11 +277,11 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         request.Headers.Add("Mcp-Param-Verbose", "false");
         request.Headers.Add("Mcp-Param-EmptyVal", "");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task Server_SkipsHeaderValidation_ForNonDraftVersion()
     {
         await StartAsync();
@@ -292,17 +292,17 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "");
         request.Content = new StringContent(callJson, Encoding.UTF8, "application/json");
-        // Send the WRONG header value — this should still succeed because version is non-draft
+        // Send the WRONG header value â€” this should still succeed because version is non-draft
         request.Headers.Add("MCP-Protocol-Version", "2025-11-25");
         request.Headers.Add("Mcp-Method", "tools/call");
         request.Headers.Add("Mcp-Name", "header_test");
         request.Headers.Add("Mcp-Param-Region", "WRONG-VALUE");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task Server_RejectsInvalidUtf8EncodedHeaderValue()
     {
         await StartAsync();
@@ -325,22 +325,22 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         utf8Client.DefaultRequestHeaders.Accept.Add(new("text/event-stream"));
 
         // Send a tools/call with raw UTF-8 non-ASCII in the Mcp-Name header.
-        // Kestrel reads header bytes as Latin-1, so the UTF-8 bytes for "café☕"
+        // Kestrel reads header bytes as Latin-1, so the UTF-8 bytes for "cafÃ©â˜•"
         // will be garbled and won't match the body value, causing rejection.
-        var callJson = CallTool("café☕", """{"region":"us-west1","priority":42,"verbose":false,"emptyVal":""}""");
+        var callJson = CallTool("cafÃ©â˜•", """{"region":"us-west1","priority":42,"verbose":false,"emptyVal":""}""");
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "");
         request.Content = new StringContent(callJson, Encoding.UTF8, "application/json");
         request.Headers.Add("MCP-Protocol-Version", "DRAFT-2026-v1");
         request.Headers.TryAddWithoutValidation("Mcp-Method", "tools/call");
-        // Raw UTF-8 non-ASCII value in Mcp-Name — server must reject this
-        request.Headers.TryAddWithoutValidation("Mcp-Name", "café☕");
+        // Raw UTF-8 non-ASCII value in Mcp-Name â€” server must reject this
+        request.Headers.TryAddWithoutValidation("Mcp-Name", "cafÃ©â˜•");
         request.Headers.TryAddWithoutValidation("Mcp-Param-Region", "us-west1");
         request.Headers.TryAddWithoutValidation("Mcp-Param-Priority", "42");
         request.Headers.TryAddWithoutValidation("Mcp-Param-Verbose", "false");
         request.Headers.TryAddWithoutValidation("Mcp-Param-EmptyVal", "");
 
-        using var response = await utf8Client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await utf8Client.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
@@ -348,9 +348,9 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
 
     #region Client-side encoding tests (unit tests for McpHeaderEncoder)
 
-    [Theory]
-    [InlineData("hello\tworld")]
-    [InlineData("col1\tcol2\tcol3")]
+    
+    [TestCase("hello\tworld")]
+    [TestCase("col1\tcol2\tcol3")]
     public void Client_TabInValue_IsBase64Encoded(string value)
     {
         var encoded = McpHeaderEncoder.EncodeValue(value);
@@ -363,14 +363,14 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         Assert.Equal(value, decoded);
     }
 
-    [Theory]
-    [InlineData("simple-text", false)]
-    [InlineData("with space", false)]
-    [InlineData("Hello, 世界", true)]
-    [InlineData("line1\nline2", true)]
-    [InlineData("\ttab-start", true)]
-    [InlineData("mid\ttab", true)]
-    [InlineData("control\x01char", true)]
+    
+    [TestCase("simple-text", false)]
+    [TestCase("with space", false)]
+    [TestCase("Hello, ä¸–ç•Œ", true)]
+    [TestCase("line1\nline2", true)]
+    [TestCase("\ttab-start", true)]
+    [TestCase("mid\ttab", true)]
+    [TestCase("control\x01char", true)]
     public void Client_EncodeValue_Base64OnlyWhenNeeded(string value, bool expectBase64)
     {
         var encoded = McpHeaderEncoder.EncodeValue(value);
@@ -390,7 +390,7 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         Assert.Equal(value, decoded);
     }
 
-    [Fact]
+    [Test]
     public void Client_EncodeValue_LargeInteger_PreservesFullPrecision()
     {
         // 2^53 + 1 cannot be represented exactly as a double
@@ -398,7 +398,7 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         Assert.Equal("9007199254740993", encoded);
     }
 
-    [Fact]
+    [Test]
     public void Client_EncodeValue_Boolean_EncodesCorrectly()
     {
         Assert.Equal("true", McpHeaderEncoder.EncodeValue(true));
@@ -409,13 +409,13 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
 
     #region Version gating tests
 
-    [Theory]
-    [InlineData("DRAFT-2026-v1", true)]
-    [InlineData("2025-11-25", false)]
-    [InlineData("2025-06-18", false)]
-    [InlineData("2024-11-05", false)]
-    [InlineData(null, false)]
-    [InlineData("", false)]
+    
+    [TestCase("DRAFT-2026-v1", true)]
+    [TestCase("2025-11-25", false)]
+    [TestCase("2025-06-18", false)]
+    [TestCase("2024-11-05", false)]
+    [TestCase(null, false)]
+    [TestCase("", false)]
     public void SupportsStandardHeaders_CorrectlyGatesVersions(string? version, bool expected)
     {
         Assert.Equal(expected, McpHttpHeaders.SupportsStandardHeaders(version));
@@ -434,7 +434,7 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
         request.Headers.Add("MCP-Protocol-Version", "DRAFT-2026-v1");
         request.Headers.Add("Mcp-Method", "initialize");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var sessionId = Assert.Single(response.Headers.GetValues("mcp-session-id"));
@@ -446,7 +446,7 @@ public class HttpHeaderConformanceTests(ITestOutputHelper outputHelper) : Kestre
     {
         HttpClient.DefaultRequestHeaders.Remove("mcp-session-id");
 
-        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var sessionId = Assert.Single(response.Headers.GetValues("mcp-session-id"));

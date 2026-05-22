@@ -11,8 +11,8 @@ namespace ModelContextProtocol.Tests.Client;
 
 public class McpClientToolTests : ClientServerTestBase
 {
-    public McpClientToolTests(ITestOutputHelper outputHelper)
-        : base(outputHelper)
+    public McpClientToolTests()
+        : base()
     {
     }
 
@@ -175,84 +175,84 @@ public class McpClientToolTests : ClientServerTestBase
         }
     }
 
-    [Fact]
+    [Test]
     public async Task TextOnlyTool_ReturnsSingleTextContent()
     {
         // Arrange
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "text_only_tool");
 
         // Act
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert - single text content should return TextContent
         var textContent = Assert.IsType<TextContent>(result);
         Assert.Equal("Simple text result", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task StringTool_ReturnsSingleTextContent()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "string_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var textContent = Assert.IsType<TextContent>(result);
         Assert.Equal("Simple string result", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ImageTool_ReturnsSingleDataContent()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "image_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var dataContent = Assert.IsType<DataContent>(result);
         Assert.Equal("image/png", dataContent.MediaType);
         Assert.Equal("fake-image-data", Encoding.UTF8.GetString(dataContent.Data.ToArray()));
     }
 
-    [Fact]
+    [Test]
     public async Task AudioTool_ReturnsSingleDataContent()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "audio_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var dataContent = Assert.IsType<DataContent>(result);
         Assert.Equal("audio/mp3", dataContent.MediaType);
         Assert.Equal("fake-audio-data", Encoding.UTF8.GetString(dataContent.Data.ToArray()));
     }
 
-    [Fact]
+    [Test]
     public async Task EmbeddedResourceTool_ReturnsSingleTextContent()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "embedded_resource_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var textContent = Assert.IsType<TextContent>(result);
         Assert.Equal("Resource text content", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task MixedContentTool_ReturnsAIContentArray()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "mixed_content_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var aiContents = Assert.IsType<AIContent[]>(result);
         Assert.Equal(2, aiContents.Length);
@@ -264,14 +264,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("image/png", dataContent.MediaType);
     }
 
-    [Fact]
+    [Test]
     public async Task MultipleImagesTool_ReturnsAIContentArray()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "multiple_images_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var aiContents = Assert.IsType<AIContent[]>(result);
         Assert.Equal(2, aiContents.Length);
@@ -285,14 +285,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("image2", Encoding.UTF8.GetString(dataContent1.Data.ToArray()));
     }
 
-    [Fact]
+    [Test]
     public async Task AudioWithTextTool_ReturnsAIContentArray()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "audio_with_text_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var aiContents = Assert.IsType<AIContent[]>(result);
         Assert.Equal(2, aiContents.Length);
@@ -304,14 +304,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("audio/wav", dataContent.MediaType);
     }
 
-    [Fact]
+    [Test]
     public async Task ResourceWithTextTool_ReturnsAIContentArray()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "resource_with_text_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var aiContents = Assert.IsType<AIContent[]>(result);
         Assert.Equal(2, aiContents.Length);
@@ -323,14 +323,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("File content", textContent1.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task AllContentTypesTool_ReturnsAIContentArray()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "all_content_types_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var aiContents = Assert.IsType<AIContent[]>(result);
         Assert.Equal(4, aiContents.Length);
@@ -348,14 +348,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("application/octet-stream", dataContent3.MediaType);
     }
 
-    [Fact]
+    [Test]
     public async Task SingleAIContent_PreservesRawRepresentation()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "image_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var dataContent = Assert.IsType<DataContent>(result);
         Assert.NotNull(dataContent.RawRepresentation);
@@ -363,14 +363,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("image/png", imageBlock.MimeType);
     }
 
-    [Fact]
+    [Test]
     public async Task ResourceLinkTool_ReturnsJsonElement()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "resource_link_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.IsType<JsonElement>(result);
         JsonElement jsonElement = (JsonElement)result!;
@@ -380,14 +380,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal(1, contentValue.GetArrayLength());
     }
 
-    [Fact]
+    [Test]
     public async Task MixedWithNonConvertibleTool_ReturnsJsonElement()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "mixed_with_non_convertible_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var jsonElement = Assert.IsType<JsonElement>(result);
         Assert.True(jsonElement.TryGetProperty("content", out var contentArray));
@@ -403,14 +403,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("resource_link", type2.GetString());
     }
 
-    [Fact]
+    [Test]
     public async Task ErrorTool_ReturnsJsonElement()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "error_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.IsType<JsonElement>(result);
         JsonElement jsonElement = (JsonElement)result!;
@@ -420,14 +420,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal(JsonValueKind.Array, content.ValueKind);
     }
 
-    [Fact]
+    [Test]
     public async Task StructuredContentTool_ReturnsJsonElement()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "structured_content_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var jsonElement = Assert.IsType<JsonElement>(result);
         Assert.True(jsonElement.TryGetProperty("structuredContent", out var structuredContent));
@@ -437,15 +437,15 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal(JsonValueKind.Array, content.ValueKind);
     }
 
-    [Fact]
+    [Test]
     public async Task MetaTool_ReturnsJsonElement()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "meta_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var jsonElement = Assert.IsType<JsonElement>(result);
         Assert.True(jsonElement.TryGetProperty("_meta", out var meta));
@@ -455,15 +455,15 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal(JsonValueKind.Array, content.ValueKind);
     }
 
-    [Fact]
+    [Test]
     public async Task ErrorWithMetaTool_ReturnsJsonElement()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "error_with_meta_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.IsType<JsonElement>(result);
         JsonElement jsonElement = (JsonElement)result!;
@@ -476,28 +476,28 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal(JsonValueKind.Array, content.ValueKind);
     }
 
-    [Fact]
+    [Test]
     public async Task BinaryResourceTool_ReturnsSingleDataContent()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "binary_resource_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var dataContent = Assert.IsType<DataContent>(result);
         Assert.Equal("application/octet-stream", dataContent.MediaType);
         Assert.Equal("binary-data", Encoding.UTF8.GetString(dataContent.Data.ToArray()));
     }
 
-    [Fact]
+    [Test]
     public async Task MultipleAIContent_PreservesRawRepresentation()
     {
         await using McpClient client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "mixed_content_tool");
 
-        var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var aiContents = Assert.IsType<AIContent[]>(result);
         Assert.Equal(2, aiContents.Length);
@@ -511,19 +511,19 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.IsType<ImageContentBlock>(dataContent.RawRepresentation);
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_MetaIsPassedToServer()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         var result = await tool.WithMeta(new()
         {
             ["traceId"] = "test-trace-123",
             ["customKey"] = "customValue"
-        }).CallAsync(cancellationToken: TestContext.Current.CancellationToken);
+        }).CallAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Single(result.Content);
@@ -536,19 +536,19 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("customValue", receivedMetadata["customKey"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_Null_PreviousMetaIsRemoved()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         var result = await tool.WithMeta(new()
         {
             ["traceId"] = "test-trace-123",
             ["customKey"] = "customValue"
-        }).WithMeta(null).CallAsync(cancellationToken: TestContext.Current.CancellationToken);
+        }).WithMeta(null).CallAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Single(result.Content);
@@ -560,12 +560,12 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Null(receivedMetadata["customKey"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_PreviousMetaIsOverwritten()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         var result = await tool.WithMeta(new()
@@ -576,7 +576,7 @@ public class McpClientToolTests : ClientServerTestBase
         {
             ["traceId2"] = "abc",
             ["customKey2"] = "def"
-        }).CallAsync(cancellationToken: TestContext.Current.CancellationToken);
+        }).CallAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Single(result.Content);
@@ -590,12 +590,12 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("def", receivedMetadata["customKey2"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_CreatesNewInstance()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "text_only_tool");
 
         var toolWithMeta = tool.WithMeta(new() { ["key"] = "value" });
@@ -605,12 +605,12 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal(tool.Description, toolWithMeta.Description);
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_ChainsWithOtherWithMethods()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         var modifiedTool = tool
@@ -621,7 +621,7 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("custom_name", modifiedTool.Name);
         Assert.Equal("Custom description", modifiedTool.Description);
 
-        var result = await modifiedTool.CallAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await modifiedTool.CallAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var textBlock = Assert.IsType<TextContentBlock>(result.Content[0]);
         var receivedMetadata = JsonNode.Parse(textBlock.Text)?.AsObject();
@@ -629,19 +629,19 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("chainedValue", receivedMetadata["chainedKey"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_MultipleToolInstancesWithDifferentMetadata()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         var tool1 = tool.WithMeta(new() { ["clientId"] = "client-1" });
         var tool2 = tool.WithMeta(new() { ["clientId"] = "client-2" });
 
-        var result1 = await tool1.CallAsync(cancellationToken: TestContext.Current.CancellationToken);
-        var result2 = await tool2.CallAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result1 = await tool1.CallAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
+        var result2 = await tool2.CallAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert - each call should have its own metadata
         var textBlock1 = Assert.IsType<TextContentBlock>(result1.Content[0]);
@@ -653,12 +653,12 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("client-2", receivedMetadata2?["clientId"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_MergesWithRequestOptionsMeta_NonOverlappingKeys()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         RequestOptions requestOptions = new()
@@ -673,7 +673,7 @@ public class McpClientToolTests : ClientServerTestBase
         {
             ["toolKey"] = "toolValue",
             ["sharedContext"] = "fromTool"
-        }).CallAsync(options: requestOptions, cancellationToken: TestContext.Current.CancellationToken);
+        }).CallAsync(options: requestOptions, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var textBlock = Assert.IsType<TextContentBlock>(result.Content[0]);
         var receivedMetadata = JsonNode.Parse(textBlock.Text)?.AsObject();
@@ -683,12 +683,12 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("fromTool", receivedMetadata["sharedContext"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_MergesWithRequestOptionsMeta_OverlappingKeys_RequestOptionsWins()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         RequestOptions requestOptions = new()
@@ -704,7 +704,7 @@ public class McpClientToolTests : ClientServerTestBase
         {
             ["sharedKey"] = "fromWithMeta",
             ["toolOnlyKey"] = "toolValue"
-        }).CallAsync(options: requestOptions, cancellationToken: TestContext.Current.CancellationToken);
+        }).CallAsync(options: requestOptions, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var textBlock = Assert.IsType<TextContentBlock>(result.Content[0]);
         var receivedMetadata = JsonNode.Parse(textBlock.Text)?.AsObject();
@@ -718,12 +718,12 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("requestValue", receivedMetadata["requestOnlyKey"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_WithEmptyRequestOptionsMeta_UsesToolMeta()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         RequestOptions requestOptions = new()
@@ -734,7 +734,7 @@ public class McpClientToolTests : ClientServerTestBase
         var result = await tool.WithMeta(new()
         {
             ["toolKey"] = "toolValue"
-        }).CallAsync(options: requestOptions, cancellationToken: TestContext.Current.CancellationToken);
+        }).CallAsync(options: requestOptions, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var textBlock = Assert.IsType<TextContentBlock>(result.Content[0]);
         var receivedMetadata = JsonNode.Parse(textBlock.Text)?.AsObject();
@@ -742,12 +742,12 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("toolValue", receivedMetadata["toolKey"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_DoesNotMutateOriginalMetadata()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         JsonObject toolMeta = new()
@@ -763,7 +763,7 @@ public class McpClientToolTests : ClientServerTestBase
             }
         };
 
-        await tool.WithMeta(toolMeta).CallAsync(options: requestOptions, cancellationToken: TestContext.Current.CancellationToken);
+        await tool.WithMeta(toolMeta).CallAsync(options: requestOptions, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // original toolMeta should not be mutated
         Assert.Single(toolMeta);
@@ -771,12 +771,12 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.False(toolMeta.ContainsKey("newKey"));
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_MultipleCallsWithDifferentRequestOptions_DoNotInterfere()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         var toolWithMeta = tool.WithMeta(new()
@@ -786,11 +786,11 @@ public class McpClientToolTests : ClientServerTestBase
 
         var result1 = await toolWithMeta.CallAsync(
             options: new RequestOptions { Meta = new JsonObject { ["callId"] = "call1" } },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var result2 = await toolWithMeta.CallAsync(
             options: new RequestOptions { Meta = new JsonObject { ["callId"] = "call2" } },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var textBlock1 = Assert.IsType<TextContentBlock>(result1.Content[0]);
         var receivedMetadata1 = JsonNode.Parse(textBlock1.Text)?.AsObject();
@@ -803,12 +803,12 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("call2", receivedMetadata2?["callId"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public async Task CallAsync_WithOnlyRequestOptionsMeta_NoWithMeta_WorksCorrectly()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         RequestOptions requestOptions = new()
@@ -819,7 +819,7 @@ public class McpClientToolTests : ClientServerTestBase
             }
         };
 
-        var result = await tool.CallAsync(options: requestOptions, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await tool.CallAsync(options: requestOptions, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var textBlock = Assert.IsType<TextContentBlock>(result.Content[0]);
         var receivedMetadata = JsonNode.Parse(textBlock.Text)?.AsObject();
@@ -827,7 +827,7 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Equal("requestOnlyValue", receivedMetadata["requestOnlyKey"]?.GetValue<string>());
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolAsync_WithAnonymousTypeArguments_Works()
     {
         if (!JsonSerializer.IsReflectionEnabledByDefault)
@@ -845,7 +845,7 @@ public class McpClientToolTests : ClientServerTestBase
         };
 
         // This should not throw NotSupportedException
-        var result = await client.CallToolAsync("argument_echo_tool", arguments, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("argument_echo_tool", arguments, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.NotEmpty(result.Content);
@@ -855,14 +855,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.Contains("coordinates", textBlock.Text);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    
+    [TestCase(false)]
+    [TestCase(true)]
     public async Task WithProgress_ProgressTokenInMeta(bool useInvokeAsync)
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         var receivedMetadata = await CallMetadataEchoToolWithProgressAsync(tool, useInvokeAsync);
@@ -870,14 +870,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.NotNull(receivedMetadata["progressToken"]?.GetValue<string>());
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    
+    [TestCase(false)]
+    [TestCase(true)]
     public async Task WithMeta_WithProgress_BothMetaAndProgressTokenPresent(bool useInvokeAsync)
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool")
             .WithMeta(new() { ["traceId"] = "trace-123" });
 
@@ -887,14 +887,14 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.NotNull(receivedMetadata["progressToken"]?.GetValue<string>());
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    
+    [TestCase(false)]
+    [TestCase(true)]
     public async Task WithMeta_WithProgress_DoesNotMutateOriginalMeta(bool useInvokeAsync)
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool");
 
         JsonObject originalMeta = new() { ["traceId"] = "trace-789" };
@@ -908,12 +908,12 @@ public class McpClientToolTests : ClientServerTestBase
         Assert.False(originalMeta.ContainsKey("progressToken"));
     }
 
-    [Fact]
+    [Test]
     public async Task WithMeta_WithProgress_WithRequestOptionsMeta_AllMerged()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var tool = tools.Single(t => t.Name == "metadata_echo_tool")
             .WithMeta(new() { ["toolKey"] = "toolValue" });
 
@@ -938,12 +938,12 @@ public class McpClientToolTests : ClientServerTestBase
         if (useInvokeAsync)
         {
             tool = tool.WithProgress(progress);
-            var result = await tool.InvokeAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var result = await tool.InvokeAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
             text = Assert.IsType<TextContent>(result).Text;
         }
         else
         {
-            var result = await tool.CallAsync(progress: progress, options: options, cancellationToken: TestContext.Current.CancellationToken);
+            var result = await tool.CallAsync(progress: progress, options: options, cancellationToken: TestExecutionContext.Current.CancellationToken);
             text = Assert.IsType<TextContentBlock>(result.Content.Single()).Text;
         }
 

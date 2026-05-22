@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ResourceContentsTests
 {
-    [Fact]
+    [Test]
     public static void TextResourceContents_UnknownArrayProperty_IsIgnored()
     {
         // This test verifies that the ResourceContents.Converter properly skips unknown properties
@@ -43,7 +43,7 @@ public static class ResourceContentsTests
         Assert.Equal("Test content", textResource.Text);
     }
 
-    [Fact]
+    [Test]
     public static void BlobResourceContents_UnknownObjectProperty_IsIgnored()
     {
         // Test that unknown properties with nested objects are properly skipped
@@ -74,7 +74,7 @@ public static class ResourceContentsTests
         Assert.Equal("AQIDBA==", System.Text.Encoding.UTF8.GetString(blobResource.Blob.ToArray()));
     }
 
-    [Fact]
+    [Test]
     public static void TextResourceContents_UnknownMixedProperties_AreIgnored()
     {
         // Test multiple unknown properties with different types
@@ -102,7 +102,7 @@ public static class ResourceContentsTests
         Assert.Equal("content", textResource.Text);
     }
 
-    [Fact]
+    [Test]
     public static void BlobResourceContents_UnknownNestedArrays_AreIgnored()
     {
         // Test complex unknown properties with arrays of objects
@@ -139,7 +139,7 @@ public static class ResourceContentsTests
         Assert.Equal("application/custom", blobResource.MimeType);
     }
 
-    [Fact]
+    [Test]
     public static void TextResourceContents_MultipleUnknownProperties_AllIgnored()
     {
         // Test that multiple unknown properties are all properly skipped
@@ -166,7 +166,7 @@ public static class ResourceContentsTests
         Assert.Equal("text/plain", textResource.MimeType);
     }
 
-    [Fact]
+    [Test]
     public static void BlobResourceContents_UnknownArrayOfArrays_IsIgnored()
     {
         // Test deeply nested array structures in unknown properties
@@ -197,7 +197,7 @@ public static class ResourceContentsTests
         Assert.Equal("Zm9v", System.Text.Encoding.UTF8.GetString(blobResource.Blob.ToArray()));
     }
 
-    [Fact]
+    [Test]
     public static void TextResourceContents_EmptyUnknownArray_IsIgnored()
     {
         // Test empty arrays in unknown properties
@@ -220,7 +220,7 @@ public static class ResourceContentsTests
         Assert.Equal("content", textResource.Text);
     }
 
-    [Fact]
+    [Test]
     public static void BlobResourceContents_EmptyUnknownObject_IsIgnored()
     {
         // Test empty objects in unknown properties
@@ -243,7 +243,7 @@ public static class ResourceContentsTests
         Assert.Equal("YmFy", System.Text.Encoding.UTF8.GetString(blobResource.Blob.ToArray()));
     }
 
-    [Fact]
+    [Test]
     public static void TextResourceContents_UnknownPropertiesBetweenRequired_AreIgnored()
     {
         // Test unknown properties interspersed with required ones
@@ -270,7 +270,7 @@ public static class ResourceContentsTests
         Assert.Equal("text/plain", textResource.MimeType);
     }
 
-    [Fact]
+    [Test]
     public static void BlobResourceContents_VeryDeeplyNestedUnknown_IsIgnored()
     {
         // Test very deeply nested structures in unknown properties
@@ -305,7 +305,7 @@ public static class ResourceContentsTests
         Assert.Equal("ZGVlcA==", System.Text.Encoding.UTF8.GetString(blobResource.Blob.ToArray()));
     }
 
-    [Fact]
+    [Test]
     public static void TextResourceContents_WithMeta_UnknownPropertiesIgnored()
     {
         // Test that _meta property works correctly alongside unknown properties
@@ -333,7 +333,7 @@ public static class ResourceContentsTests
         Assert.True(textResource.Meta.ContainsKey("customField"));
     }
 
-    [Fact]
+    [Test]
     public static void TextResourceContents_SerializationRoundTrip_PreservesKnownProperties()
     {
         // Test that serialization/deserialization preserves known properties
@@ -355,7 +355,7 @@ public static class ResourceContentsTests
         Assert.Equal(original.Text, textResource.Text);
     }
 
-    [Fact]
+    [Test]
     public static void BlobResourceContents_SerializationRoundTrip_PreservesKnownProperties()
     {
         // Test that serialization/deserialization preserves known properties
@@ -377,7 +377,7 @@ public static class ResourceContentsTests
         Assert.True(original.Blob.Span.SequenceEqual(blobResource.Blob.Span));
     }
 
-    [Fact]
+    [Test]
     public static void ResourceContents_MissingBothTextAndBlob_ReturnsNull()
     {
         // Test that missing both text and blob properties returns null
@@ -396,7 +396,7 @@ public static class ResourceContentsTests
         Assert.Null(result);
     }
 
-    [Fact]
+    [Test]
     public static void ResourceContents_WithBothTextAndBlob_PrefersBlob()
     {
         // Test that when both text and blob are present, blob takes precedence
@@ -419,7 +419,7 @@ public static class ResourceContentsTests
         Assert.Equal("YmxvYg==", System.Text.Encoding.UTF8.GetString(blobResource.Blob.ToArray()));
     }
 
-    [Fact]
+    [Test]
     public static void TextResourceContents_MissingUri_UsesEmptyString()
     {
         // Test that missing uri defaults to empty string
@@ -440,7 +440,7 @@ public static class ResourceContentsTests
         Assert.Equal("content without uri", textResource.Text);
     }
 
-    [Fact]
+    [Test]
     public static void BlobResourceContents_MissingUri_UsesEmptyString()
     {
         // Test that missing uri defaults to empty string
@@ -461,7 +461,7 @@ public static class ResourceContentsTests
         Assert.Equal("YmxvYg==", System.Text.Encoding.UTF8.GetString(blobResource.Blob.ToArray()));
     }
 
-    [Fact]
+    [Test]
     public static void TextResourceContents_NullMimeType_OmittedFromJson()
     {
         var resource = new TextResourceContents
@@ -476,7 +476,7 @@ public static class ResourceContentsTests
         Assert.DoesNotContain("mimeType", json);
     }
 
-    [Fact]
+    [Test]
     public static void BlobResourceContents_NullMimeType_OmittedFromJson()
     {
         var resource = new BlobResourceContents
@@ -491,7 +491,7 @@ public static class ResourceContentsTests
         Assert.DoesNotContain("mimeType", json);
     }
 
-    [Fact]
+    [Test]
     public static void BlobResourceContents_Deserialization_HandlesEscapedForwardSlashInBase64()
     {
         // Base64 uses '/' which some JSON encoders escape as '\/' (valid JSON).
@@ -509,8 +509,8 @@ public static class ResourceContentsTests
         Assert.Equal(originalBytes, blob.DecodedData.ToArray());
     }
 
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public static void BlobResourceContents_FromBytes_RoundtripsCorrectly(byte[] originalBytes)
     {
         string expectedBase64 = Convert.ToBase64String(originalBytes);
@@ -523,8 +523,8 @@ public static class ResourceContentsTests
         Assert.Equal(expectedBase64, Encoding.UTF8.GetString(blob.Blob.ToArray()));
     }
 
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public static void BlobResourceContents_BlobSetter_RoundtripsCorrectly(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -536,8 +536,8 @@ public static class ResourceContentsTests
         Assert.Equal(originalBytes, blob.DecodedData.ToArray());
     }
 
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public static void BlobResourceContents_JsonRoundtrip_PreservesData(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -557,8 +557,8 @@ public static class ResourceContentsTests
         Assert.Equal(originalBytes, deserialized.DecodedData.ToArray());
     }
 
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public static void BlobResourceContents_FromBytes_JsonRoundtrip_PreservesData(byte[] originalBytes)
     {
         string expectedBase64 = Convert.ToBase64String(originalBytes);
@@ -572,8 +572,8 @@ public static class ResourceContentsTests
         Assert.Equal(originalBytes, deserialized.DecodedData.ToArray());
     }
 
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public static void BlobResourceContents_EscapedJsonRoundtrip_PreservesData(byte[] originalBytes)
     {
         string base64 = Convert.ToBase64String(originalBytes);
@@ -587,7 +587,7 @@ public static class ResourceContentsTests
         Assert.Equal(originalBytes, deserialized.DecodedData.ToArray());
     }
 
-    [Fact]
+    [Test]
     public static void BlobResourceContents_BlobSetterInvalidatesCachedDecodedData()
     {
         byte[] bytes1 = [1, 2, 3];
@@ -602,8 +602,8 @@ public static class ResourceContentsTests
         Assert.Equal(newBytes, blob.DecodedData.ToArray());
     }
 
-    [Theory]
-    [MemberData(nameof(ContentBlockTests.Base64TestData), MemberType = typeof(ContentBlockTests))]
+    
+    [TestCaseSource(typeof(ContentBlockTests), nameof(ContentBlockTests.Base64TestData))]
     public static void BlobResourceContents_FromBytes_LazilyEncodesBlob(byte[] originalBytes)
     {
         var blob = BlobResourceContents.FromBytes(originalBytes, "file:///test.bin");

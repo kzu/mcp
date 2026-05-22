@@ -20,8 +20,8 @@ public abstract class OAuthTestBase : KestrelInMemoryTest, IAsyncDisposable
     protected readonly TestOAuthServer.Program TestOAuthServer;
     private readonly Task _testOAuthRunTask;
 
-    protected OAuthTestBase(ITestOutputHelper outputHelper, bool configureMcpMetadata = true)
-        : base(outputHelper)
+    protected OAuthTestBase( bool configureMcpMetadata = true)
+        : base()
     {
         // Let the HandleAuthorizationUrlAsync take a look at the Location header
         SocketsHttpHandler.AllowAutoRedirect = false;
@@ -29,7 +29,7 @@ public abstract class OAuthTestBase : KestrelInMemoryTest, IAsyncDisposable
         // The easiest workaround is to disable cert validation for testing purposes.
         SocketsHttpHandler.SslOptions.RemoteCertificateValidationCallback = (_, _, _, _) => true;
 
-        TestOAuthServer = new TestOAuthServer.Program(XunitLoggerProvider, KestrelInMemoryTransport);
+        TestOAuthServer = new TestOAuthServer.Program(TestLoggerProvider, KestrelInMemoryTransport);
         _testOAuthRunTask = TestOAuthServer.RunServerAsync(cancellationToken: TestCts.Token);
 
         Builder.Services.AddAuthentication(options =>
@@ -86,7 +86,7 @@ public abstract class OAuthTestBase : KestrelInMemoryTest, IAsyncDisposable
         // Wait for the OAuth server to be ready before starting the MCP server.
         // This prevents race conditions in CI where the OAuth server may not be
         // fully initialized when the first test request is made.
-        await TestOAuthServer.ServerStarted.WaitAsync(TestContext.Current.CancellationToken);
+        await TestOAuthServer.ServerStarted.WaitAsync(TestExecutionContext.Current.CancellationToken);
 
         Builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
         {
@@ -102,7 +102,7 @@ public abstract class OAuthTestBase : KestrelInMemoryTest, IAsyncDisposable
         {
             AuthenticationSchemes = authScheme
         });
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
         return app;
     }
 

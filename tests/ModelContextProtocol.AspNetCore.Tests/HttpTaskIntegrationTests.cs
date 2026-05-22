@@ -13,7 +13,7 @@ namespace ModelContextProtocol.AspNetCore.Tests;
 /// Integration tests for MCP Tasks feature over HTTP transports.
 /// Tests task creation, polling, cancellation, and result retrieval.
 /// </summary>
-public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelInMemoryTest(outputHelper)
+public class HttpTaskIntegrationTests() : KestrelInMemoryTest()
 {
     private readonly HttpClientTransportOptions DefaultTransportOptions = new()
     {
@@ -29,7 +29,7 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
             new HttpClientTransport(transportOptions ?? DefaultTransportOptions, httpClient ?? HttpClient, LoggerFactory),
             clientOptions,
             LoggerFactory,
-            TestContext.Current.CancellationToken);
+            TestExecutionContext.Current.CancellationToken);
 
     private static IDictionary<string, JsonElement> CreateArguments(string key, object? value)
     {
@@ -39,7 +39,7 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
         };
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolAsTask_ReturnsTask_WhenServerSupportsTasksAsync()
     {
         // Arrange
@@ -53,7 +53,7 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var client = await ConnectMcpClientAsync();
 
@@ -65,14 +65,14 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
                 Arguments = CreateArguments("durationMs", 100),
                 Task = new McpTaskMetadata()
             },
-            TestContext.Current.CancellationToken);
+            TestExecutionContext.Current.CancellationToken);
 
         // Assert - Response should indicate task was created
         Assert.NotNull(result);
         Assert.Null(result.IsError);
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskAsync_ReturnsTaskStatus_WhenTaskExistsAsync()
     {
         // Arrange
@@ -86,7 +86,7 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var client = await ConnectMcpClientAsync();
 
@@ -98,21 +98,21 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
                 Arguments = CreateArguments("durationMs", 500),
                 Task = new McpTaskMetadata()
             },
-            TestContext.Current.CancellationToken);
+            TestExecutionContext.Current.CancellationToken);
 
         // Get all tasks
-        var tasks = await client.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tasks = await client.ListTasksAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         Assert.NotEmpty(tasks);
 
         // Act - Get the task status
-        var task = await client.GetTaskAsync(tasks[0].TaskId, cancellationToken: TestContext.Current.CancellationToken);
+        var task = await client.GetTaskAsync(tasks[0].TaskId, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(task);
         Assert.Equal(tasks[0].TaskId, task.TaskId);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_ReturnsTasks_WhenTasksExistAsync()
     {
         // Arrange
@@ -126,7 +126,7 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var client = await ConnectMcpClientAsync();
 
@@ -140,18 +140,18 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
                     Arguments = CreateArguments("durationMs", 1000),
                     Task = new McpTaskMetadata()
                 },
-                TestContext.Current.CancellationToken);
+                TestExecutionContext.Current.CancellationToken);
         }
 
         // Act
-        var tasks = await client.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tasks = await client.ListTasksAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(tasks);
         Assert.Equal(3, tasks.Count);
     }
 
-    [Fact]
+    [Test]
     public async Task CancelTaskAsync_CancelsTask_WhenTaskIsRunningAsync()
     {
         // Arrange
@@ -165,7 +165,7 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var client = await ConnectMcpClientAsync();
 
@@ -177,20 +177,20 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
                 Arguments = CreateArguments("durationMs", 10000),
                 Task = new McpTaskMetadata()
             },
-            TestContext.Current.CancellationToken);
+            TestExecutionContext.Current.CancellationToken);
 
-        var tasks = await client.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tasks = await client.ListTasksAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         Assert.NotEmpty(tasks);
 
         // Act - Cancel the task
-        var cancelledTask = await client.CancelTaskAsync(tasks[0].TaskId, cancellationToken: TestContext.Current.CancellationToken);
+        var cancelledTask = await client.CancelTaskAsync(tasks[0].TaskId, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(cancelledTask);
         Assert.Equal(McpTaskStatus.Cancelled, cancelledTask.Status);
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskResultAsync_ReturnsResult_WhenTaskCompletesAsync()
     {
         // Arrange
@@ -204,7 +204,7 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var client = await ConnectMcpClientAsync();
 
@@ -216,22 +216,22 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
                 Arguments = CreateArguments("durationMs", 50),
                 Task = new McpTaskMetadata()
             },
-            TestContext.Current.CancellationToken);
+            TestExecutionContext.Current.CancellationToken);
 
-        var tasks = await client.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tasks = await client.ListTasksAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         Assert.NotEmpty(tasks);
 
         // Wait a bit for the task to complete
-        await Task.Delay(200, TestContext.Current.CancellationToken);
+        await Task.Delay(200, TestExecutionContext.Current.CancellationToken);
 
         // Act - Get the task result
-        var result = await client.GetTaskResultAsync(tasks[0].TaskId, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.GetTaskResultAsync(tasks[0].TaskId, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert
         Assert.NotEqual(default, result);
     }
 
-    [Fact]
+    [Test]
     public async Task TasksIsolated_BetweenSessions_WhenMultipleClientsConnectAsync()
     {
         // Arrange
@@ -245,7 +245,7 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         // Connect two separate clients
         await using var client1 = await ConnectMcpClientAsync();
@@ -259,18 +259,18 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
                 Arguments = CreateArguments("durationMs", 1000),
                 Task = new McpTaskMetadata()
             },
-            TestContext.Current.CancellationToken);
+            TestExecutionContext.Current.CancellationToken);
 
         // Act - Both clients list tasks
-        var client1Tasks = await client1.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
-        var client2Tasks = await client2.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var client1Tasks = await client1.ListTasksAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
+        var client2Tasks = await client2.ListTasksAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert - Tasks should be isolated by session
         Assert.Single(client1Tasks);
         Assert.Empty(client2Tasks);
     }
 
-    [Fact]
+    [Test]
     public async Task ServerCapabilities_IncludesTasks_WhenTaskStoreConfiguredAsync()
     {
         // Arrange
@@ -284,7 +284,7 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         // Act
         await using var client = await ConnectMcpClientAsync();
@@ -293,7 +293,7 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
         Assert.NotNull(client.ServerCapabilities?.Tasks);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTools_ShowsTaskSupport_WhenToolIsAsyncAsync()
     {
         // Arrange
@@ -307,17 +307,17 @@ public class HttpTaskIntegrationTests(ITestOutputHelper outputHelper) : KestrelI
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var client = await ConnectMcpClientAsync();
 
         // Act
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         // Assert
         var asyncTool = tools.FirstOrDefault(t => t.Name == "long_running_operation");
         Assert.NotNull(asyncTool);
-        Assert.NotNull(asyncTool.ProtocolTool.Execution);
+        Assert.NotNull(asyncTool!.ProtocolTool!.Execution);
         Assert.Equal(ToolTaskSupport.Optional, asyncTool.ProtocolTool.Execution.TaskSupport);
     }
 

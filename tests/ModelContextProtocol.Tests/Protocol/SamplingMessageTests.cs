@@ -5,7 +5,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public class SamplingMessageTests
 {
-    [Fact]
+    [Test]
     public void WithToolResults_SerializationRoundtrips()
     {
         SamplingMessage message = new()
@@ -18,7 +18,7 @@ public class SamplingMessageTests
                     ToolUseId = "call_123",
                     Content =
                     [
-                        new TextContentBlock { Text = "Weather in Paris: 18°C, partly cloudy" }
+                        new TextContentBlock { Text = "Weather in Paris: 18Â°C, partly cloudy" }
                     ]
                 }
             ]
@@ -36,10 +36,10 @@ public class SamplingMessageTests
         Assert.Single(toolResult.Content);
         
         var textBlock = Assert.IsType<TextContentBlock>(toolResult.Content[0]);
-        Assert.Equal("Weather in Paris: 18°C, partly cloudy", textBlock.Text);
+        Assert.Equal("Weather in Paris: 18Â°C, partly cloudy", textBlock.Text);
     }
 
-    [Fact]
+    [Test]
     public void WithMultipleToolResults_SerializationRoundtrips()
     {
         SamplingMessage message = new()
@@ -50,12 +50,12 @@ public class SamplingMessageTests
                 new ToolResultContentBlock
                 {
                     ToolUseId = "call_abc123",
-                    Content = [new TextContentBlock { Text = "Weather in Paris: 18°C, partly cloudy" }]
+                    Content = [new TextContentBlock { Text = "Weather in Paris: 18Â°C, partly cloudy" }]
                 },
                 new ToolResultContentBlock
                 {
                     ToolUseId = "call_def456",
-                    Content = [new TextContentBlock { Text = "Weather in London: 15°C, rainy" }]
+                    Content = [new TextContentBlock { Text = "Weather in London: 15Â°C, rainy" }]
                 }
             ]
         };
@@ -71,16 +71,16 @@ public class SamplingMessageTests
         Assert.Equal("call_abc123", toolResult1.ToolUseId);
         Assert.Single(toolResult1.Content);
         var textBlock1 = Assert.IsType<TextContentBlock>(toolResult1.Content[0]);
-        Assert.Equal("Weather in Paris: 18°C, partly cloudy", textBlock1.Text);
+        Assert.Equal("Weather in Paris: 18Â°C, partly cloudy", textBlock1.Text);
         
         var toolResult2 = Assert.IsType<ToolResultContentBlock>(deserialized.Content[1]);
         Assert.Equal("call_def456", toolResult2.ToolUseId);
         Assert.Single(toolResult2.Content);
         var textBlock2 = Assert.IsType<TextContentBlock>(toolResult2.Content[0]);
-        Assert.Equal("Weather in London: 15°C, rainy", textBlock2.Text);
+        Assert.Equal("Weather in London: 15Â°C, rainy", textBlock2.Text);
     }
 
-    [Fact]
+    [Test]
     public void WithToolResultOnly_SerializationRoundtrips()
     {
         SamplingMessage message = new()

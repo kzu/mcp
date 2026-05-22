@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
@@ -16,7 +16,7 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper) : KestrelInMemoryTest(outputHelper), IAsyncDisposable
+public class StreamableHttpServerConformanceTests() : KestrelInMemoryTest(), IAsyncDisposable
 {
     private static McpServerTool[] Tools { get; } = [
         McpServerTool.Create(EchoAsync),
@@ -42,7 +42,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
 
         _app.MapMcp();
 
-        await _app.StartAsync(TestContext.Current.CancellationToken);
+        await _app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         HttpClient.DefaultRequestHeaders.Accept.Add(new("application/json"));
         HttpClient.DefaultRequestHeaders.Accept.Add(new("text/event-stream"));
@@ -57,7 +57,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         base.Dispose();
     }
 
-    [Fact]
+    [Test]
     public async Task NegativeNonInfiniteIdleTimeout_Throws_ArgumentOutOfRangeException()
     {
         Builder.Services.AddMcpServer().WithHttpTransport(options =>
@@ -69,7 +69,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         Assert.Contains("IdleTimeout", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task NegativeMaxIdleSessionCount_Throws_ArgumentOutOfRangeException()
     {
         Builder.Services.AddMcpServer().WithHttpTransport(options =>
@@ -81,41 +81,41 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         Assert.Contains("MaxIdleSessionCount", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task InitialPostResponse_Includes_McpSessionIdHeader()
     {
         await StartAsync();
 
-        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Single(response.Headers.GetValues("mcp-session-id"));
         Assert.Equal("text/event-stream", Assert.Single(response.Content.Headers.GetValues("content-type")));
     }
 
-    [Fact]
+    [Test]
     public async Task SseResponse_Includes_XAccelBufferingHeader()
     {
         await StartAsync();
 
-        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("text/event-stream", response.Content.Headers.ContentType?.MediaType);
         Assert.Equal("no", Assert.Single(response.Headers.GetValues("X-Accel-Buffering")));
     }
 
-    [Fact]
+    [Test]
     public async Task PostRequest_IsUnsupportedMediaType_WithoutJsonContentType()
     {
         await StartAsync();
 
-        using var response = await HttpClient.PostAsync("", new StringContent(InitializeRequest, Encoding.UTF8, "text/javascript"), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", new StringContent(InitializeRequest, Encoding.UTF8, "text/javascript"), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData("text/event-stream")]
-    [InlineData("application/json")]
-    [InlineData("application/json-text/event-stream")]
+    
+    [TestCase("text/event-stream")]
+    [TestCase("application/json")]
+    [TestCase("application/json-text/event-stream")]
     public async Task PostRequest_IsNotAcceptable_WithSingleSpecificAcceptHeader(string singleAcceptValue)
     {
         await StartAsync();
@@ -123,13 +123,13 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         HttpClient.DefaultRequestHeaders.Accept.Clear();
         HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(HeaderNames.Accept, singleAcceptValue);
 
-        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotAcceptable, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData("*/*")]
-    [InlineData("text/event-stream, application/json;q=0.9")]
+    
+    [TestCase("*/*")]
+    [TestCase("text/event-stream, application/json;q=0.9")]
     public async Task PostRequest_IsAcceptable_WithWildcardOrAddedQualityInAcceptHeader(string acceptHeaderValue)
     {
         await StartAsync();
@@ -137,11 +137,11 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         HttpClient.DefaultRequestHeaders.Accept.Clear();
         HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(HeaderNames.Accept, acceptHeaderValue);
 
-        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task GetRequest_IsNotAcceptable_WithoutTextEventStreamAcceptHeader()
     {
         await StartAsync();
@@ -149,13 +149,13 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         HttpClient.DefaultRequestHeaders.Accept.Clear();
         HttpClient.DefaultRequestHeaders.Accept.Add(new("application/json"));
 
-        using var response = await HttpClient.GetAsync("", TestContext.Current.CancellationToken);
+        using var response = await HttpClient.GetAsync("", TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotAcceptable, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData("*/*")]
-    [InlineData("application/json, text/event-stream;q=0.9")]
+    
+    [TestCase("*/*")]
+    [TestCase("application/json, text/event-stream;q=0.9")]
     public async Task GetRequest_IsAcceptable_WithWildcardOrAddedQualityInAcceptHeader(string acceptHeaderValue)
     {
         await StartAsync();
@@ -165,46 +165,46 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
 
         await CallInitializeAndValidateAsync();
 
-        using var response = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Theory]
-    [InlineData("invalid-version")]
-    [InlineData("9999-01-01")]
-    [InlineData("not-a-date")]
+    
+    [TestCase("invalid-version")]
+    [TestCase("9999-01-01")]
+    [TestCase("not-a-date")]
     public async Task PostRequest_IsBadRequest_WithInvalidProtocolVersionHeader(string invalidVersion)
     {
         await StartAsync();
 
         HttpClient.DefaultRequestHeaders.Add("MCP-Protocol-Version", invalidVersion);
 
-        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task PostRequest_Succeeds_WithoutProtocolVersionHeader()
     {
         await StartAsync();
 
         // No MCP-Protocol-Version header is set - this should be accepted for backwards compatibility
-        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task PostRequest_Succeeds_WithValidProtocolVersionHeader()
     {
         await StartAsync();
 
         HttpClient.DefaultRequestHeaders.Add("MCP-Protocol-Version", "2025-03-26");
 
-        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task GetRequest_IsBadRequest_WithInvalidProtocolVersionHeader()
     {
         await StartAsync();
@@ -213,11 +213,11 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
 
         HttpClient.DefaultRequestHeaders.Add("MCP-Protocol-Version", "invalid-version");
 
-        using var response = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task PostRequest_IsNotFound_WithUnrecognizedSessionId()
     {
         await StartAsync();
@@ -230,24 +230,24 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
                 { "mcp-session-id", "fakeSession" },
             },
         };
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task PostWithoutSessionId_NonInitializeRequest_Returns400()
     {
         await StartAsync();
 
-        using var response = await HttpClient.PostAsync("", JsonContent(ListToolsRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(ListToolsRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadAsStringAsync(TestExecutionContext.Current.CancellationToken);
         Assert.Contains("Mcp-Session-Id", body);
         Assert.Contains("Stateless", body);
     }
 
-    [Fact]
+    [Test]
     public async Task GetWithoutSessionId_Returns400_WithStatelessGuidance()
     {
         await StartAsync();
@@ -258,15 +258,15 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         HttpClient.DefaultRequestHeaders.Accept.Clear();
         HttpClient.DefaultRequestHeaders.Accept.Add(new("text/event-stream"));
 
-        using var response = await HttpClient.GetAsync("", TestContext.Current.CancellationToken);
+        using var response = await HttpClient.GetAsync("", TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadAsStringAsync(TestExecutionContext.Current.CancellationToken);
         Assert.Contains("Mcp-Session-Id", body);
         Assert.Contains("Stateless", body);
     }
 
-    [Fact]
+    [Test]
     public async Task InitializeRequest_Matches_CustomRoute()
     {
         Builder.Services.AddMcpServer().WithHttpTransport();
@@ -274,39 +274,39 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
 
         app.MapMcp("/custom-route");
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         HttpClient.DefaultRequestHeaders.Accept.Add(new("application/json"));
         HttpClient.DefaultRequestHeaders.Accept.Add(new("text/event-stream"));
-        using var response = await HttpClient.PostAsync("/custom-route", JsonContent(InitializeRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("/custom-route", JsonContent(InitializeRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task PostWithSingleNotification_IsAccepted_WithEmptyResponse()
     {
         await StartAsync();
         await CallInitializeAndValidateAsync();
 
-        var response = await HttpClient.PostAsync("", JsonContent(ProgressNotification("1")), TestContext.Current.CancellationToken);
+        var response = await HttpClient.PostAsync("", JsonContent(ProgressNotification("1")), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
-        Assert.Equal("", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal("", await response.Content.ReadAsStringAsync(TestExecutionContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task InitializeJsonRpcRequest_IsHandled_WithCompleteSseResponse()
     {
         await StartAsync();
         await CallInitializeAndValidateAsync();
     }
 
-    [Fact]
+    [Test]
     public async Task SingleJsonRpcRequest_ThatThrowsIsHandled_WithCompleteSseResponse()
     {
         await StartAsync();
         await CallInitializeAndValidateAsync();
 
-        var response = await HttpClient.PostAsync("", JsonContent(CallTool("throw")), TestContext.Current.CancellationToken);
+        var response = await HttpClient.PostAsync("", JsonContent(CallTool("throw")), TestExecutionContext.Current.CancellationToken);
         var rpcError = await AssertSingleSseResponseAsync(response);
 
         var error = AssertType<CallToolResult>(rpcError.Result);
@@ -314,7 +314,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         Assert.Contains("'throw'", Assert.IsType<TextContentBlock>(content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task MultipleSerialJsonRpcRequests_IsHandled_OneAtATime()
     {
         await StartAsync();
@@ -324,7 +324,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         await CallEchoAndValidateAsync();
     }
 
-    [Fact]
+    [Test]
     public async Task MultipleConcurrentJsonRpcRequests_IsHandled_InParallel()
     {
         await StartAsync();
@@ -340,7 +340,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         await Task.WhenAll(echoTasks);
     }
 
-    [Fact]
+    [Test]
     public async Task GetRequest_Receives_UnsolicitedNotifications()
     {
         McpServer? server = null;
@@ -363,24 +363,24 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         Assert.NotNull(server);
 
         // Headers should be sent even before any messages are ready on the GET endpoint.
-        using var getResponse = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        using var getResponse = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestExecutionContext.Current.CancellationToken);
         async Task<string> GetFirstNotificationAsync()
         {
             await foreach (var sseEvent in ReadSseAsync(getResponse.Content))
             {
                 var notification = JsonSerializer.Deserialize(sseEvent, GetJsonTypeInfo<JsonRpcNotification>());
                 Assert.NotNull(notification);
-                return notification.Method;
+                return notification!.Method;
             }
 
             throw new Exception("No notifications received.");
         }
 
-        await server.SendNotificationAsync("test-method", TestContext.Current.CancellationToken);
+        await server!.SendNotificationAsync("test-method", TestExecutionContext.Current.CancellationToken);
         Assert.Equal("test-method", await GetFirstNotificationAsync());
     }
 
-    [Fact]
+    [Test]
     public async Task SendNotificationAsync_DoesNotThrow_WhenNoGetRequestHasBeenMade()
     {
         // Clients are not required to make a GET request for unsolicited messages.
@@ -407,37 +407,37 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         // Calling SendNotificationAsync before a GET request should not throw.
         // The notification should be silently dropped.
         var exception = await Record.ExceptionAsync(() =>
-            server.SendNotificationAsync("test-method", TestContext.Current.CancellationToken));
+            server!.SendNotificationAsync("test-method", TestExecutionContext.Current.CancellationToken));
         Assert.Null(exception);
     }
 
-    [Fact]
+    [Test]
     public async Task SecondGetRequests_IsRejected_AsBadRequest()
     {
         await StartAsync();
 
         await CallInitializeAndValidateAsync();
-        using var getResponse1 = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
-        using var getResponse2 = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        using var getResponse1 = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestExecutionContext.Current.CancellationToken);
+        using var getResponse2 = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestExecutionContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, getResponse1.StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, getResponse2.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task DeleteRequest_CompletesSession_WhichIsNoLongerFound()
     {
         await StartAsync();
 
         await CallInitializeAndValidateAsync();
         await CallEchoAndValidateAsync();
-        await HttpClient.DeleteAsync("", TestContext.Current.CancellationToken);
+        await HttpClient.DeleteAsync("", TestExecutionContext.Current.CancellationToken);
 
-        using var response = await HttpClient.PostAsync("", JsonContent(EchoRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(EchoRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task DeleteRequest_CompletesSession_WhichCancelsLongRunningToolCalls()
     {
         await StartAsync();
@@ -451,7 +451,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
                     Content = JsonContent(CallTool("long-running"))
                 },
                 HttpCompletionOption.ResponseHeadersRead,
-                TestContext.Current.CancellationToken);
+                TestExecutionContext.Current.CancellationToken);
 
         var longRunningToolTasks = new Task<HttpResponseMessage>[10];
         for (int i = 0; i < longRunningToolTasks.Length; i++)
@@ -459,7 +459,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
             longRunningToolTasks[i] = CallLongRunningToolAsync();
         }
 
-        var getResponse = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        var getResponse = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestExecutionContext.Current.CancellationToken);
 
         // Wait for all long-running tool calls to receive 200 response headers before sending DELETE
         var responseHeaders = await Task.WhenAll(longRunningToolTasks);
@@ -469,10 +469,10 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         }
 
         // Now send DELETE to cancel the session
-        await HttpClient.DeleteAsync("", TestContext.Current.CancellationToken);
+        await HttpClient.DeleteAsync("", TestExecutionContext.Current.CancellationToken);
 
         // Get request should complete gracefully.
-        var sseResponseBody = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var sseResponseBody = await getResponse.Content.ReadAsStringAsync(TestExecutionContext.Current.CancellationToken);
         Assert.Empty(sseResponseBody);
 
         // Currently, responses are flushed immediately to prevent HttpClient timeouts for long-running requests.
@@ -482,18 +482,18 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         // For now, the important thing is that reading the response body fails.
         foreach (var response in responseHeaders)
         {
-            await Assert.ThrowsAsync<HttpRequestException>(async () => await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
+            await Assert.ThrowsAsync<HttpRequestException>(async () => await response.Content.ReadAsByteArrayAsync(TestExecutionContext.Current.CancellationToken));
         }
     }
 
-    [Fact]
+    [Test]
     public async Task Progress_IsReported_InSameSseResponseAsRpcResponse()
     {
         await StartAsync();
 
         await CallInitializeAndValidateAsync();
 
-        using var response = await HttpClient.PostAsync("", JsonContent(CallToolWithProgressToken("progress")), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(CallToolWithProgressToken("progress")), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var currentSseItem = 0;
@@ -519,7 +519,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         Assert.Equal(11, currentSseItem);
     }
 
-    [Fact]
+    [Test]
     public async Task AsyncLocalSetInRunSessionHandlerCallback_Flows_ToAllToolCalls_IfPerSessionExecutionContextEnabled()
     {
         var asyncLocal = new AsyncLocal<string>();
@@ -546,7 +546,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
 
         async Task CallAsyncLocalToolAndValidateAsync(int expectedSessionIndex)
         {
-            var response = await HttpClient.PostAsync("", JsonContent(CallTool("async-local-session")), TestContext.Current.CancellationToken);
+            var response = await HttpClient.PostAsync("", JsonContent(CallTool("async-local-session")), TestExecutionContext.Current.CancellationToken);
             var rpcResponse = await AssertSingleSseResponseAsync(response);
             var callToolResponse = AssertType<CallToolResult>(rpcResponse.Result);
             var callToolContent = Assert.Single(callToolResponse.Content);
@@ -562,7 +562,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         await CallAsyncLocalToolAndValidateAsync(expectedSessionIndex: 0);
     }
 
-    [Fact]
+    [Test]
     public async Task IdleSessions_ArePruned_AfterIdleTimeout()
     {
         var fakeTimeProvider = new FakeTimeProvider();
@@ -586,8 +586,8 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         do
         {
             fakeTimeProvider.Advance(TimeSpan.FromHours(2) + TimeSpan.FromSeconds(5));
-            await Task.Delay(100, TestContext.Current.CancellationToken);
-            using var response = await HttpClient.PostAsync("", JsonContent(EchoRequest), TestContext.Current.CancellationToken);
+            await Task.Delay(100, TestExecutionContext.Current.CancellationToken);
+            using var response = await HttpClient.PostAsync("", JsonContent(EchoRequest), TestExecutionContext.Current.CancellationToken);
             statusCode = response.StatusCode;
         }
         while (statusCode != HttpStatusCode.NotFound && DateTime.UtcNow < deadline);
@@ -595,7 +595,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         Assert.Equal(HttpStatusCode.NotFound, statusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task IdleSessions_AreNotPruned_WithInfiniteIdleTimeoutWhileUnderMaxIdleSessionCount()
     {
         var fakeTimeProvider = new FakeTimeProvider();
@@ -615,7 +615,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         await CallEchoAndValidateAsync();
     }
 
-    [Fact]
+    [Test]
     public async Task IdleSessionsPastMaxIdleSessionCount_ArePruned_LongestIdleFirstDespiteIdleTimeout()
     {
         var fakeTimeProvider = new FakeTimeProvider();
@@ -653,7 +653,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
 
         // Pruning of the second session results in a 404 since we used the first session more recently.
         SetSessionId(secondSessionId);
-        using var response = await HttpClient.PostAsync("", JsonContent(EchoRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(EchoRequest), TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
         // But the first and third session IDs should still work.
@@ -668,7 +668,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         Assert.StartsWith("MaxIdleSessionCount of 2 exceeded. Closing idle session", idleLimitLogMessage.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task ActiveSession_WithPeriodicRequests_DoesNotTimeout()
     {
         var fakeTimeProvider = new FakeTimeProvider();
@@ -695,7 +695,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         await CallEchoAndValidateAsync();
     }
 
-    [Fact]
+    [Test]
     public async Task McpServer_UsedOutOfScope_CanSendNotifications()
     {
         McpServer? capturedServer = null;
@@ -714,17 +714,17 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         SetSessionId(sessionId);
 
         // Call the subscribe method to capture the McpServer instance.
-        using var getResponse = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
-        using var response = await HttpClient.PostAsync("", JsonContent(SubscribeToResource("file:///test")), TestContext.Current.CancellationToken);
+        using var getResponse = await HttpClient.GetAsync("", HttpCompletionOption.ResponseHeadersRead, TestExecutionContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(SubscribeToResource("file:///test")), TestExecutionContext.Current.CancellationToken);
         var rpcResponse = await AssertSingleSseResponseAsync(response);
         AssertType<EmptyResult>(rpcResponse.Result);
         Assert.NotNull(capturedServer);
 
         // Check the captured McpServer instance can send a notification.
-        await capturedServer.SendNotificationAsync(NotificationMethods.ResourceUpdatedNotification, TestContext.Current.CancellationToken);
+        await capturedServer!.SendNotificationAsync(NotificationMethods.ResourceUpdatedNotification, TestExecutionContext.Current.CancellationToken);
         JsonRpcMessage? firstSseMessage = await ReadSseAsync(getResponse.Content)
             .Select(data => JsonSerializer.Deserialize<JsonRpcMessage>(data, McpJsonUtilities.DefaultOptions))
-            .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+            .FirstOrDefaultAsync(TestExecutionContext.Current.CancellationToken);
 
         var notification = Assert.IsType<JsonRpcNotification>(firstSseMessage);
         Assert.Equal(NotificationMethods.ResourceUpdatedNotification, notification.Method);
@@ -732,7 +732,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
 
     #region SEP-2243 Header Validation Tests
 
-    [Fact]
+    [Test]
     public async Task DraftVersion_RejectsMissingMcpMethodHeader()
     {
         await StartAsync();
@@ -746,11 +746,11 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         request.Headers.Add("MCP-Protocol-Version", "DRAFT-2026-v1");
         // Deliberately omit Mcp-Method header
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task DraftVersion_RejectsMismatchedMcpMethodHeader()
     {
         await StartAsync();
@@ -762,11 +762,11 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         request.Headers.Add("MCP-Protocol-Version", "DRAFT-2026-v1");
         request.Headers.Add("Mcp-Method", "resources/read"); // Wrong method
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task DraftVersion_AcceptsCorrectMcpMethodHeader()
     {
         await StartAsync();
@@ -779,11 +779,11 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         request.Headers.Add("Mcp-Method", "tools/call");
         request.Headers.Add("Mcp-Name", "echo");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task NonDraftVersion_DoesNotRequireMcpMethodHeader()
     {
         await StartAsync();
@@ -795,7 +795,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         request.Headers.Add("MCP-Protocol-Version", "2025-03-26");
         // No Mcp-Method header — should still work
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -808,7 +808,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         request.Headers.Add("MCP-Protocol-Version", "DRAFT-2026-v1");
         request.Headers.Add("Mcp-Method", "initialize");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestExecutionContext.Current.CancellationToken);
         var rpcResponse = await AssertSingleSseResponseAsync(response);
         AssertServerInfo(rpcResponse);
 
@@ -825,17 +825,17 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
     private static StringContent JsonContent(string json) => new(json, Encoding.UTF8, "application/json");
     private static JsonTypeInfo<T> GetJsonTypeInfo<T>() => (JsonTypeInfo<T>)McpJsonUtilities.DefaultOptions.GetTypeInfo(typeof(T));
 
-    private static T AssertType<T>(JsonNode? jsonNode)
+    private static T AssertType<T>(JsonNode? jsonNode) where T : class
     {
         var type = JsonSerializer.Deserialize(jsonNode, GetJsonTypeInfo<T>());
         Assert.NotNull(type);
-        return type;
+        return type!;
     }
 
     private static async IAsyncEnumerable<string> ReadSseAsync(HttpContent responseContent)
     {
-        var responseStream = await responseContent.ReadAsStreamAsync(TestContext.Current.CancellationToken);
-        await foreach (var sseItem in SseParser.Create(responseStream).EnumerateAsync(TestContext.Current.CancellationToken))
+        var responseStream = await responseContent.ReadAsStreamAsync(TestExecutionContext.Current.CancellationToken);
+        await foreach (var sseItem in SseParser.Create(responseStream).EnumerateAsync(TestExecutionContext.Current.CancellationToken))
         {
             Assert.Equal("message", sseItem.EventType);
             yield return sseItem.Data;
@@ -847,11 +847,11 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("text/event-stream", response.Content.Headers.ContentType?.MediaType);
 
-        var sseItem = Assert.Single(await ReadSseAsync(response.Content).ToListAsync(TestContext.Current.CancellationToken));
+        var sseItem = Assert.Single(await ReadSseAsync(response.Content).ToListAsync(TestExecutionContext.Current.CancellationToken));
         var jsonRpcResponse = JsonSerializer.Deserialize(sseItem, GetJsonTypeInfo<JsonRpcResponse>());
 
         Assert.NotNull(jsonRpcResponse);
-        return jsonRpcResponse;
+        return jsonRpcResponse!;
     }
 
     private static string InitializeRequest => """
@@ -923,7 +923,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
     private async Task<string> CallInitializeAndValidateAsync()
     {
         HttpClient.DefaultRequestHeaders.Remove("mcp-session-id");
-        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(InitializeRequest), TestExecutionContext.Current.CancellationToken);
         var rpcResponse = await AssertSingleSseResponseAsync(response);
         AssertServerInfo(rpcResponse);
 
@@ -940,7 +940,7 @@ public class StreamableHttpServerConformanceTests(ITestOutputHelper outputHelper
 
     private async Task CallEchoAndValidateAsync()
     {
-        using var response = await HttpClient.PostAsync("", JsonContent(EchoRequest), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.PostAsync("", JsonContent(EchoRequest), TestExecutionContext.Current.CancellationToken);
         var rpcResponse = await AssertSingleSseResponseAsync(response);
         AssertEchoResponse(rpcResponse);
     }

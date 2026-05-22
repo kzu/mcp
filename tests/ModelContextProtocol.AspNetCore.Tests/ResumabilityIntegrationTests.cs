@@ -18,7 +18,7 @@ namespace ModelContextProtocol.AspNetCore.Tests;
 /// from the base class.
 /// </para>
 /// </remarks>
-public class ResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : ResumabilityIntegrationTestsBase(testOutputHelper)
+public class ResumabilityIntegrationTests() : ResumabilityIntegrationTestsBase()
 {
     /// <summary>
     /// Gets the test event stream store, cast to the concrete type for test-specific assertions.
@@ -29,7 +29,7 @@ public class ResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : 
     protected override ValueTask<ISseEventStreamStore> CreateEventStreamStoreAsync()
         => new(new TestSseEventStreamStore());
 
-    [Fact]
+    [Test]
     public override async Task Server_StoresEvents_WhenEventStoreConfigured()
     {
         await base.Server_StoresEvents_WhenEventStoreConfigured();
@@ -38,7 +38,7 @@ public class ResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : 
         Assert.True(TestEventStreamStore.StoreEventCallCount > 0, "Expected events to be stored when EventStore is configured");
     }
 
-    [Fact]
+    [Test]
     public override async Task Client_CanMakeMultipleRequests_WithResumabilityEnabled()
     {
         await base.Client_CanMakeMultipleRequests_WithResumabilityEnabled();
@@ -47,7 +47,7 @@ public class ResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : 
         Assert.True(TestEventStreamStore.StoreEventCallCount >= 5, "Expected events to be stored for each request");
     }
 
-    [Fact]
+    [Test]
     public async Task Server_StoresMultipleEvents_ForMultipleToolCalls()
     {
         // Arrange
@@ -59,13 +59,13 @@ public class ResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : 
 
         await client.CallToolAsync("echo",
             new Dictionary<string, object?> { ["message"] = "test1" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var countAfterFirst = TestEventStreamStore.StoreEventCallCount;
 
         await client.CallToolAsync("echo",
             new Dictionary<string, object?> { ["message"] = "test2" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         var countAfterSecond = TestEventStreamStore.StoreEventCallCount;
 
@@ -74,7 +74,7 @@ public class ResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : 
         Assert.True(countAfterSecond > countAfterFirst, "Expected more events after second call");
     }
 
-    [Fact]
+    [Test]
     public override async Task EnablePollingAsync_SendsSseItemWithRetryField()
     {
         await base.EnablePollingAsync_SendsSseItemWithRetryField();
@@ -84,7 +84,7 @@ public class ResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : 
         Assert.Contains(expectedRetryInterval, TestEventStreamStore.StoredReconnectionIntervals);
     }
 
-    [Fact]
+    [Test]
     public async Task Server_WithoutEventStore_DoesNotIncludeEventId()
     {
         // Arrange - Server without event store (pass null explicitly)
@@ -97,7 +97,7 @@ public class ResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : 
         Assert.True(sseResponse.LastEventId is null, "Did not expect event IDs when EventStore is not configured");
     }
 
-    [Fact]
+    [Test]
     public async Task Server_DoesNotSendPrimingEvents_ToOlderProtocolVersionClients()
     {
         // Arrange - Server with resumability enabled
@@ -117,7 +117,7 @@ public class ResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : 
         Assert.Equal(0, TestEventStreamStore.StoreEventCallCount);
     }
 
-    [Fact]
+    [Test]
     public async Task PostResponse_EndsAndSseEventStreamWriterIsDisposed_WhenWriteEventAsyncIsCanceled()
     {
         var blockingStore = new BlockingEventStreamStore();
@@ -127,7 +127,7 @@ public class ResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : 
         // Enable blocking now that initialization is complete
         blockingStore.EnableBlocking();
 
-        using var callCts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        using var callCts = CancellationTokenSource.CreateLinkedTokenSource(TestExecutionContext.Current.CancellationToken);
 
         // Start calling the tool - this will eventually trigger WriteEventAsync for the response
         var callTask = client.CallToolAsync("echo",
@@ -135,14 +135,14 @@ public class ResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : 
             cancellationToken: callCts.Token).AsTask();
 
         // Wait for the writer to block on WriteEventAsync for the response message
-        await blockingStore.WriteEventBlockedTask.WaitAsync(TestContext.Current.CancellationToken);
+        await blockingStore.WriteEventBlockedTask.WaitAsync(TestExecutionContext.Current.CancellationToken);
 
         // Cancel the token while the writer is blocked - this causes an OCE to bubble up
         // to SendMessageAsync
         await callCts.CancelAsync();
 
         // The call should complete (with an error or cancellation) without hanging
-        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(TestExecutionContext.Current.CancellationToken);
         timeoutCts.CancelAfter(TimeSpan.FromSeconds(10));
 
         // The call task should throw an OCE due to cancellation

@@ -14,7 +14,7 @@ public class SseServerIntegrationTestFixture : IAsyncDisposable
     private readonly Task _serverTask;
     private readonly CancellationTokenSource _stopCts = new();
 
-    // XUnit's ITestOutputHelper is created per test, while this fixture is used for
+    // ITestOutputHelper is created per test, while this fixture is used for
     // multiple tests, so this dispatches the output to the current test.
     private readonly DelegatingTestOutputHelper _delegatingTestOutputHelper = new();
 
@@ -39,7 +39,7 @@ public class SseServerIntegrationTestFixture : IAsyncDisposable
             BaseAddress = new("http://localhost:5000/"),
         };
 
-        _serverTask = Program.MainAsync([], new XunitLoggerProvider(_delegatingTestOutputHelper), _inMemoryTransport, _stopCts.Token);
+        _serverTask = Program.MainAsync([], new TestLoggerProvider(_delegatingTestOutputHelper), _inMemoryTransport, _stopCts.Token);
     }
 
     public HttpClient HttpClient { get; }
@@ -50,12 +50,12 @@ public class SseServerIntegrationTestFixture : IAsyncDisposable
             new HttpClientTransport(DefaultTransportOptions, HttpClient, loggerFactory),
             options,
             loggerFactory,
-            TestContext.Current.CancellationToken);
+            TestExecutionContext.Current.CancellationToken);
     }
 
-    public void Initialize(ITestOutputHelper output, HttpClientTransportOptions clientTransportOptions)
+    public void Initialize(ITestOutputHelper testOutputHelper, HttpClientTransportOptions clientTransportOptions)
     {
-        _delegatingTestOutputHelper.CurrentTestOutputHelper = output;
+        _delegatingTestOutputHelper.CurrentTestOutputHelper = testOutputHelper;
         DefaultTransportOptions = clientTransportOptions;
     }
 

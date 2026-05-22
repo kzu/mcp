@@ -8,28 +8,28 @@ using System.Threading.Channels;
 
 namespace ModelContextProtocol.Tests.Client;
 
-public class McpClientCreationTests(ITestOutputHelper testOutputHelper) : LoggedTest(testOutputHelper)
+public class McpClientCreationTests() : LoggedTest()
 {
-    [Fact]
+    [Test]
     public async Task CreateAsync_WithInvalidArgs_Throws()
     {
-        await Assert.ThrowsAsync<ArgumentNullException>("clientTransport", () => McpClient.CreateAsync(null!, cancellationToken: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>("clientTransport", () => McpClient.CreateAsync(null!, cancellationToken: TestExecutionContext.Current.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task CreateAsync_NopTransport_ReturnsClient()
     {
         // Act
         await using var client = await McpClient.CreateAsync(
             new NopTransport(),
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(client);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    
+    [TestCase(false)]
+    [TestCase(true)]
     public async Task Cancellation_ThrowsCancellationException(bool preCanceled)
     {
         var cts = new CancellationTokenSource();
@@ -55,9 +55,9 @@ public class McpClientCreationTests(ITestOutputHelper testOutputHelper) : Logged
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => t);
     }
 
-    [Theory]
-    [InlineData(typeof(NopTransport))]
-    [InlineData(typeof(FailureTransport))]
+    
+    [TestCase(typeof(NopTransport))]
+    [TestCase(typeof(FailureTransport))]
     public async Task CreateAsync_WithCapabilitiesOptions(Type transportType)
     {
         // Arrange
@@ -103,18 +103,18 @@ public class McpClientCreationTests(ITestOutputHelper testOutputHelper) : Logged
         }        
     }
 
-    [Fact]
+    [Test]
     public async Task CreateAsync_TransportChannelClosed_ThrowsClientTransportClosedException()
     {
         // Arrange - transport completes its read channel with ClientTransportClosedException
         // when the client tries to send the initialize request (simulating a server process
-        // exit detected by the reader loop). SendMessageAsync returns successfully —
+        // exit detected by the reader loop). SendMessageAsync returns successfully â€”
         // only the read side fails.
         var transport = new ChannelClosedDuringInitTransport();
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<ClientTransportClosedException>(
-            () => McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken));
+            () => McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken));
 
         var details = Assert.IsType<StdioClientCompletionDetails>(ex.Details);
         Assert.Equal(42, details.ExitCode);
@@ -128,7 +128,7 @@ public class McpClientCreationTests(ITestOutputHelper testOutputHelper) : Logged
             log.Message.Contains("client initialization error"));
     }
 
-    [Fact]
+    [Test]
     public async Task CreateAsync_SendFails_PropagatesOriginalIOException()
     {
         // Arrange - transport throws IOException from SendMessageAsync, but the channel
@@ -138,7 +138,7 @@ public class McpClientCreationTests(ITestOutputHelper testOutputHelper) : Logged
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<IOException>(
-            () => McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken));
+            () => McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestExecutionContext.Current.CancellationToken));
 
         Assert.Equal(SendFailsDuringInitTransport.ExpectedMessage, ex.Message);
 
@@ -206,7 +206,7 @@ public class McpClientCreationTests(ITestOutputHelper testOutputHelper) : Logged
     /// <summary>
     /// Simulates a transport where the read channel closes with structured completion details during
     /// initialization, as happens when a stdio server process exits before completing the handshake.
-    /// The send succeeds — only the read side carries the failure.
+    /// The send succeeds â€” only the read side carries the failure.
     /// </summary>
     private sealed class ChannelClosedDuringInitTransport : ITransport, IClientTransport
     {
@@ -231,7 +231,7 @@ public class McpClientCreationTests(ITestOutputHelper testOutputHelper) : Logged
         {
             // Simulate the server process exiting: complete the channel with a
             // ClientTransportClosedException carrying structured completion details.
-            // The send itself succeeds — the failure comes from the read side.
+            // The send itself succeeds â€” the failure comes from the read side.
             var details = new StdioClientCompletionDetails
             {
                 ExitCode = 42,

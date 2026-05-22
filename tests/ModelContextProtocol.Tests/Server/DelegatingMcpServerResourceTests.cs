@@ -6,13 +6,13 @@ namespace ModelContextProtocol.Tests.Server;
 
 public class DelegatingMcpServerResourceTests
 {
-    [Fact]
+    [Test]
     public void Ctor_NullInnerResource_Throws()
     {
         Assert.Throws<ArgumentNullException>("innerResource", () => new TestDelegatingResource(null!));
     }
 
-    [Fact]
+    [Test]
     public async Task AllMembers_DelegateToInnerResource()
     {
         ResourceTemplate expectedTemplate = new() { Name = "sentinel-resource", UriTemplate = "test://resource" };
@@ -31,7 +31,7 @@ public class DelegatingMcpServerResourceTests
         Assert.Equal(inner.ToString(), delegating.ToString());
     }
 
-    [Fact]
+    [Test]
     public void OverridesAllVirtualAndAbstractMembers()
     {
         MethodInfo[] baseMethods = typeof(McpServerResource).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)

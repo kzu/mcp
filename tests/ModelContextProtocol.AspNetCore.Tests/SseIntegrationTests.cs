@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +14,7 @@ using TestServerWithHosting.Tools;
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : KestrelInMemoryTest(outputHelper)
+public partial class SseIntegrationTests() : KestrelInMemoryTest()
 {
     private readonly HttpClientTransportOptions DefaultTransportOptions = new()
     {
@@ -26,56 +26,56 @@ public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : Kestr
         => McpClient.CreateAsync(
             new HttpClientTransport(transportOptions ?? DefaultTransportOptions, httpClient ?? HttpClient, LoggerFactory),
             loggerFactory: LoggerFactory,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
-    [Fact]
+    [Test]
     public async Task ConnectAndReceiveMessage_InMemoryServer()
     {
         Builder.Services.AddMcpServer().WithHttpTransport(options => options.EnableLegacySse = true);
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var mcpClient = await ConnectMcpClientAsync();
 
         // Send a test message through POST endpoint
-        await mcpClient.SendNotificationAsync("test/message", new Envelope { Message = "Hello, SSE!" }, serializerOptions: JsonContext.Default.Options, cancellationToken: TestContext.Current.CancellationToken);
+        await mcpClient.SendNotificationAsync("test/message", new Envelope { Message = "Hello, SSE!" }, serializerOptions: JsonContext.Default.Options, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.True(true);
     }
 
-    [Fact]
+    [Test]
     public async Task ConnectAndReceiveMessage_InMemoryServer_WithFullEndpointEventUri()
     {
         await using var app = Builder.Build();
         MapAbsoluteEndpointUriMcp(app);
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var mcpClient = await ConnectMcpClientAsync();
 
         // Send a test message through POST endpoint
-        await mcpClient.SendNotificationAsync("test/message", new Envelope { Message = "Hello, SSE!" }, serializerOptions: JsonContext.Default.Options, cancellationToken: TestContext.Current.CancellationToken);
+        await mcpClient.SendNotificationAsync("test/message", new Envelope { Message = "Hello, SSE!" }, serializerOptions: JsonContext.Default.Options, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.True(true);
     }
 
-    [Fact]
+    [Test]
     public async Task ConnectAndReceiveMessage_ServerReturningJsonInPostRequest()
     {
         await using var app = Builder.Build();
         MapAbsoluteEndpointUriMcp(app, respondInJson: true);
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var mcpClient = await ConnectMcpClientAsync();
 
         // Send a test message through POST endpoint
-        await mcpClient.SendNotificationAsync("test/message", new Envelope { Message = "Hello, SSE!" }, serializerOptions: JsonContext.Default.Options, cancellationToken: TestContext.Current.CancellationToken);
+        await mcpClient.SendNotificationAsync("test/message", new Envelope { Message = "Hello, SSE!" }, serializerOptions: JsonContext.Default.Options, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.True(true);
     }
 
-    [Fact]
+    [Test]
     public async Task ConnectAndReceiveNotification_InMemoryServer()
     {
         var receivedNotification = new TaskCompletionSource<string?>();
@@ -100,7 +100,7 @@ public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : Kestr
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var mcpClient = await ConnectMcpClientAsync();
 
@@ -112,13 +112,13 @@ public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : Kestr
         });
 
         // Send a test message through POST endpoint
-        await mcpClient.SendNotificationAsync("test/notification", new Envelope { Message = "Hello from client!" }, serializerOptions: JsonContext.Default.Options, cancellationToken: TestContext.Current.CancellationToken);
+        await mcpClient.SendNotificationAsync("test/notification", new Envelope { Message = "Hello from client!" }, serializerOptions: JsonContext.Default.Options, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
-        var message = await receivedNotification.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        var message = await receivedNotification.Task.WaitAsync(TestConstants.DefaultTimeout, TestExecutionContext.Current.CancellationToken);
         Assert.Equal("Hello from server!", message);
     }
 
-    [Fact]
+    [Test]
     public async Task AddMcpServer_CanBeCalled_MultipleTimes()
     {
         var firstOptionsCallbackCallCount = 0;
@@ -140,7 +140,7 @@ public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : Kestr
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         await using var mcpClient = await ConnectMcpClientAsync();
 
@@ -150,7 +150,7 @@ public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : Kestr
         Assert.Equal(1, firstOptionsCallbackCallCount);
         Assert.Equal(1, secondOptionsCallbackCallCount);
 
-        var tools = await mcpClient.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await mcpClient.ListToolsAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.Equal(2, tools.Count);
         Assert.Contains(tools, tools => tools.Name == "echo");
@@ -162,13 +162,13 @@ public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : Kestr
             {
                 ["message"] = "from client!"
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
         var textContent = Assert.Single(echoResponse.Content.OfType<TextContentBlock>());
 
         Assert.Equal("hello from client!", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task AdditionalHeaders_AreSent_InGetAndPostRequests()
     {
         Builder.Services.AddMcpServer()
@@ -183,7 +183,7 @@ public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : Kestr
         {
             return async context =>
             {
-                Assert.Equal("Bearer testToken", context.Request.Headers["Authorize"]);
+                Assert.Equal("Bearer testToken", context.Request.Headers["Authorize"].ToString());
                 if (context.Request.Method == HttpMethods.Get)
                 {
                     wasGetRequest = true;
@@ -197,7 +197,7 @@ public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : Kestr
         });
 
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         var sseOptions = new HttpClientTransportOptions
         {
@@ -215,7 +215,7 @@ public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : Kestr
         Assert.True(wasPostRequest);
     }
 
-    [Fact]
+    [Test]
     public async Task EmptyAdditionalHeadersKey_Throws_InvalidOperationException()
     {
         Builder.Services.AddMcpServer()
@@ -224,7 +224,7 @@ public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : Kestr
         await using var app = Builder.Build();
 
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         var sseOptions = new HttpClientTransportOptions
         {
@@ -308,21 +308,21 @@ public partial class SseIntegrationTests(ITestOutputHelper outputHelper) : Kestr
         });
     }
 
-    [Fact]
+    [Test]
     public async Task Completion_ServerShutdown_ReturnsHttpCompletionDetails()
     {
         Builder.Services.AddMcpServer().WithHttpTransport(options => options.EnableLegacySse = true);
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestExecutionContext.Current.CancellationToken);
 
         var mcpClient = await ConnectMcpClientAsync();
         Assert.False(mcpClient.Completion.IsCompleted);
 
         // Stop the server while the client is still connected.
-        await app.StopAsync(TestContext.Current.CancellationToken);
+        await app.StopAsync(TestExecutionContext.Current.CancellationToken);
 
-        var details = await mcpClient.Completion.WaitAsync(TestContext.Current.CancellationToken);
+        var details = await mcpClient.Completion.WaitAsync(TestExecutionContext.Current.CancellationToken);
         var httpDetails = Assert.IsType<HttpClientCompletionDetails>(details);
         Assert.Null(httpDetails.HttpStatusCode);
     }

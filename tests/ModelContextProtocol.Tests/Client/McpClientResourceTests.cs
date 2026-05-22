@@ -9,8 +9,8 @@ namespace ModelContextProtocol.Tests.Client;
 
 public class McpClientResourceTests : ClientServerTestBase
 {
-    public McpClientResourceTests(ITestOutputHelper outputHelper)
-        : base(outputHelper)
+    public McpClientResourceTests()
+        : base()
     {
     }
 
@@ -30,12 +30,12 @@ public class McpClientResourceTests : ClientServerTestBase
             context.Params.Meta?.ToJsonString() ?? "{}";
     }
 
-    [Fact]
+    [Test]
     public async Task Constructor_WithValidParameters_CreatesInstance()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resources = await client.ListResourcesAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var originalResource = resources.First(r => r.Name == "sample");
         var resourceDefinition = originalResource.ProtocolResource;
 
@@ -47,7 +47,7 @@ public class McpClientResourceTests : ClientServerTestBase
         Assert.Same(resourceDefinition, newResource.ProtocolResource);
     }
 
-    [Fact]
+    [Test]
     public void Constructor_WithNullClient_ThrowsArgumentNullException()
     {
         var resourceDefinition = new Resource
@@ -60,7 +60,7 @@ public class McpClientResourceTests : ClientServerTestBase
         Assert.Throws<ArgumentNullException>("client", () => new McpClientResource(null!, resourceDefinition));
     }
 
-    [Fact]
+    [Test]
     public async Task Constructor_WithNullResource_ThrowsArgumentNullException()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -68,13 +68,13 @@ public class McpClientResourceTests : ClientServerTestBase
         Assert.Throws<ArgumentNullException>("resource", () => new McpClientResource(client, null!));
     }
 
-    [Fact]
+    [Test]
     public async Task ReuseResourceDefinition_AcrossDifferentClients_ReadsSuccessfully()
     {
         Resource resourceDefinition;
         {
             await using McpClient client1 = await CreateMcpClientForServer();
-            var resources = await client1.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var resources = await client1.ListResourcesAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
             var sampleResource = resources.First(r => r.Name == "sample");
             resourceDefinition = sampleResource.ProtocolResource;
         }
@@ -84,7 +84,7 @@ public class McpClientResourceTests : ClientServerTestBase
         var reusedResource = new McpClientResource(client2, resourceDefinition);
 
         var result = await reusedResource.ReadAsync(
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.NotNull(result.Contents);
@@ -93,12 +93,12 @@ public class McpClientResourceTests : ClientServerTestBase
         Assert.Equal("Sample content", content.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ReuseResourceDefinition_PreservesResourceMetadata()
     {
         await using McpClient client = await CreateMcpClientForServer();
         
-        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resources = await client.ListResourcesAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var originalResource = resources.First(r => r.Name == "sample");
         var resourceDefinition = originalResource.ProtocolResource;
 
@@ -111,7 +111,7 @@ public class McpClientResourceTests : ClientServerTestBase
         Assert.Equal(originalResource.ProtocolResource.Description, reusedResource.ProtocolResource.Description);
     }
 
-    [Fact]
+    [Test]
     public async Task ManuallyConstructedResource_CreatesValidInstance()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -131,12 +131,12 @@ public class McpClientResourceTests : ClientServerTestBase
         Assert.Equal("file:///sample.txt", clientResource.Uri);
     }
 
-    [Fact]
+    [Test]
     public async Task ReadAsync_WithRequestOptions_PassesMetaToServer()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resources = await client.ListResourcesAsync(cancellationToken: TestExecutionContext.Current.CancellationToken);
         var resource = resources.Single(r => r.Name == "metadata_echo");
 
         RequestOptions requestOptions = new()
@@ -148,7 +148,7 @@ public class McpClientResourceTests : ClientServerTestBase
             }
         };
 
-        var result = await resource.ReadAsync(options: requestOptions, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await resource.ReadAsync(options: requestOptions, cancellationToken: TestExecutionContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         var content = Assert.IsType<TextResourceContents>(result.Contents.First());
