@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ListPromptsRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void ListPromptsRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ListPromptsRequestParams
@@ -24,7 +24,7 @@ public static class ListPromptsRequestParamsTests
         Assert.Equal("tok-1", (string)deserialized.Meta["progressToken"]!);
     }
 
-    [Fact]
+    [Test]
     public static void ListPromptsRequestParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ListPromptsRequestParams();

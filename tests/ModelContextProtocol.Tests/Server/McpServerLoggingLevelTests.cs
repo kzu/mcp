@@ -10,11 +10,11 @@ public class McpServerLoggingLevelTests
     public McpServerLoggingLevelTests()
     {
 #if !NET
-        Assert.SkipWhen(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "https://github.com/modelcontextprotocol/csharp-sdk/issues/587");
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) Assert.Ignore("https://github.com/modelcontextprotocol/csharp-sdk/issues/587");
 #endif
     }
 
-    [Fact]
+    [Test]
     public async Task CanCreateServerWithLoggingLevelHandler()
     {
         var services = new ServiceCollection();
@@ -28,7 +28,7 @@ public class McpServerLoggingLevelTests
         provider.GetRequiredService<McpServer>();
     }
 
-    [Fact]
+    [Test]
     public async Task AddingLoggingLevelHandlerSetsLoggingCapability()
     {
         var services = new ServiceCollection();
@@ -45,7 +45,7 @@ public class McpServerLoggingLevelTests
         Assert.NotNull(server.ServerOptions.Handlers.SetLoggingLevelHandler);
     }
 
-    [Fact]
+    [Test]
     public async Task ServerWithoutCallingLoggingLevelHandlerDoesNotSetLoggingCapability()
     {
         var services = new ServiceCollection();

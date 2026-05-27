@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class CallToolResultTests
 {
-    [Fact]
+    [Test]
     public static void CallToolResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new CallToolResult
@@ -40,7 +40,7 @@ public static class CallToolResultTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void CallToolResult_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new CallToolResult();

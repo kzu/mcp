@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class McpTaskTests
 {
-    [Fact]
+    [Test]
     public static void McpTask_SerializationRoundTrip_PreservesAllProperties()
     {
         // Arrange
@@ -37,7 +37,7 @@ public static class McpTaskTests
         Assert.Equal(original.PollInterval, deserialized.PollInterval);
     }
 
-    [Fact]
+    [Test]
     public static void McpTask_SerializationRoundTrip_WithMinimalProperties()
     {
         // Arrange
@@ -66,7 +66,7 @@ public static class McpTaskTests
         Assert.Null(deserialized.PollInterval);
     }
 
-    [Fact]
+    [Test]
     public static void McpTask_HasCorrectJsonPropertyNames()
     {
         var task = new McpTask
@@ -91,7 +91,7 @@ public static class McpTaskTests
         Assert.Contains("\"pollInterval\":", json);
     }
 
-    [Fact]
+    [Test]
     public static void McpTask_TimeToLive_SerializesAsMilliseconds()
     {
         var task = new McpTask
@@ -108,12 +108,12 @@ public static class McpTaskTests
         Assert.Contains("\"ttl\":60000", json);
     }
 
-    [Theory]
-    [InlineData(McpTaskStatus.Working)]
-    [InlineData(McpTaskStatus.InputRequired)]
-    [InlineData(McpTaskStatus.Completed)]
-    [InlineData(McpTaskStatus.Failed)]
-    [InlineData(McpTaskStatus.Cancelled)]
+    [Test]
+    [TestCase(McpTaskStatus.Working)]
+    [TestCase(McpTaskStatus.InputRequired)]
+    [TestCase(McpTaskStatus.Completed)]
+    [TestCase(McpTaskStatus.Failed)]
+    [TestCase(McpTaskStatus.Cancelled)]
     public static void McpTaskStatus_SerializesCorrectly(McpTaskStatus status)
     {
         var task = new McpTask
@@ -131,7 +131,7 @@ public static class McpTaskTests
         Assert.Equal(status, deserialized.Status);
     }
 
-    [Fact]
+    [Test]
     public static void McpTaskStatus_HasCorrectJsonValues()
     {
         var statuses = new[]

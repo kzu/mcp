@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,9 +13,9 @@ using System.Text.Encodings.Web;
 
 namespace ModelContextProtocol.AspNetCore.Tests.OAuth;
 
-public class McpAuthenticationHandlerTests(ITestOutputHelper outputHelper) : KestrelInMemoryTest(outputHelper)
+public class McpAuthenticationHandlerTests() : KestrelInMemoryTest()
 {
-    [Fact]
+    [Test]
     public async Task Challenge_WithRelativeResourceMetadataUri_SetsAbsoluteUrl()
     {
         const string metadataPath = "/.well-known/custom-relative";
@@ -26,18 +26,18 @@ public class McpAuthenticationHandlerTests(ITestOutputHelper outputHelper) : Kes
             options.ResourceMetadata!.Resource = "http://localhost:5000/challenge";
         });
 
-        using var challengeResponse = await HttpClient.GetAsync(new Uri("/challenge", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        using var challengeResponse = await HttpClient.GetAsync(new Uri("/challenge", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead, TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, challengeResponse.StatusCode);
         var header = Assert.Single(challengeResponse.Headers.WwwAuthenticate);
         Assert.Equal("Bearer", header.Scheme);
         Assert.Contains($"resource_metadata=\"http://localhost:5000{metadataPath}\"", header.Parameter);
 
-        using var metadataResponse = await HttpClient.GetAsync(new Uri(metadataPath, UriKind.Relative), TestContext.Current.CancellationToken);
+        using var metadataResponse = await HttpClient.GetAsync(new Uri(metadataPath, UriKind.Relative), TestContext.CurrentContext.CancellationToken);
         metadataResponse.EnsureSuccessStatusCode();
     }
 
-    [Fact]
+    [Test]
     public async Task MetadataRequest_CustomResourceMetadataUriWithoutResource_ThrowsInvalidOperationException()
     {
         const string metadataPath = "/.well-known/custom-metadata";
@@ -47,7 +47,7 @@ public class McpAuthenticationHandlerTests(ITestOutputHelper outputHelper) : Kes
             options.ResourceMetadataUri = new Uri(metadataPath, UriKind.Relative);
         });
 
-        using var response = await HttpClient.GetAsync(new Uri(metadataPath, UriKind.Relative), TestContext.Current.CancellationToken);
+        using var response = await HttpClient.GetAsync(new Uri(metadataPath, UriKind.Relative), TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.Contains(MockLoggerProvider.LogMessages, log =>
@@ -56,7 +56,7 @@ public class McpAuthenticationHandlerTests(ITestOutputHelper outputHelper) : Kes
             log.Exception.Message.Contains("ResourceMetadata.Resource could not be determined", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Test]
     public async Task Challenge_WithAbsoluteResourceMetadataUri_SetsConfiguredUrl()
     {
         var metadataUri = new Uri("http://localhost:5000/.well-known/custom-absolute");
@@ -67,18 +67,18 @@ public class McpAuthenticationHandlerTests(ITestOutputHelper outputHelper) : Kes
             options.ResourceMetadata!.Resource = "http://localhost:5000/challenge";
         });
 
-        using var challengeResponse = await HttpClient.GetAsync(new Uri("/challenge", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        using var challengeResponse = await HttpClient.GetAsync(new Uri("/challenge", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead, TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, challengeResponse.StatusCode);
         var header = Assert.Single(challengeResponse.Headers.WwwAuthenticate);
         Assert.Equal("Bearer", header.Scheme);
         Assert.Contains($"resource_metadata=\"{metadataUri}\"", header.Parameter);
 
-        using var metadataResponse = await HttpClient.GetAsync(metadataUri, TestContext.Current.CancellationToken);
+        using var metadataResponse = await HttpClient.GetAsync(metadataUri, TestContext.CurrentContext.CancellationToken);
         metadataResponse.EnsureSuccessStatusCode();
     }
 
-    [Fact]
+    [Test]
     public async Task MetadataRequest_WithHostMismatch_LogsWarning()
     {
         var metadataUri = new Uri("http://expected-host:5000/.well-known/host-mismatch");
@@ -89,7 +89,7 @@ public class McpAuthenticationHandlerTests(ITestOutputHelper outputHelper) : Kes
         });
 
         using var metadataRequest = new HttpRequestMessage(HttpMethod.Get, new Uri("http://localhost:5000/.well-known/host-mismatch"));
-        using var metadataResponse = await HttpClient.SendAsync(metadataRequest, TestContext.Current.CancellationToken);
+        using var metadataResponse = await HttpClient.SendAsync(metadataRequest, TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, metadataResponse.StatusCode);
         Assert.Contains(MockLoggerProvider.LogMessages, log =>
@@ -98,12 +98,12 @@ public class McpAuthenticationHandlerTests(ITestOutputHelper outputHelper) : Kes
             log.Message.Contains("expected-host", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Test]
     public async Task Challenge_WithDefaultMetadata_ComposesResourceSpecificEndpoint()
     {
         await using var app = await StartAuthenticationServerAsync();
 
-        using var challengeResponse = await HttpClient.GetAsync(new Uri("/resource/tools/list", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        using var challengeResponse = await HttpClient.GetAsync(new Uri("/resource/tools/list", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead, TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, challengeResponse.StatusCode);
         var header = Assert.Single(challengeResponse.Headers.WwwAuthenticate);
@@ -111,12 +111,12 @@ public class McpAuthenticationHandlerTests(ITestOutputHelper outputHelper) : Kes
         Assert.Contains("resource_metadata=\"http://localhost:5000/.well-known/oauth-protected-resource/resource/tools/list\"", header.Parameter);
     }
 
-    [Fact]
+    [Test]
     public async Task Challenge_WithDefaultMetadata_AndPathBase_ComposesResourceSpecificEndpoint()
     {
         await using var app = await StartAuthenticationServerAsync(pathBase: new PathString("/api"));
 
-        using var challengeResponse = await HttpClient.GetAsync(new Uri("/api/resource/tools/list", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        using var challengeResponse = await HttpClient.GetAsync(new Uri("/api/resource/tools/list", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead, TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Unauthorized, challengeResponse.StatusCode);
         var header = Assert.Single(challengeResponse.Headers.WwwAuthenticate);
@@ -124,34 +124,34 @@ public class McpAuthenticationHandlerTests(ITestOutputHelper outputHelper) : Kes
         Assert.Contains("resource_metadata=\"http://localhost:5000/api/.well-known/oauth-protected-resource/resource/tools/list\"", header.Parameter);
     }
 
-    [Fact]
+    [Test]
     public async Task MetadataRequest_DefaultEndpoint_SetsResourceFromSuffix()
     {
         await using var app = await StartAuthenticationServerAsync();
 
-        using var metadataResponse = await HttpClient.GetAsync(new Uri("/.well-known/oauth-protected-resource/resource/tools", UriKind.Relative), TestContext.Current.CancellationToken);
+        using var metadataResponse = await HttpClient.GetAsync(new Uri("/.well-known/oauth-protected-resource/resource/tools", UriKind.Relative), TestContext.CurrentContext.CancellationToken);
 
         metadataResponse.EnsureSuccessStatusCode();
 
         var metadata = await metadataResponse.Content.ReadFromJsonAsync<ProtectedResourceMetadata>(
             McpJsonUtilities.DefaultOptions,
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(metadata);
         Assert.Equal("http://localhost:5000/resource/tools", metadata!.Resource);
     }
 
-    [Fact]
+    [Test]
     public async Task MetadataRequest_DefaultEndpoint_WithPathBase_SetsResourceFromSuffix()
     {
         await using var app = await StartAuthenticationServerAsync(pathBase: new PathString("/api"));
 
-        using var metadataResponse = await HttpClient.GetAsync(new Uri("/api/.well-known/oauth-protected-resource/resource/tools", UriKind.Relative), TestContext.Current.CancellationToken);
+        using var metadataResponse = await HttpClient.GetAsync(new Uri("/api/.well-known/oauth-protected-resource/resource/tools", UriKind.Relative), TestContext.CurrentContext.CancellationToken);
 
         metadataResponse.EnsureSuccessStatusCode();
 
         var metadata = await metadataResponse.Content.ReadFromJsonAsync<ProtectedResourceMetadata>(
             McpJsonUtilities.DefaultOptions,
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(metadata);
         Assert.Equal("http://localhost:5000/api/resource/tools", metadata!.Resource);
     }
@@ -188,7 +188,7 @@ public class McpAuthenticationHandlerTests(ITestOutputHelper outputHelper) : Kes
         app.UseAuthorization();
         app.MapGet("/challenge", context => context.ChallengeAsync(McpAuthenticationDefaults.AuthenticationScheme));
         app.MapGet("/resource/{*resourcePath}", context => context.ChallengeAsync(McpAuthenticationDefaults.AuthenticationScheme));
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
         return app;
     }
 

@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class PromptsCapabilityTests
 {
-    [Fact]
+    [Test]
     public static void PromptsCapability_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new PromptsCapability
@@ -20,7 +20,7 @@ public static class PromptsCapabilityTests
         Assert.True(deserialized.ListChanged);
     }
 
-    [Fact]
+    [Test]
     public static void PromptsCapability_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new PromptsCapability();

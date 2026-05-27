@@ -1,11 +1,11 @@
-namespace System.Diagnostics;
+﻿namespace System.Diagnostics;
 
 public static class ProcessExtensions
 {
     public static async Task WaitForExitAsync(this Process process, TimeSpan timeout)
     {
 #if NET
-        using var shutdownCts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        using var shutdownCts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.CurrentContext.CancellationToken);
         shutdownCts.CancelAfter(timeout);
         await process.WaitForExitAsync(shutdownCts.Token);
 #else

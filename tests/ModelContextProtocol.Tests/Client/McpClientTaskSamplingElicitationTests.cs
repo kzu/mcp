@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -14,8 +14,8 @@ namespace ModelContextProtocol.Tests.Client;
 /// </summary>
 public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
 {
-    public McpClientTaskSamplingElicitationTests(ITestOutputHelper outputHelper)
-        : base(outputHelper)
+    public McpClientTaskSamplingElicitationTests()
+        : base()
     {
     }
 
@@ -78,7 +78,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
 
     #region Client Task-Based Sampling Tests
 
-    [Fact]
+    [Test]
     public async Task Client_WithTaskStoreAndSamplingHandler_AdvertisesTaskAugmentedSamplingCapability()
     {
         // Arrange - Create client with task store and sampling handler
@@ -109,7 +109,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         Assert.NotNull(Server.ClientCapabilities.Tasks.Requests?.Sampling?.CreateMessage);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_WithoutTaskStore_DoesNotAdvertiseTaskAugmentedSamplingCapability()
     {
         // Arrange - Create client with sampling handler but NO task store
@@ -139,7 +139,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         Assert.Null(Server.ClientCapabilities.Tasks);
     }
 
-    [Fact]
+    [Test]
     public async Task Server_SampleAsTaskAsync_FailsWhenClientDoesNotSupportTaskAugmentedSampling()
     {
         // Arrange - Client with sampling handler but NO task store
@@ -170,13 +170,13 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
                     MaxTokens = 100
                 },
                 new McpTaskMetadata(),
-                TestContext.Current.CancellationToken);
+                TestContext.CurrentContext.CancellationToken);
         });
 
         Assert.Contains("task-augmented sampling", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_WithTaskStore_CanExecuteSamplingAsTask()
     {
         // Arrange
@@ -212,7 +212,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
                 MaxTokens = 100
             },
             new McpTaskMetadata(),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Assert - Task was created
         Assert.NotNull(mcpTask);
@@ -220,14 +220,14 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         Assert.Equal(McpTaskStatus.Working, mcpTask.Status);
 
         // Wait for sampling to complete
-        await samplingCompleted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await samplingCompleted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
 
         // Poll until task is complete
         McpTask taskStatus;
         do
         {
-            await Task.Delay(100, TestContext.Current.CancellationToken);
-            taskStatus = await Server.GetTaskAsync(mcpTask.TaskId, TestContext.Current.CancellationToken);
+            await Task.Delay(100, TestContext.CurrentContext.CancellationToken);
+            taskStatus = await Server.GetTaskAsync(mcpTask.TaskId, TestContext.CurrentContext.CancellationToken);
         }
         while (taskStatus.Status == McpTaskStatus.Working);
 
@@ -235,7 +235,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
 
         // Get the result
         var result = await Server.GetTaskResultAsync<CreateMessageResult>(
-            mcpTask.TaskId, cancellationToken: TestContext.Current.CancellationToken);
+            mcpTask.TaskId, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
         var textContent = Assert.IsType<TextContentBlock>(Assert.Single(result.Content));
@@ -246,7 +246,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
 
     #region Client Task-Based Elicitation Tests
 
-    [Fact]
+    [Test]
     public async Task Client_WithTaskStoreAndElicitationHandler_AdvertisesTaskAugmentedElicitationCapability()
     {
         // Arrange - Create client with task store and elicitation handler
@@ -272,7 +272,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         Assert.NotNull(Server.ClientCapabilities.Tasks.Requests?.Elicitation?.Create);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_WithoutTaskStore_DoesNotAdvertiseTaskAugmentedElicitationCapability()
     {
         // Arrange - Create client with elicitation handler but NO task store
@@ -296,7 +296,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         Assert.Null(Server.ClientCapabilities.Tasks);
     }
 
-    [Fact]
+    [Test]
     public async Task Server_ElicitAsTaskAsync_FailsWhenClientDoesNotSupportTaskAugmentedElicitation()
     {
         // Arrange - Client with elicitation handler but NO task store
@@ -323,13 +323,13 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
                     RequestedSchema = new()
                 },
                 new McpTaskMetadata(),
-                TestContext.Current.CancellationToken);
+                TestContext.CurrentContext.CancellationToken);
         });
 
         Assert.Contains("task-augmented elicitation", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_WithTaskStore_CanExecuteElicitationAsTask()
     {
         // Arrange
@@ -368,7 +368,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
                 RequestedSchema = new()
             },
             new McpTaskMetadata(),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Assert - Task was created
         Assert.NotNull(mcpTask);
@@ -376,14 +376,14 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         Assert.Equal(McpTaskStatus.Working, mcpTask.Status);
 
         // Wait for elicitation to complete
-        await elicitationCompleted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await elicitationCompleted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
 
         // Poll until task is complete
         McpTask taskStatus;
         do
         {
-            await Task.Delay(100, TestContext.Current.CancellationToken);
-            taskStatus = await Server.GetTaskAsync(mcpTask.TaskId, TestContext.Current.CancellationToken);
+            await Task.Delay(100, TestContext.CurrentContext.CancellationToken);
+            taskStatus = await Server.GetTaskAsync(mcpTask.TaskId, TestContext.CurrentContext.CancellationToken);
         }
         while (taskStatus.Status == McpTaskStatus.Working);
 
@@ -391,7 +391,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
 
         // Get the result
         var result = await Server.GetTaskResultAsync<ElicitResult>(
-            mcpTask.TaskId, cancellationToken: TestContext.Current.CancellationToken);
+            mcpTask.TaskId, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("accept", result.Action);
@@ -401,7 +401,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
 
     #region Client Task Reporting Tests
 
-    [Fact]
+    [Test]
     public async Task Client_CanListOwnTasks()
     {
         // Arrange
@@ -429,15 +429,15 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         var task1 = await Server.SampleAsTaskAsync(
             new CreateMessageRequestParams { Messages = [], MaxTokens = 100 },
             new McpTaskMetadata(),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         var task2 = await Server.SampleAsTaskAsync(
             new CreateMessageRequestParams { Messages = [], MaxTokens = 100 },
             new McpTaskMetadata(),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Act - Server lists tasks from client
-        var tasks = await Server.ListTasksAsync(TestContext.Current.CancellationToken);
+        var tasks = await Server.ListTasksAsync(TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(tasks);
@@ -446,7 +446,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         Assert.Contains(tasks, t => t.TaskId == task2.TaskId);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_CanCancelTasks()
     {
         // Arrange
@@ -486,13 +486,13 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         var mcpTask = await Server.SampleAsTaskAsync(
             new CreateMessageRequestParams { Messages = [], MaxTokens = 100 },
             new McpTaskMetadata(),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Wait for sampling to start
-        await samplingStarted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await samplingStarted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
 
         // Act - Cancel the task
-        var cancelledTask = await Server.CancelTaskAsync(mcpTask.TaskId, TestContext.Current.CancellationToken);
+        var cancelledTask = await Server.CancelTaskAsync(mcpTask.TaskId, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(cancelledTask);
@@ -502,7 +502,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         allowCompletion.TrySetResult(true);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_TaskStatusNotifications_SentWhenEnabled()
     {
         // Arrange
@@ -590,7 +590,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         var mcpTask = await Server.SampleAsTaskAsync(
             new CreateMessageRequestParams { Messages = [], MaxTokens = 100 },
             new McpTaskMetadata(),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Store the expected task ID for filtering
         lock (expectedTaskIdLock)
@@ -601,8 +601,8 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         // Wait for both Working and Completed notifications to arrive
         // The notifications are sent asynchronously so we need to wait for both
         await Task.WhenAll(
-            workingNotificationReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken),
-            completedNotificationReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken));
+            workingNotificationReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken),
+            completedNotificationReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken));
 
         // Assert - Should have received notifications for status transitions
         await notificationHandler.DisposeAsync();
@@ -625,7 +625,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
 
     #region Error Handling Tests
 
-    [Fact]
+    [Test]
     public async Task Client_SamplingHandlerException_ResultsInFailedTask()
     {
         // Arrange
@@ -651,17 +651,17 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         var mcpTask = await Server.SampleAsTaskAsync(
             new CreateMessageRequestParams { Messages = [], MaxTokens = 100 },
             new McpTaskMetadata(),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Wait for sampling attempt
-        await samplingAttempted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await samplingAttempted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
 
         // Poll until task status changes
         McpTask taskStatus;
         do
         {
-            await Task.Delay(100, TestContext.Current.CancellationToken);
-            taskStatus = await Server.GetTaskAsync(mcpTask.TaskId, TestContext.Current.CancellationToken);
+            await Task.Delay(100, TestContext.CurrentContext.CancellationToken);
+            taskStatus = await Server.GetTaskAsync(mcpTask.TaskId, TestContext.CurrentContext.CancellationToken);
         }
         while (taskStatus.Status == McpTaskStatus.Working);
 
@@ -671,7 +671,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         Assert.Contains("Sampling failed!", taskStatus.StatusMessage);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_ElicitationHandlerException_ResultsInFailedTask()
     {
         // Arrange
@@ -701,17 +701,17 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
                 RequestedSchema = new()
             },
             new McpTaskMetadata(),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Wait for elicitation attempt
-        await elicitationAttempted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await elicitationAttempted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
 
         // Poll until task status changes
         McpTask taskStatus;
         do
         {
-            await Task.Delay(100, TestContext.Current.CancellationToken);
-            taskStatus = await Server.GetTaskAsync(mcpTask.TaskId, TestContext.Current.CancellationToken);
+            await Task.Delay(100, TestContext.CurrentContext.CancellationToken);
+            taskStatus = await Server.GetTaskAsync(mcpTask.TaskId, TestContext.CurrentContext.CancellationToken);
         }
         while (taskStatus.Status == McpTaskStatus.Working);
 
@@ -725,7 +725,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
 
     #region Capability Validation Tests
 
-    [Fact]
+    [Test]
     public async Task Client_WithOnlySamplingHandler_OnlyAdvertisesSamplingTasks()
     {
         // Arrange - Client with only sampling handler and task store
@@ -760,7 +760,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         Assert.Null(Server.ClientCapabilities.Tasks.Requests?.Elicitation);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_WithOnlyElicitationHandler_OnlyAdvertisesElicitationTasks()
     {
         // Arrange - Client with only elicitation handler and task store
@@ -791,7 +791,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         Assert.Null(Server.ClientCapabilities.Tasks.Requests?.Sampling);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_WithBothHandlers_AdvertisesBothTaskCapabilities()
     {
         // Arrange - Client with both handlers and task store
@@ -832,7 +832,7 @@ public class McpClientTaskSamplingElicitationTests : ClientServerTestBase
         Assert.NotNull(Server.ClientCapabilities.Tasks.Cancel);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_WithNoHandlers_DoesNotAdvertiseTaskCapabilities()
     {
         // Arrange - Client with task store but no handlers

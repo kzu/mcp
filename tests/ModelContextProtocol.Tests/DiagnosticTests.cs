@@ -9,10 +9,10 @@ using System.Text.Json;
 
 namespace ModelContextProtocol.Tests;
 
-[Collection(nameof(DisableParallelization))]
+[NonParallelizable]
 public class DiagnosticTests
 {
-    [Fact]
+    [Test]
     public async Task Session_TracksActivities()
     {
         var activities = new List<Activity>();
@@ -25,12 +25,12 @@ public class DiagnosticTests
         {
             await RunConnected(async (client, server) =>
             {
-                var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+                var tools = await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
                 Assert.NotNull(tools);
                 Assert.NotEmpty(tools);
 
                 var tool = tools.First(t => t.Name == "DoubleValue");
-                await tool.InvokeAsync(new() { ["amount"] = 42 }, TestContext.Current.CancellationToken);
+                await tool.InvokeAsync(new() { ["amount"] = 42 }, TestContext.CurrentContext.CancellationToken);
             }, clientToServerLog);
 
             // Wait for server-side activities to be exported. The server processes messages
@@ -100,7 +100,7 @@ public class DiagnosticTests
         Assert.Equal(serverSessionId, serverListToolsCall.Tags.Single(t => t.Key == "mcp.session.id").Value);
     }
 
-    [Fact]
+    [Test]
     public async Task Session_FailedToolCall()
     {
         var activities = new List<Activity>();
@@ -112,8 +112,8 @@ public class DiagnosticTests
         {
             await RunConnected(async (client, server) =>
             {
-                await client.CallToolAsync("Throw", cancellationToken: TestContext.Current.CancellationToken);
-                await Assert.ThrowsAsync<McpProtocolException>(async () => await client.CallToolAsync("does-not-exist", cancellationToken: TestContext.Current.CancellationToken));
+                await client.CallToolAsync("Throw", cancellationToken: TestContext.CurrentContext.CancellationToken);
+                await Assert.ThrowsAsync<McpProtocolException>(async () => await client.CallToolAsync("does-not-exist", cancellationToken: TestContext.CurrentContext.CancellationToken));
             }, []);
 
             // Wait for server-side activities to be exported. Wait for specific activities
@@ -160,7 +160,7 @@ public class DiagnosticTests
         Assert.Equal("-32602", doesNotExistToolClient.Tags.Single(t => t.Key == "rpc.response.status_code").Value);
     }
 
-    [Fact]
+    [Test]
     public async Task Session_McpAttributesAddedToOuterExecuteToolActivity()
     {
         // This test simulates the scenario where FunctionInvokingChatClient creates an outer
@@ -184,9 +184,9 @@ public class DiagnosticTests
                 Assert.NotNull(outerActivity);
 
                 // Now call the MCP tool - MCP should augment the outer activity
-                var tool = (await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken))
+                var tool = (await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken))
                     .First(t => t.Name == "DoubleValue");
-                await tool.InvokeAsync(new() { ["amount"] = 42 }, TestContext.Current.CancellationToken);
+                await tool.InvokeAsync(new() { ["amount"] = 42 }, TestContext.CurrentContext.CancellationToken);
             }, []);
 
             // Wait for server-side activities to be exported. Wait for specific activities
@@ -232,11 +232,11 @@ public class DiagnosticTests
                 ]
             }))
         {
-            serverTask = server.RunAsync(TestContext.Current.CancellationToken);
+            serverTask = server.RunAsync(TestContext.CurrentContext.CancellationToken);
 
             await using (McpClient client = await McpClient.CreateAsync(
                 clientTransport,
-                cancellationToken: TestContext.Current.CancellationToken))
+                cancellationToken: TestContext.CurrentContext.CancellationToken))
             {
                 await action(client, server);
             }

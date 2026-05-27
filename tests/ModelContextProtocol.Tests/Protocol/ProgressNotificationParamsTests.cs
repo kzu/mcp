@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ProgressNotificationParamsTests
 {
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_UnknownArrayProperty_IsIgnored()
     {
         // This test verifies that the ProgressNotificationParams.Converter properly skips unknown properties
@@ -43,7 +43,7 @@ public static class ProgressNotificationParamsTests
         Assert.Equal("Processing items", result.Progress.Message);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_UnknownObjectProperty_IsIgnored()
     {
         // Test that unknown properties with nested objects are properly skipped
@@ -72,7 +72,7 @@ public static class ProgressNotificationParamsTests
         Assert.Null(result.Progress.Total);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_UnknownMixedProperties_AreIgnored()
     {
         // Test multiple unknown properties with different types
@@ -103,7 +103,7 @@ public static class ProgressNotificationParamsTests
         Assert.Equal("Working on it", result.Progress.Message);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_UnknownNestedArrays_AreIgnored()
     {
         // Test complex unknown properties with arrays of objects
@@ -139,7 +139,7 @@ public static class ProgressNotificationParamsTests
         Assert.Equal(99.9f, result.Progress.Total);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_MultipleUnknownProperties_AllIgnored()
     {
         // Test that multiple unknown properties are all properly skipped
@@ -165,7 +165,7 @@ public static class ProgressNotificationParamsTests
         Assert.Equal("Multiple unknowns", result.Progress.Message);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_UnknownArrayOfArrays_IsIgnored()
     {
         // Test deeply nested array structures in unknown properties
@@ -195,7 +195,7 @@ public static class ProgressNotificationParamsTests
         Assert.Equal(88.0f, result.Progress.Progress);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_EmptyUnknownArray_IsIgnored()
     {
         // Test empty arrays in unknown properties
@@ -217,7 +217,7 @@ public static class ProgressNotificationParamsTests
         Assert.Equal(0.0f, result.Progress.Progress);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_EmptyUnknownObject_IsIgnored()
     {
         // Test empty objects in unknown properties
@@ -241,7 +241,7 @@ public static class ProgressNotificationParamsTests
         Assert.Equal(100.0f, result.Progress.Total);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_UnknownPropertiesBetweenRequired_AreIgnored()
     {
         // Test unknown properties interspersed with required ones
@@ -270,7 +270,7 @@ public static class ProgressNotificationParamsTests
         Assert.Equal("Interspersed test", result.Progress.Message);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_VeryDeeplyNestedUnknown_IsIgnored()
     {
         // Test very deeply nested structures in unknown properties
@@ -304,7 +304,7 @@ public static class ProgressNotificationParamsTests
         Assert.Equal(50.0f, result.Progress.Progress);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_WithMeta_UnknownPropertiesIgnored()
     {
         // Test that _meta property works correctly alongside unknown properties
@@ -331,7 +331,7 @@ public static class ProgressNotificationParamsTests
         Assert.True(result.Meta.ContainsKey("customField"));
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_SerializationRoundTrip_PreservesKnownProperties()
     {
         // Test that serialization/deserialization preserves known properties
@@ -357,7 +357,7 @@ public static class ProgressNotificationParamsTests
         Assert.Equal(original.Progress.Message, deserialized.Progress.Message);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_MinimalProperties_Deserializes()
     {
         // Test with only required properties
@@ -380,7 +380,7 @@ public static class ProgressNotificationParamsTests
         Assert.Null(result.Progress.Message);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_MissingProgress_ThrowsException()
     {
         // Test that missing required progress property throws an exception
@@ -396,7 +396,7 @@ public static class ProgressNotificationParamsTests
             JsonSerializer.Deserialize<ProgressNotificationParams>(jsonMissingProgress, McpJsonUtilities.DefaultOptions));
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_MissingProgressToken_ThrowsException()
     {
         // Test that missing required progressToken property throws an exception
@@ -412,7 +412,7 @@ public static class ProgressNotificationParamsTests
             JsonSerializer.Deserialize<ProgressNotificationParams>(jsonMissingToken, McpJsonUtilities.DefaultOptions));
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_StringProgressToken_Deserializes()
     {
         // Test with string progress token
@@ -434,7 +434,7 @@ public static class ProgressNotificationParamsTests
         Assert.Equal(25.0f, result.Progress.Progress);
     }
 
-    [Fact]
+    [Test]
     public static void ProgressNotificationParams_IntegerProgressToken_Deserializes()
     {
         // Test with integer progress token

@@ -1,33 +1,37 @@
 ﻿using Microsoft.Extensions.Logging;
+using NUnit.Framework;
 
 namespace ModelContextProtocol.Tests.Utils;
 
 public class LoggedTest : IDisposable
 {
-    private readonly DelegatingTestOutputHelper _delegatingTestOutputHelper;
+    private readonly DelegatingTextWriter _outputWriter;
 
-    public LoggedTest(ITestOutputHelper testOutputHelper)
+    public LoggedTest()
     {
-        _delegatingTestOutputHelper = new()
-        {
-            CurrentTestOutputHelper = testOutputHelper,
-        };
-        XunitLoggerProvider = new XunitLoggerProvider(_delegatingTestOutputHelper);
+        _outputWriter = new DelegatingTextWriter(() => TestContext.Out);
+        LoggerProvider = new TestLoggerProvider(_outputWriter);
         LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
         {
-            builder.AddProvider(XunitLoggerProvider);
+            builder.AddProvider(LoggerProvider);
             builder.AddProvider(MockLoggerProvider);
             builder.SetMinimumLevel(LogLevel.Debug);
         });
     }
 
-    public ITestOutputHelper TestOutputHelper => _delegatingTestOutputHelper;
-    public ILoggerFactory LoggerFactory { get; set; }
-    public ILoggerProvider XunitLoggerProvider { get; }
+    /// <summary>
+    /// Provides a TextWriter for test output (writes to TestContext.Out).
+    /// </summary>
+    public TextWriter TestOutput => _outputWriter;
+
+    public ILoggerFactory LoggerFactory { get; }
+
+    public ILoggerProvider LoggerProvider { get; }
+
     public MockLoggerProvider MockLoggerProvider { get; } = new();
 
     public virtual void Dispose()
     {
-        _delegatingTestOutputHelper.CurrentTestOutputHelper = null;
+        // Nothing to clear; delegating to TestContext.Out which is managed by NUnit
     }
 }

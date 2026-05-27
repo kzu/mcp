@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ElicitRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void ElicitRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ElicitRequestParams
@@ -43,7 +43,7 @@ public static class ElicitRequestParamsTests
         Assert.Equal("tok-1", (string)deserialized.Meta["progressToken"]!);
     }
 
-    [Fact]
+    [Test]
     public static void ElicitRequestParams_SerializationRoundTrip_UrlMode()
     {
         var original = new ElicitRequestParams
@@ -66,7 +66,7 @@ public static class ElicitRequestParamsTests
         Assert.Null(deserialized.Task);
     }
 
-    [Fact]
+    [Test]
     public static void ElicitRequestParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ElicitRequestParams

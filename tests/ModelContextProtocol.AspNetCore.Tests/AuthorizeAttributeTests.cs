@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,7 +15,7 @@ namespace ModelContextProtocol.AspNetCore.Tests;
 /// <summary>
 /// Tests for MCP authorization functionality with [Authorize], [AllowAnonymous] and role-based authorization.
 /// </summary>
-public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : KestrelInMemoryTest(testOutputHelper)
+public class AuthorizeAttributeTests() : KestrelInMemoryTest()
 {
 
     private async Task<McpClient> ConnectAsync()
@@ -25,10 +25,10 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             Endpoint = new("http://localhost:5000"),
         }, HttpClient, LoggerFactory);
 
-        return await McpClient.CreateAsync(transport, cancellationToken: TestContext.Current.CancellationToken, loggerFactory: LoggerFactory);
+        return await McpClient.CreateAsync(transport, cancellationToken: TestContext.CurrentContext.CancellationToken, loggerFactory: LoggerFactory);
     }
 
-    [Fact]
+    [Test]
     public async Task Authorize_Tool_RequiresAuthentication()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithTools<AuthorizationTestTools>());
@@ -39,13 +39,13 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             await client.CallToolAsync(
                 "authorized_tool",
                 new Dictionary<string, object?> { ["message"] = "test" },
-                cancellationToken: TestContext.Current.CancellationToken));
+                cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): Access forbidden: This tool requires authorization.", exception.Message);
         Assert.Equal(McpErrorCode.InvalidRequest, exception.ErrorCode);
     }
 
-    [Fact]
+    [Test]
     public async Task ClassLevelAuthorize_Tool_RequiresAuthentication()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithTools<AllowAnonymousTestTools>());
@@ -54,14 +54,14 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         var result = await client.CallToolAsync(
             "anonymous_tool",
             new Dictionary<string, object?> { ["message"] = "test" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.False(result.IsError ?? false);
         var content = Assert.Single(result.Content.OfType<TextContentBlock>());
         Assert.Equal("Anonymous: test", content.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task AllowAnonymous_Tool_AllowsAnonymousAccess()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithTools<AllowAnonymousTestTools>());
@@ -70,14 +70,14 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         var result = await client.CallToolAsync(
             "anonymous_tool",
             new Dictionary<string, object?> { ["message"] = "test" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.False(result.IsError ?? false);
         var content = Assert.Single(result.Content.OfType<TextContentBlock>());
         Assert.Equal("Anonymous: test", content.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task Authorize_Tool_AllowsAuthenticatedUser()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithTools<AuthorizationTestTools>(), "TestUser");
@@ -86,14 +86,14 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         var result = await client.CallToolAsync(
             "authorized_tool",
             new Dictionary<string, object?> { ["message"] = "test" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.False(result.IsError ?? false);
         var content = Assert.Single(result.Content.OfType<TextContentBlock>());
         Assert.Equal("Authorized: test", content.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task AuthorizeWithRoles_Tool_RequiresAdminRole()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithTools<AuthorizationTestTools>(), "TestUser", "User");
@@ -104,13 +104,13 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             await client.CallToolAsync(
                 "admin_tool",
                 new Dictionary<string, object?> { ["message"] = "test" },
-                cancellationToken: TestContext.Current.CancellationToken));
+                cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): Access forbidden: This tool requires authorization.", exception.Message);
         Assert.Equal(McpErrorCode.InvalidRequest, exception.ErrorCode);
     }
 
-    [Fact]
+    [Test]
     public async Task AuthorizeWithRoles_Tool_AllowsAdminUser()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithTools<AuthorizationTestTools>(), "AdminUser", "Admin");
@@ -119,32 +119,32 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         var result = await client.CallToolAsync(
             "admin_tool",
             new Dictionary<string, object?> { ["message"] = "test" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.False(result.IsError ?? false);
         var content = Assert.Single(result.Content.OfType<TextContentBlock>());
         Assert.Equal("Admin: test", content.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTools_Anonymous_OnlyReturnsAnonymousTools()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithTools<AuthorizationTestTools>());
 
         var client = await ConnectAsync();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Single(tools);
         Assert.Equal("anonymous_tool", tools[0].Name);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTools_AuthenticatedUser_ReturnsAuthorizedTools()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithTools<AuthorizationTestTools>(), "TestUser");
 
         var client = await ConnectAsync();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Authenticated user should see anonymous and basic authorized tools, but not admin-only tools
         Assert.Equal(2, tools.Count);
@@ -152,13 +152,13 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         Assert.Equal(["anonymous_tool", "authorized_tool"], toolNames);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTools_AdminUser_ReturnsAllTools()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithTools<AuthorizationTestTools>(), "AdminUser", "Admin");
 
         var client = await ConnectAsync();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Admin user should see all tools
         Assert.Equal(3, tools.Count);
@@ -166,13 +166,13 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         Assert.Equal(["admin_tool", "anonymous_tool", "authorized_tool"], toolNames);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTools_UserRole_DoesNotReturnAdminTools()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithTools<AuthorizationTestTools>(), "TestUser", "User");
 
         var client = await ConnectAsync();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // User with User role should not see admin-only tools
         Assert.Equal(2, tools.Count);
@@ -180,7 +180,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         Assert.Equal(["anonymous_tool", "authorized_tool"], toolNames);
     }
 
-    [Fact]
+    [Test]
     public async Task Authorize_Prompt_RequiresAuthentication()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithPrompts<AuthorizationTestPrompts>());
@@ -191,13 +191,13 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             await client.GetPromptAsync(
                 "authorized_prompt",
                 new Dictionary<string, object?> { ["message"] = "test" },
-                cancellationToken: TestContext.Current.CancellationToken));
+                cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): Access forbidden: This prompt requires authorization.", exception.Message);
         Assert.Equal(McpErrorCode.InvalidRequest, exception.ErrorCode);
     }
 
-    [Fact]
+    [Test]
     public async Task Authorize_Prompt_AllowsAuthenticatedUser()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithPrompts<AuthorizationTestPrompts>(), "TestUser");
@@ -206,7 +206,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         var result = await client.GetPromptAsync(
             "authorized_prompt",
             new Dictionary<string, object?> { ["message"] = "test" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var message = Assert.Single(result.Messages);
         Assert.Equal(Role.User, message.Role);
@@ -214,20 +214,20 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         Assert.Equal("Authorized prompt: test", content.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ListPrompts_Anonymous_OnlyReturnsAnonymousPrompts()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithPrompts<AuthorizationTestPrompts>());
 
         var client = await ConnectAsync();
-        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Anonymous user should only see prompts marked with [AllowAnonymous]
         Assert.Single(prompts);
         Assert.Equal("anonymous_prompt", prompts[0].Name);
     }
 
-    [Fact]
+    [Test]
     public async Task Authorize_Resource_RequiresAuthentication()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithResources<AuthorizationTestResources>());
@@ -237,13 +237,13 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
             await client.ReadResourceAsync(
                 "resource://authorized",
-                cancellationToken: TestContext.Current.CancellationToken));
+                cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): Access forbidden: This resource requires authorization.", exception.Message);
         Assert.Equal(McpErrorCode.InvalidRequest, exception.ErrorCode);
     }
 
-    [Fact]
+    [Test]
     public async Task Authorize_Resource_AllowsAuthenticatedUser()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithResources<AuthorizationTestResources>(), "TestUser");
@@ -251,32 +251,32 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         var client = await ConnectAsync();
         var result = await client.ReadResourceAsync(
             "resource://authorized",
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var content = Assert.Single(result.Contents.OfType<TextResourceContents>());
         Assert.Equal("Authorized resource content", content.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ListResources_Anonymous_OnlyReturnsAnonymousResources()
     {
         await using var app = await StartServerWithAuth(builder => builder.WithResources<AuthorizationTestResources>());
 
         var client = await ConnectAsync();
-        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Single(resources);
         Assert.Equal("resource://anonymous", resources[0].Uri);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTools_WithoutAuthFilters_ThrowsInvalidOperationException()
     {
         await using var app = await StartServerWithoutAuthFilters(builder => builder.WithTools<AuthorizationTestTools>());
         var client = await ConnectAsync();
 
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken));
+            await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): An error occurred.", exception.Message);
         Assert.Contains(MockLoggerProvider.LogMessages, log =>
@@ -286,7 +286,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             log.Exception.Message.Contains("Ensure that AddAuthorizationFilters() is called"));
     }
 
-    [Fact]
+    [Test]
     public async Task CallTool_WithoutAuthFilters_ReturnsError()
     {
         await using var app = await StartServerWithoutAuthFilters(builder => builder.WithTools<AuthorizationTestTools>());
@@ -295,7 +295,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         var toolResult = await client.CallToolAsync(
                 "authorized_tool",
                 new Dictionary<string, object?> { ["message"] = "test" },
-                cancellationToken: TestContext.Current.CancellationToken);
+                cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.True(toolResult.IsError);
 
@@ -308,14 +308,14 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             log.Exception.Message.Contains("Ensure that AddAuthorizationFilters() is called"));
     }
 
-    [Fact]
+    [Test]
     public async Task ListPrompts_WithoutAuthFilters_ThrowsInvalidOperationException()
     {
         await using var app = await StartServerWithoutAuthFilters(builder => builder.WithPrompts<AuthorizationTestPrompts>());
         var client = await ConnectAsync();
 
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken));
+            await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): An error occurred.", exception.Message);
         Assert.Contains(MockLoggerProvider.LogMessages, log =>
@@ -325,7 +325,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             log.Exception.Message.Contains("Ensure that AddAuthorizationFilters() is called"));
     }
 
-    [Fact]
+    [Test]
     public async Task GetPrompt_WithoutAuthFilters_ThrowsInvalidOperationException()
     {
         await using var app = await StartServerWithoutAuthFilters(builder => builder.WithPrompts<AuthorizationTestPrompts>());
@@ -335,7 +335,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             await client.GetPromptAsync(
                 "authorized_prompt",
                 new Dictionary<string, object?> { ["message"] = "test" },
-                cancellationToken: TestContext.Current.CancellationToken));
+                cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): An error occurred.", exception.Message);
         Assert.Contains(MockLoggerProvider.LogMessages, log =>
@@ -345,14 +345,14 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             log.Exception.Message.Contains("Ensure that AddAuthorizationFilters() is called"));
     }
 
-    [Fact]
+    [Test]
     public async Task ListResources_WithoutAuthFilters_ThrowsInvalidOperationException()
     {
         await using var app = await StartServerWithoutAuthFilters(builder => builder.WithResources<AuthorizationTestResources>());
         var client = await ConnectAsync();
 
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken));
+            await client.ListResourcesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): An error occurred.", exception.Message);
         Assert.Contains(MockLoggerProvider.LogMessages, log =>
@@ -362,7 +362,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             log.Exception.Message.Contains("Ensure that AddAuthorizationFilters() is called"));
     }
 
-    [Fact]
+    [Test]
     public async Task ReadResource_WithoutAuthFilters_ThrowsInvalidOperationException()
     {
         await using var app = await StartServerWithoutAuthFilters(builder => builder.WithResources<AuthorizationTestResources>());
@@ -371,7 +371,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
             await client.ReadResourceAsync(
                 "resource://authorized",
-                cancellationToken: TestContext.Current.CancellationToken));
+                cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): An error occurred.", exception.Message);
         Assert.Contains(MockLoggerProvider.LogMessages, log =>
@@ -381,14 +381,14 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             log.Exception.Message.Contains("Ensure that AddAuthorizationFilters() is called"));
     }
 
-    [Fact]
+    [Test]
     public async Task ListResourceTemplates_WithoutAuthFilters_ThrowsInvalidOperationException()
     {
         await using var app = await StartServerWithoutAuthFilters(builder => builder.WithResources<AuthorizationTestResources>());
         var client = await ConnectAsync();
 
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.ListResourceTemplatesAsync(cancellationToken: TestContext.Current.CancellationToken));
+            await client.ListResourceTemplatesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): An error occurred.", exception.Message);
         Assert.Contains(MockLoggerProvider.LogMessages, log =>
@@ -398,7 +398,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             log.Exception.Message.Contains("Ensure that AddAuthorizationFilters() is called"));
     }
 
-    [Fact]
+    [Test]
     public async Task ListTools_WithHandlerAndNullCollection_AllToolsVisible()
     {
         // When ToolCollection is null (custom handler only), the auth filter can't look up
@@ -410,14 +410,14 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             })));
 
         var client = await ConnectAsync();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Tool from custom handler (not in ToolCollection) should be visible even to anonymous users
         Assert.Single(tools);
         Assert.Equal("custom_tool", tools[0].Name);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTools_WithMixedCollectionAndHandler_HandlerToolsNotFiltered()
     {
         // Tools in the ToolCollection are filtered based on auth metadata.
@@ -432,7 +432,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         });
 
         var client = await ConnectAsync();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Anonymous user: anonymous_tool from collection + handler_tool (not in collection, so not filtered)
         Assert.Equal(2, tools.Count);
@@ -440,7 +440,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         Assert.Equal(["anonymous_tool", "handler_tool"], toolNames);
     }
 
-    [Fact]
+    [Test]
     public async Task ListPrompts_WithHandlerAndNullCollection_AllPromptsVisible()
     {
         // When PromptCollection is null (custom handler only), the auth filter can't look up
@@ -452,14 +452,14 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             })));
 
         var client = await ConnectAsync();
-        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var prompts = await client.ListPromptsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Prompt from custom handler (not in PromptCollection) should be visible even to anonymous users
         Assert.Single(prompts);
         Assert.Equal("custom_prompt", prompts[0].Name);
     }
 
-    [Fact]
+    [Test]
     public async Task ListResources_WithHandlerAndNullCollection_AllResourcesVisible()
     {
         // When ResourceCollection is null (custom handler only), the auth filter can't look up
@@ -471,14 +471,14 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             })));
 
         var client = await ConnectAsync();
-        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Resource from custom handler (not in ResourceCollection) should be visible even to anonymous users
         Assert.Single(resources);
         Assert.Equal("resource://custom", resources[0].Uri);
     }
 
-    [Fact]
+    [Test]
     public async Task ListResourceTemplates_WithHandlerAndNullCollection_AllResourceTemplatesVisible()
     {
         // When ResourceCollection is null (custom handler only), the auth filter can't look up
@@ -490,7 +490,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
             })));
 
         var client = await ConnectAsync();
-        var templates = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var templates = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Template from custom handler (not in ResourceCollection) should be visible even to anonymous users
         Assert.Single(templates);
@@ -519,7 +519,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
         }
 
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
         return app;
     }
 
@@ -532,7 +532,7 @@ public class AuthorizeAttributeTests(ITestOutputHelper testOutputHelper) : Kestr
 
         var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
         return app;
     }
 

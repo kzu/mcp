@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ReferenceTests
 {
-    [Fact]
+    [Test]
     public static void PromptReference_UnknownArrayProperty_IsIgnored()
     {
         // This test verifies that the Reference.Converter properly skips unknown properties
@@ -42,7 +42,7 @@ public static class ReferenceTests
         Assert.Equal("Test Prompt", promptRef.Title);
     }
 
-    [Fact]
+    [Test]
     public static void ResourceReference_UnknownObjectProperty_IsIgnored()
     {
         // Test that unknown properties with nested objects are properly skipped
@@ -71,7 +71,7 @@ public static class ReferenceTests
         Assert.Equal("file:///test/resource", resourceRef.Uri);
     }
 
-    [Fact]
+    [Test]
     public static void PromptReference_UnknownMixedProperties_AreIgnored()
     {
         // Test multiple unknown properties with different types
@@ -99,7 +99,7 @@ public static class ReferenceTests
         Assert.Equal("my_prompt", promptRef.Name);
     }
 
-    [Fact]
+    [Test]
     public static void ResourceReference_UnknownNestedArrays_AreIgnored()
     {
         // Test complex unknown properties with arrays of objects
@@ -134,7 +134,7 @@ public static class ReferenceTests
         Assert.Equal("resource://test/{id}", resourceRef.Uri);
     }
 
-    [Fact]
+    [Test]
     public static void PromptReference_MultipleUnknownProperties_AllIgnored()
     {
         // Test that multiple unknown properties are all properly skipped
@@ -161,7 +161,7 @@ public static class ReferenceTests
         Assert.Equal("Test Title", promptRef.Title);
     }
 
-    [Fact]
+    [Test]
     public static void ResourceReference_UnknownArrayOfArrays_IsIgnored()
     {
         // Test deeply nested array structures in unknown properties
@@ -192,7 +192,7 @@ public static class ReferenceTests
         Assert.Equal("http://example.com/resource", resourceRef.Uri);
     }
 
-    [Fact]
+    [Test]
     public static void PromptReference_EmptyUnknownArray_IsIgnored()
     {
         // Test empty arrays in unknown properties
@@ -215,7 +215,7 @@ public static class ReferenceTests
         Assert.Equal("prompt", promptRef.Name);
     }
 
-    [Fact]
+    [Test]
     public static void ResourceReference_EmptyUnknownObject_IsIgnored()
     {
         // Test empty objects in unknown properties
@@ -238,7 +238,7 @@ public static class ReferenceTests
         Assert.Equal("test://resource", resourceRef.Uri);
     }
 
-    [Fact]
+    [Test]
     public static void PromptReference_UnknownPropertiesBetweenRequired_AreIgnored()
     {
         // Test unknown properties interspersed with required ones
@@ -265,7 +265,7 @@ public static class ReferenceTests
         Assert.Equal("My Prompt", promptRef.Title);
     }
 
-    [Fact]
+    [Test]
     public static void ResourceReference_VeryDeeplyNestedUnknown_IsIgnored()
     {
         // Test very deeply nested structures in unknown properties
@@ -300,7 +300,7 @@ public static class ReferenceTests
         Assert.Equal("deep://resource", resourceRef.Uri);
     }
 
-    [Fact]
+    [Test]
     public static void PromptReference_SerializationRoundTrip_PreservesKnownProperties()
     {
         // Test that serialization/deserialization preserves known properties
@@ -321,7 +321,7 @@ public static class ReferenceTests
         Assert.Equal(original.Title, promptRef.Title);
     }
 
-    [Fact]
+    [Test]
     public static void ResourceReference_SerializationRoundTrip_PreservesKnownProperties()
     {
         // Test that serialization/deserialization preserves known properties
@@ -340,7 +340,7 @@ public static class ReferenceTests
         Assert.Equal(original.Uri, resourceRef.Uri);
     }
 
-    [Fact]
+    [Test]
     public static void PromptReference_WithoutTitle_Deserializes()
     {
         // Test that title is optional
@@ -363,7 +363,7 @@ public static class ReferenceTests
         Assert.Null(promptRef.Title);
     }
 
-    [Fact]
+    [Test]
     public static void Reference_UnknownType_ThrowsException()
     {
         // Test that unknown reference types throw an exception
@@ -379,7 +379,7 @@ public static class ReferenceTests
             JsonSerializer.Deserialize<Reference>(jsonWithUnknownType, McpJsonUtilities.DefaultOptions));
     }
 
-    [Fact]
+    [Test]
     public static void PromptReference_MissingName_ThrowsException()
     {
         // Test that missing required name property throws an exception
@@ -395,7 +395,7 @@ public static class ReferenceTests
             JsonSerializer.Deserialize<Reference>(jsonMissingName, McpJsonUtilities.DefaultOptions));
     }
 
-    [Fact]
+    [Test]
     public static void ResourceReference_MissingUri_ThrowsException()
     {
         // Test that missing required uri property throws an exception

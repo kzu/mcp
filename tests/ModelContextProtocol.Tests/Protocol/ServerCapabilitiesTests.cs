@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ServerCapabilitiesTests
 {
-    [Fact]
+    [Test]
     public static void ServerCapabilities_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ServerCapabilities
@@ -40,7 +40,7 @@ public static class ServerCapabilitiesTests
         Assert.True(deserialized.Extensions.ContainsKey("io.modelcontextprotocol/apps"));
     }
 
-    [Fact]
+    [Test]
     public static void ServerCapabilities_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ServerCapabilities();
@@ -59,7 +59,7 @@ public static class ServerCapabilitiesTests
         Assert.Null(deserialized.Extensions);
     }
 
-    [Fact]
+    [Test]
     public static void ServerCapabilities_Extensions_DeserializesFromJson()
     {
         string json = """
@@ -83,7 +83,7 @@ public static class ServerCapabilitiesTests
         Assert.True(deserialized.Extensions.ContainsKey("io.modelcontextprotocol/custom"));
     }
 
-    [Fact]
+    [Test]
     public static void ServerCapabilities_Extensions_EmptyObjectDeserializesAsEmptyDictionary()
     {
         string json = """{"extensions": {}}""";

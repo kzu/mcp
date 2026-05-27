@@ -9,11 +9,11 @@ public class McpServerHandlerTests
     public McpServerHandlerTests()
     {
 #if !NET
-        Assert.SkipWhen(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "https://github.com/modelcontextprotocol/csharp-sdk/issues/587");
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) Assert.Ignore("https://github.com/modelcontextprotocol/csharp-sdk/issues/587");
 #endif
     }
 
-    [Fact]
+    [Test]
     public void AllPropertiesAreSettable()
     {
         var handlers = new McpServerHandlers();

@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class CompleteContextTests
 {
-    [Fact]
+    [Test]
     public static void CompleteContext_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new CompleteContext
@@ -27,7 +27,7 @@ public static class CompleteContextTests
         Assert.Equal("us", deserialized.Arguments["region"]);
     }
 
-    [Fact]
+    [Test]
     public static void CompleteContext_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new CompleteContext();

@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ResourceTemplateTests
 {
-    [Fact]
+    [Test]
     public static void ResourceTemplate_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ResourceTemplate
@@ -49,7 +49,7 @@ public static class ResourceTemplateTests
         Assert.True(deserialized.IsTemplated);
     }
 
-    [Fact]
+    [Test]
     public static void ResourceTemplate_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ResourceTemplate

@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ArgumentTests
 {
-    [Fact]
+    [Test]
     public static void Argument_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new Argument

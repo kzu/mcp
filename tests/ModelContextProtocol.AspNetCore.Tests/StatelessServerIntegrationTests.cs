@@ -2,7 +2,7 @@
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public class StatelessServerIntegrationTests(SseServerIntegrationTestFixture fixture, ITestOutputHelper testOutputHelper)
+public class StatelessServerIntegrationTests(SseServerIntegrationTestFixture fixture)
     : StreamableHttpServerIntegrationTests(fixture, testOutputHelper)
 {
     protected override HttpClientTransportOptions ClientTransportOptions => new()

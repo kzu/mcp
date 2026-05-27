@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class PingResultTests
 {
-    [Fact]
+    [Test]
     public static void PingResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new PingResult
@@ -22,7 +22,7 @@ public static class PingResultTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void PingResult_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new PingResult();

@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using System.Reflection;
 
@@ -6,13 +6,13 @@ namespace ModelContextProtocol.Tests.Server;
 
 public class DelegatingMcpServerPromptTests
 {
-    [Fact]
+    [Test]
     public void Ctor_NullInnerPrompt_Throws()
     {
         Assert.Throws<ArgumentNullException>("innerPrompt", () => new TestDelegatingPrompt(null!));
     }
 
-    [Fact]
+    [Test]
     public async Task AllMembers_DelegateToInnerPrompt()
     {
         Prompt expectedPrompt = new() { Name = "sentinel-prompt" };
@@ -28,7 +28,7 @@ public class DelegatingMcpServerPromptTests
         Assert.Equal(inner.ToString(), delegating.ToString());
     }
 
-    [Fact]
+    [Test]
     public void OverridesAllVirtualAndAbstractMembers()
     {
         MethodInfo[] baseMethods = typeof(McpServerPrompt).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -18,7 +18,7 @@ public class McpServerBuilderExtensionsHandlerTests
         _builder.SetupGet(b => b.Services).Returns(_services);
     }
 
-    [Fact]
+    [Test]
     public void WithListToolsHandler_Sets_Handler()
     {
         McpRequestHandler<ListToolsRequestParams, ListToolsResult> handler = async (context, token) => new ListToolsResult();
@@ -31,7 +31,7 @@ public class McpServerBuilderExtensionsHandlerTests
         Assert.Equal(handler, options.Handlers.ListToolsHandler);
     }
 
-    [Fact]
+    [Test]
     public void WithCallToolHandler_Sets_Handler()
     {
         McpRequestHandler<CallToolRequestParams, CallToolResult> handler = async (context, token) => new CallToolResult();
@@ -44,7 +44,7 @@ public class McpServerBuilderExtensionsHandlerTests
         Assert.Equal(handler, options.Handlers.CallToolHandler);
     }
 
-    [Fact]
+    [Test]
     public void WithListPromptsHandler_Sets_Handler()
     {
         McpRequestHandler<ListPromptsRequestParams, ListPromptsResult> handler = async (context, token) => new ListPromptsResult();
@@ -57,7 +57,7 @@ public class McpServerBuilderExtensionsHandlerTests
         Assert.Equal(handler, options.Handlers.ListPromptsHandler);
     }
 
-    [Fact]
+    [Test]
     public void WithGetPromptHandler_Sets_Handler()
     {
         McpRequestHandler<GetPromptRequestParams, GetPromptResult> handler = async (context, token) => new GetPromptResult();
@@ -70,7 +70,7 @@ public class McpServerBuilderExtensionsHandlerTests
         Assert.Equal(handler, options.Handlers.GetPromptHandler);
     }
 
-    [Fact]
+    [Test]
     public void WithListResourceTemplatesHandler_Sets_Handler()
     {
         McpRequestHandler<ListResourceTemplatesRequestParams, ListResourceTemplatesResult> handler = async (context, token) => new ListResourceTemplatesResult();
@@ -83,7 +83,7 @@ public class McpServerBuilderExtensionsHandlerTests
         Assert.Equal(handler, options.Handlers.ListResourceTemplatesHandler);
     }
 
-    [Fact]
+    [Test]
     public void WithListResourcesHandler_Sets_Handler()
     {
         McpRequestHandler<ListResourcesRequestParams, ListResourcesResult> handler = async (context, token) => new ListResourcesResult();
@@ -96,7 +96,7 @@ public class McpServerBuilderExtensionsHandlerTests
         Assert.Equal(handler, options.Handlers.ListResourcesHandler);
     }
 
-    [Fact]
+    [Test]
     public void WithReadResourceHandler_Sets_Handler()
     {
         McpRequestHandler<ReadResourceRequestParams, ReadResourceResult> handler = async (context, token) => new ReadResourceResult();
@@ -109,7 +109,7 @@ public class McpServerBuilderExtensionsHandlerTests
         Assert.Equal(handler, options.Handlers.ReadResourceHandler);
     }
 
-    [Fact]
+    [Test]
     public void WithCompleteHandler_Sets_Handler()
     {
         McpRequestHandler<CompleteRequestParams, CompleteResult> handler = async (context, token) => new CompleteResult();
@@ -122,7 +122,7 @@ public class McpServerBuilderExtensionsHandlerTests
         Assert.Equal(handler, options.Handlers.CompleteHandler);
     }
 
-    [Fact]
+    [Test]
     public void WithSubscribeToResourcesHandler_Sets_Handler()
     {
         McpRequestHandler<SubscribeRequestParams, EmptyResult> handler = async (context, token) => new EmptyResult();
@@ -135,7 +135,7 @@ public class McpServerBuilderExtensionsHandlerTests
         Assert.Equal(handler, options.Handlers.SubscribeToResourcesHandler);
     }
 
-    [Fact]
+    [Test]
     public void WithUnsubscribeFromResourcesHandler_Sets_Handler()
     {
         McpRequestHandler<UnsubscribeRequestParams, EmptyResult> handler = async (context, token) => new EmptyResult();

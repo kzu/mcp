@@ -13,17 +13,17 @@ using System.Threading.Tasks;
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpTests(outputHelper)
+public class MapMcpStreamableHttpTests() : MapMcpTests()
 {
     protected override bool UseStreamableHttp => true;
     protected override bool Stateless => false;
 
-    [Theory]
-    [InlineData("/a", "/a")]
-    [InlineData("/a", "/a/")]
-    [InlineData("/a/", "/a/")]
-    [InlineData("/a/", "/a")]
-    [InlineData("/a/b", "/a/b")]
+    [Test]
+    [TestCase("/a", "/a")]
+    [TestCase("/a", "/a/")]
+    [TestCase("/a/", "/a/")]
+    [TestCase("/a/", "/a")]
+    [TestCase("/a/b", "/a/b")]
     public async Task CanConnect_WithMcpClient_AfterCustomizingRoute(string routePattern, string requestPath)
     {
         Builder.Services.AddMcpServer(options =>
@@ -38,14 +38,14 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
 
         app.MapMcp(routePattern);
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var mcpClient = await ConnectAsync(requestPath);
 
         Assert.Equal("TestCustomRouteServer", mcpClient.ServerInfo.Name);
     }
 
-    [Fact]
+    [Test]
     public async Task StreamableHttpMode_Works_WithRootEndpoint()
     {
         Builder.Services.AddMcpServer(options =>
@@ -60,7 +60,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
 
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var mcpClient = await ConnectAsync("/", new()
         {
@@ -71,7 +71,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         Assert.Equal("StreamableHttpTestServer", mcpClient.ServerInfo.Name);
     }
 
-    [Fact]
+    [Test]
     public async Task AutoDetectMode_Works_WithRootEndpoint()
     {
         Builder.Services.AddMcpServer(options =>
@@ -86,7 +86,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
 
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var mcpClient = await ConnectAsync("/", new()
         {
@@ -97,7 +97,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         Assert.Equal("AutoDetectTestServer", mcpClient.ServerInfo.Name);
     }
 
-    [Fact]
+    [Test]
     public async Task BrowserPreflight_AllowsConfiguredOrigin_AndRequiredHeaders()
     {
         Builder.Services.AddCors(options =>
@@ -117,14 +117,14 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         app.UseCors();
         app.MapMcp().RequireCors("BrowserClient");
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         using var request = new HttpRequestMessage(HttpMethod.Options, "http://localhost:5000/");
         request.Headers.Add("Origin", "http://localhost:5173");
         request.Headers.Add("Access-Control-Request-Method", "POST");
         request.Headers.Add("Access-Control-Request-Headers", "content-type,authorization,mcp-protocol-version,mcp-session-id");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         Assert.Equal("http://localhost:5173", Assert.Single(response.Headers.GetValues("Access-Control-Allow-Origin")));
@@ -136,7 +136,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         Assert.Contains("mcp-session-id", allowHeaders, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public async Task BrowserPreflight_DoesNotCorsApprove_DisallowedOrigin()
     {
         Builder.Services.AddCors(options =>
@@ -155,7 +155,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         app.UseCors();
         app.MapMcp().RequireCors("BrowserClient");
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         using var request = new HttpRequestMessage(HttpMethod.Options, "http://localhost:5000/");
         // CORS matches the browser Origin exactly. "localhost" and "127.0.0.1" both
@@ -164,7 +164,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         request.Headers.Add("Access-Control-Request-Method", "POST");
         request.Headers.Add("Access-Control-Request-Headers", "content-type,mcp-protocol-version");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestContext.CurrentContext.CancellationToken);
 
         // ASP.NET Core's CORS middleware commonly answers the preflight with 204 even when
         // the origin is not approved. The browser treats the request as disallowed because
@@ -174,7 +174,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         Assert.False(response.Headers.Contains("Access-Control-Allow-Headers"));
     }
 
-    [Fact]
+    [Test]
     public async Task InitializeResponse_ExposesMcpSessionId_ForBrowserClients()
     {
         Builder.Services.AddCors(options =>
@@ -201,7 +201,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         app.UseCors();
         app.MapMcp().RequireCors("BrowserClient");
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         const string initializeRequest = """
             {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"browser-client","version":"1.0.0"}}}
@@ -215,7 +215,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         request.Headers.Accept.ParseAdd("application/json");
         request.Headers.Accept.ParseAdd("text/event-stream");
 
-        using var response = await HttpClient.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.SendAsync(request, TestContext.CurrentContext.CancellationToken);
 
         Assert.True(response.IsSuccessStatusCode);
         Assert.Equal("http://localhost:5173", Assert.Single(response.Headers.GetValues("Access-Control-Allow-Origin")));
@@ -229,7 +229,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         }
     }
 
-    [Fact]
+    [Test]
     public async Task SseEndpoints_AreDisabledByDefault_InStatefulMode()
     {
         Builder.Services.AddMcpServer().WithHttpTransport(options =>
@@ -241,16 +241,16 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
 
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
-        using var sseResponse = await HttpClient.GetAsync("/sse", TestContext.Current.CancellationToken);
+        using var sseResponse = await HttpClient.GetAsync("/sse", TestContext.CurrentContext.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, sseResponse.StatusCode);
 
-        using var messageResponse = await HttpClient.PostAsync("/message", new StringContent(""), TestContext.Current.CancellationToken);
+        using var messageResponse = await HttpClient.PostAsync("/message", new StringContent(""), TestContext.CurrentContext.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, messageResponse.StatusCode);
     }
 
-    [Fact]
+    [Test]
     public async Task SseEndpoints_ThrowOnMapMcp_InStatelessMode_WithEnableLegacySse()
     {
         Builder.Services.AddMcpServer().WithHttpTransport(options =>
@@ -265,10 +265,10 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         Assert.Contains("EnableLegacySse", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task AutoDetectMode_Works_WithSseEndpoint()
     {
-        Assert.SkipWhen(Stateless, "SSE endpoint is disabled in stateless mode.");
+        if (Stateless) Assert.Ignore("SSE endpoint is disabled in stateless mode.");
 
         Builder.Services.AddMcpServer(options =>
         {
@@ -282,7 +282,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
 
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var mcpClient = await ConnectAsync("/sse", new()
         {
@@ -293,10 +293,10 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         Assert.Equal("AutoDetectSseTestServer", mcpClient.ServerInfo.Name);
     }
 
-    [Fact]
+    [Test]
     public async Task SseMode_Works_WithSseEndpoint()
     {
-        Assert.SkipWhen(Stateless, "SSE endpoint is disabled in stateless mode.");
+        if (Stateless) Assert.Ignore("SSE endpoint is disabled in stateless mode.");
 
         Builder.Services.AddMcpServer(options =>
         {
@@ -310,7 +310,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
 
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var mcpClient = await ConnectAsync(transportOptions: new()
         {
@@ -321,7 +321,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         Assert.Equal("SseTestServer", mcpClient.ServerInfo.Name);
     }
 
-    [Fact]
+    [Test]
     public async Task StreamableHttpClient_SendsMcpProtocolVersionHeader_AfterInitialization()
     {
         var protocolVersionHeaderValues = new ConcurrentQueue<string?>();
@@ -345,7 +345,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
 
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var mcpClient = await ConnectAsync(clientOptions: new()
         {
@@ -353,7 +353,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         });
 
         Assert.Equal("2025-06-18", mcpClient.NegotiatedProtocolVersion);
-        await mcpClient.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await mcpClient.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         await mcpClient.DisposeAsync();
 
@@ -364,10 +364,10 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         Assert.All(protocolVersionHeaderValues, v => Assert.Equal("2025-06-18", v));
     }
 
-    [Fact]
+    [Test]
     public async Task CanResumeSessionWithMapMcpAndRunSessionHandler()
     {
-        Assert.SkipWhen(Stateless, "Session resumption relies on server-side session tracking.");
+        if (Stateless) Assert.Ignore("Session resumption relies on server-side session tracking.");
 
         var runSessionCount = 0;
         var serverTcs = new TaskCompletionSource<McpServer>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -394,7 +394,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
 
         await using var app = Builder.Build();
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         ServerCapabilities? serverCapabilities = null;
         Implementation? serverInfo = null;
@@ -409,7 +409,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
             OwnsSession = false,
         }, HttpClient, LoggerFactory);
 
-        await using (var initialClient = await McpClient.CreateAsync(initialTransport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken))
+        await using (var initialClient = await McpClient.CreateAsync(initialTransport, loggerFactory: LoggerFactory, cancellationToken: TestContext.CurrentContext.CancellationToken))
         {
             resumedSessionId = initialClient.SessionId ?? throw new InvalidOperationException("SessionId not negotiated.");
             serverCapabilities = initialClient.ServerCapabilities;
@@ -417,14 +417,14 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
             serverInstructions = initialClient.ServerInstructions;
             negotiatedProtocolVersion = initialClient.NegotiatedProtocolVersion;
 
-            await initialClient.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            await initialClient.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         }
 
         Assert.NotNull(serverCapabilities);
         Assert.NotNull(serverInfo);
         Assert.False(string.IsNullOrEmpty(resumedSessionId));
 
-        await serverTcs.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await serverTcs.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
 
         await using var resumeTransport = new HttpClientTransport(new()
         {
@@ -445,9 +445,9 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
             resumeTransport,
             resumeOptions,
             loggerFactory: LoggerFactory,
-            cancellationToken: TestContext.Current.CancellationToken))
+            cancellationToken: TestContext.CurrentContext.CancellationToken))
         {
-            var tools = await resumedClient.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var tools = await resumedClient.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
             Assert.NotEmpty(tools);
 
             Assert.Equal(serverInstructions, resumedClient.ServerInstructions);
@@ -457,10 +457,10 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         Assert.Equal(1, runSessionCount);
     }
 
-    [Fact]
+    [Test]
     public async Task EnablePollingAsync_ThrowsInvalidOperationException_InStatelessMode()
     {
-        Assert.SkipUnless(Stateless, "This test only applies to stateless mode.");
+        if (!(Stateless)) Assert.Ignore("This test only applies to stateless mode.");
 
         InvalidOperationException? capturedException = null;
         var pollingTool = McpServerTool.Create(async (RequestContext<CallToolRequestParams> context) =>
@@ -482,20 +482,20 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         await using var app = Builder.Build();
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var mcpClient = await ConnectAsync();
 
-        await mcpClient.CallToolAsync("polling_tool", cancellationToken: TestContext.Current.CancellationToken);
+        await mcpClient.CallToolAsync("polling_tool", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(capturedException);
         Assert.Contains("stateless", capturedException.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public async Task EnablePollingAsync_ThrowsInvalidOperationException_WhenNoEventStreamStoreConfigured()
     {
-        Assert.SkipWhen(Stateless, "This test only applies to stateful mode without an event stream store.");
+        if (Stateless) Assert.Ignore("This test only applies to stateful mode without an event stream store.");
 
         InvalidOperationException? capturedException = null;
         var pollingTool = McpServerTool.Create(async (RequestContext<CallToolRequestParams> context) =>
@@ -518,20 +518,20 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         await using var app = Builder.Build();
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var mcpClient = await ConnectAsync();
 
-        await mcpClient.CallToolAsync("polling_tool", cancellationToken: TestContext.Current.CancellationToken);
+        await mcpClient.CallToolAsync("polling_tool", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(capturedException);
         Assert.Contains("event stream store", capturedException.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public async Task AdditionalHeaders_AreSent_InPostAndDeleteRequests()
     {
-        Assert.SkipWhen(Stateless, "DELETE requests are not sent in stateless mode due to lack of session ID.");
+        if (Stateless) Assert.Ignore("DELETE requests are not sent in stateless mode due to lack of session ID.");
 
         bool wasPostRequest = false;
         bool wasDeleteRequest = false;
@@ -559,7 +559,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
 
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         var transportOptions = new HttpClientTransportOptions
         {
@@ -575,7 +575,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         await using var mcpClient = await ConnectAsync(transportOptions: transportOptions);
 
         // Do a tool call to ensure there's more than just the initialize request
-        await mcpClient.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await mcpClient.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Dispose the client to trigger the DELETE request
         await mcpClient.DisposeAsync();
@@ -584,10 +584,10 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         Assert.True(wasDeleteRequest, "DELETE request was not made");
     }
 
-    [Fact]
+    [Test]
     public async Task DisposeAsync_DoesNotHang_WhenOwnsSessionIsFalse()
     {
-        Assert.SkipWhen(Stateless, "Stateless mode doesn't support session management.");
+        if (Stateless) Assert.Ignore("Stateless mode doesn't support session management.");
 
         var getResponseStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -614,7 +614,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         });
 
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var transport = new HttpClientTransport(new()
         {
@@ -623,28 +623,28 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
             OwnsSession = false,
         }, HttpClient, LoggerFactory);
 
-        var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+        var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Call a tool to ensure the session is fully established
         var result = await client.CallToolAsync(
             "echo_claims_principal",
             new Dictionary<string, object?>() { ["message"] = "Hello!" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
 
         // Wait for the GET SSE stream to be fully established on the server
-        await getResponseStarted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await getResponseStarted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
 
         // This should not hang. The issue reports that DisposeAsync hangs indefinitely
         // when OwnsSession is false. Use a timeout to detect the hang.
-        await client.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await client.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10), TestContext.CurrentContext.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task DisposeAsync_DoesNotHang_WhenOwnsSessionIsFalse_WithUnsolicitedMessages()
     {
-        Assert.SkipWhen(Stateless, "Stateless mode doesn't support session management.");
+        if (Stateless) Assert.Ignore("Stateless mode doesn't support session management.");
 
         var getResponseStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var serverTcs = new TaskCompletionSource<McpServer>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -682,7 +682,7 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         });
 
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var transport = new HttpClientTransport(new()
         {
@@ -691,16 +691,16 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
             OwnsSession = false,
         }, HttpClient, LoggerFactory);
 
-        var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.Current.CancellationToken);
+        var client = await McpClient.CreateAsync(transport, loggerFactory: LoggerFactory, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var result = await client.CallToolAsync(
             "echo_claims_principal",
             new Dictionary<string, object?>() { ["message"] = "Hello!" },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(result);
 
         // Wait for the GET SSE stream to be fully established on the server
-        await getResponseStarted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await getResponseStarted.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
 
         // Register a handler on the client to detect when the notification is received
         var notificationReceived = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -711,20 +711,20 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         });
 
         // Get the server instance and send an unsolicited notification by modifying tools
-        var server = await serverTcs.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
-        await server.SendNotificationAsync("notifications/tools/list_changed", TestContext.Current.CancellationToken);
+        var server = await serverTcs.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
+        await server.SendNotificationAsync("notifications/tools/list_changed", TestContext.CurrentContext.CancellationToken);
 
         // Wait for the client to actually receive the notification
-        await notificationReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        await notificationReceived.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
 
         // Dispose should still not hang
-        await client.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await client.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10), TestContext.CurrentContext.CancellationToken);
     }
 
-    [Fact]
+    [Test]
     public async Task Client_CanReconnect_AfterSessionExpiry()
     {
-        Assert.SkipWhen(Stateless, "Sessions don't exist in stateless mode.");
+        if (Stateless) Assert.Ignore("Sessions don't exist in stateless mode.");
 
         string? expiredSessionId = null;
 
@@ -748,14 +748,14 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         });
 
         app.MapMcp();
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         // Connect the first client and verify it works.
         var client1 = await ConnectAsync();
         var originalSessionId = client1.SessionId;
         Assert.NotNull(originalSessionId);
 
-        var tools = await client1.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client1.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.NotEmpty(tools);
 
         // Simulate session expiry by having the middleware reject the original session.
@@ -763,10 +763,10 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
 
         // The next request should fail.
         await Assert.ThrowsAnyAsync<Exception>(async () =>
-            await client1.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken));
+            await client1.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         // Completion should resolve with a 404 status code.
-        var details = await client1.Completion.WaitAsync(TestContext.Current.CancellationToken);
+        var details = await client1.Completion.WaitAsync(TestContext.CurrentContext.CancellationToken);
         var httpDetails = Assert.IsType<HttpClientCompletionDetails>(details);
         Assert.Equal(HttpStatusCode.NotFound, httpDetails.HttpStatusCode);
 
@@ -778,11 +778,11 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
         Assert.NotEqual(originalSessionId, client2.SessionId);
 
         // The new session works normally.
-        tools = await client2.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        tools = await client2.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.NotEmpty(tools);
     }
 
-    [Fact]
+    [Test]
     public async Task EndpointFilter_CanReadSessionId_BeforeAndAfterHandler()
     {
         var capturedSessionIds = new ConcurrentBag<(string? BeforeNext, string? AfterNext, string Method)>();
@@ -820,11 +820,11 @@ public class MapMcpStreamableHttpTests(ITestOutputHelper outputHelper) : MapMcpT
             return result;
         });
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var client = await ConnectAsync();
 
-        await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // The filter must have observed at least one MCP request. Don't assert an exact
         // minimum — the initialized notification or GET stream may not have completed yet.

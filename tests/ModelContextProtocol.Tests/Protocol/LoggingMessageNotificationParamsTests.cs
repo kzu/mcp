@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class LoggingMessageNotificationParamsTests
 {
-    [Fact]
+    [Test]
     public static void LoggingMessageNotificationParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new LoggingMessageNotificationParams
@@ -28,7 +28,7 @@ public static class LoggingMessageNotificationParamsTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void LoggingMessageNotificationParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new LoggingMessageNotificationParams

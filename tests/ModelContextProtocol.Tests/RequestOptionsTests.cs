@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 using ModelContextProtocol.Protocol;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests;
 
 public static class RequestOptionsTests
 {
-    [Fact]
+    [Test]
     public static void DefaultConstructor_AllPropertiesNull()
     {
         RequestOptions options = new();
@@ -16,7 +16,7 @@ public static class RequestOptionsTests
         Assert.Null(options.JsonSerializerOptions);
     }
 
-    [Fact]
+    [Test]
     public static void Meta_GetSet_RoundTrips()
     {
         RequestOptions options = new();
@@ -34,7 +34,7 @@ public static class RequestOptionsTests
         }
     }
 
-    [Fact]
+    [Test]
     public static void ProgressToken_GetSet_RoundTrips()
     {
         RequestOptions options = new();
@@ -52,7 +52,7 @@ public static class RequestOptionsTests
         }
     }
 
-    [Fact]
+    [Test]
     public static void ProgressToken_DoesNotAffectMeta()
     {
         RequestOptions options = new() { Meta = new JsonObject { ["existing"] = "data" } };
@@ -63,7 +63,7 @@ public static class RequestOptionsTests
         Assert.Equal("data", options.Meta["existing"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public static void Meta_DoesNotAffectProgressToken()
     {
         RequestOptions options = new() { ProgressToken = new ProgressToken("original") };
@@ -73,7 +73,7 @@ public static class RequestOptionsTests
         Assert.Equal("original", options.ProgressToken?.ToString());
     }
 
-    [Fact]
+    [Test]
     public static void JsonSerializerOptions_GetSet_RoundTrips()
     {
         RequestOptions options = new();
@@ -89,7 +89,7 @@ public static class RequestOptionsTests
         }
     }
 
-    [Fact]
+    [Test]
     public static void GetMetaForRequest_BothNull_ReturnsNull()
     {
         RequestOptions options = new();
@@ -99,7 +99,7 @@ public static class RequestOptionsTests
         Assert.Null(actual);
     }
 
-    [Fact]
+    [Test]
     public static void GetMetaForRequest_OnlyMetaSet_ReturnsMeta()
     {
         JsonObject meta = new() { ["key"] = "value" };
@@ -110,7 +110,7 @@ public static class RequestOptionsTests
         Assert.Same(meta, actual);
     }
 
-    [Fact]
+    [Test]
     public static void GetMetaForRequest_OnlyProgressTokenSet_ReturnsNewObjectWithToken()
     {
         RequestOptions options = new() { ProgressToken = new ProgressToken("my-token") };
@@ -125,7 +125,7 @@ public static class RequestOptionsTests
         Assert.NotSame(actual, options.GetMetaForRequest());
     }
 
-    [Fact]
+    [Test]
     public static void GetMetaForRequest_OnlyProgressTokenSetAsLong_ReturnsNewObjectWithToken()
     {
         RequestOptions options = new() { ProgressToken = new ProgressToken(42L) };
@@ -140,7 +140,7 @@ public static class RequestOptionsTests
         Assert.NotSame(actual, options.GetMetaForRequest());
     }
 
-    [Fact]
+    [Test]
     public static void GetMetaForRequest_BothSet_ReturnsCloneWithProgressToken()
     {
         JsonObject meta = new() { ["custom"] = "data" };
@@ -161,7 +161,7 @@ public static class RequestOptionsTests
         Assert.NotSame(actual, options.GetMetaForRequest());
     }
 
-    [Fact]
+    [Test]
     public static void GetMetaForRequest_BothSet_DoesNotModifyOriginalMeta()
     {
         JsonObject meta = new() { ["custom"] = "data" };
@@ -177,7 +177,7 @@ public static class RequestOptionsTests
         Assert.Single(meta);
     }
 
-    [Fact]
+    [Test]
     public static void GetMetaForRequest_MetaHasProgressToken_OverwrittenByProperty()
     {
         JsonObject meta = new()
@@ -197,7 +197,7 @@ public static class RequestOptionsTests
         Assert.Equal("data", actual["custom"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public static void GetMetaForRequest_MetaHasProgressToken_NoPropertyToken_PreservesMetaToken()
     {
         JsonObject meta = new()
@@ -213,7 +213,7 @@ public static class RequestOptionsTests
         Assert.Equal("meta-token", actual!["progressToken"]?.ToString());
     }
 
-    [Fact]
+    [Test]
     public static void GetMetaForRequest_CalledMultipleTimes_ReturnsNewCloneEachTime()
     {
         RequestOptions options = new()
@@ -229,7 +229,7 @@ public static class RequestOptionsTests
         Assert.Equal(actual1!.ToJsonString(), actual2!.ToJsonString());
     }
 
-    [Fact]
+    [Test]
     public static void GetMetaForRequest_OnlyMeta_SameInstanceOnMultipleCalls()
     {
         JsonObject meta = new() { ["key"] = "value" };
@@ -242,7 +242,7 @@ public static class RequestOptionsTests
         Assert.Same(meta, actual1);
     }
 
-    [Fact]
+    [Test]
     public static void AllProperties_CanBeSetIndependently()
     {
         JsonObject meta = new() { ["field"] = "value" };

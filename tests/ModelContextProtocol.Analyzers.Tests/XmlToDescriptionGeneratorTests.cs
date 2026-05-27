@@ -1,15 +1,15 @@
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using Xunit;
+
 
 namespace ModelContextProtocol.Analyzers.Tests;
 
 public partial class XmlToDescriptionGeneratorTests
 {
-    [Fact]
+    [Test]
     public void Generator_WithSummaryOnly_GeneratesMethodDescription()
     {
         var result = RunGenerator("""
@@ -57,7 +57,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithSummaryAndRemarks_CombinesInMethodDescription()
     {
         var result = RunGenerator("""
@@ -107,7 +107,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithParameterDocs_GeneratesParameterDescriptions()
     {
         var result = RunGenerator("""
@@ -156,7 +156,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithReturnDocs_GeneratesReturnDescription()
     {
         var result = RunGenerator("""
@@ -205,7 +205,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithExistingMethodDescription_DoesNotGenerateMethodDescription()
     {
         var result = RunGenerator("""
@@ -254,7 +254,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithExistingParameterDescription_SkipsThatParameter()
     {
         var result = RunGenerator("""
@@ -303,7 +303,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithoutMcpServerToolAttribute_DoesNotGenerate()
     {
         var result = RunGenerator("""
@@ -328,7 +328,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.Empty(result.GeneratedSources);
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithoutPartialKeyword_DoesNotGenerate()
     {
         var result = RunGenerator("""
@@ -355,7 +355,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.Empty(result.GeneratedSources);
     }
 
-    [Fact]
+    [Test]
     public void Generator_NonPartialMethodWithXmlDocs_ReportsMCP002Diagnostic()
     {
         var result = RunGenerator("""
@@ -388,7 +388,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.Contains("partial", diagnostic.GetMessage());
     }
 
-    [Fact]
+    [Test]
     public void Generator_NonPartialMethodWithParameterDocs_ReportsMCP002Diagnostic()
     {
         var result = RunGenerator("""
@@ -417,7 +417,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.Equal(DiagnosticSeverity.Info, diagnostic.Severity);
     }
 
-    [Fact]
+    [Test]
     public void Generator_NonPartialMethodWithReturnDocs_ReportsMCP002Diagnostic()
     {
         var result = RunGenerator("""
@@ -446,7 +446,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.Equal(DiagnosticSeverity.Info, diagnostic.Severity);
     }
 
-    [Fact]
+    [Test]
     public void Generator_NonPartialMethodWithoutXmlDocs_DoesNotReportDiagnostic()
     {
         var result = RunGenerator("""
@@ -473,7 +473,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.DoesNotContain(result.Diagnostics, d => d.Id == "MCP002");
     }
 
-    [Fact]
+    [Test]
     public void Generator_NonPartialMethodWithEmptyXmlDocs_DoesNotReportDiagnostic()
     {
         var result = RunGenerator("""
@@ -501,7 +501,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.DoesNotContain(result.Diagnostics, d => d.Id == "MCP002");
     }
 
-    [Fact]
+    [Test]
     public void Generator_NonPartialMethodWithExistingDescriptions_DoesNotReportDiagnostic()
     {
         var result = RunGenerator("""
@@ -533,7 +533,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.DoesNotContain(result.Diagnostics, d => d.Id == "MCP002");
     }
 
-    [Fact]
+    [Test]
     public void Generator_NonPartialMethodWithPartialExistingDescriptions_ReportsMCP002Diagnostic()
     {
         var result = RunGenerator("""
@@ -564,7 +564,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.Equal(DiagnosticSeverity.Info, diagnostic.Severity);
     }
 
-    [Fact]
+    [Test]
     public void Generator_NonPartialPromptWithXmlDocs_ReportsMCP002Diagnostic()
     {
         var result = RunGenerator("""
@@ -595,7 +595,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.Equal(DiagnosticSeverity.Info, diagnostic.Severity);
     }
 
-    [Fact]
+    [Test]
     public void Generator_NonPartialResourceWithXmlDocs_ReportsMCP002Diagnostic()
     {
         var result = RunGenerator("""
@@ -626,7 +626,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.Equal(DiagnosticSeverity.Info, diagnostic.Severity);
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithSpecialCharacters_EscapesCorrectly()
     {
         var result = RunGenerator("""
@@ -676,7 +676,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithInvalidXml_GeneratesPartialAndReportsDiagnostic()
     {
         var result = RunGenerator("""
@@ -729,7 +729,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.Contains("invalid", diagnostic.GetMessage(), StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public void Generator_DiagnosticHasValidSourceLocation()
     {
         // This test verifies that diagnostic locations are properly reconstructed
@@ -774,7 +774,7 @@ public partial class XmlToDescriptionGeneratorTests
         Assert.Equal(10, diagnostic.Location.SourceSpan.Length); // "TestMethod".Length == 10
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithGenericType_GeneratesCorrectly()
     {
         var result = RunGenerator("""
@@ -822,7 +822,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithEmptyXmlComments_GeneratesPartialWithoutDescription()
     {
         var result = RunGenerator("""
@@ -868,7 +868,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithMultilineComments_CombinesIntoSingleLine()
     {
         var result = RunGenerator("""
@@ -918,7 +918,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithParametersOnly_GeneratesParameterDescriptions()
     {
         var result = RunGenerator("""
@@ -964,7 +964,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithNestedType_GeneratesCorrectly()
     {
         var result = RunGenerator("""
@@ -1018,7 +1018,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithManyToolsAcrossMultipleNestedTypes_GeneratesCorrectly()
     {
         var result = RunGenerator("""
@@ -1182,7 +1182,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithRecordClass_GeneratesCorrectly()
     {
         var result = RunGenerator("""
@@ -1230,7 +1230,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithRecordStruct_GeneratesCorrectly()
     {
         var result = RunGenerator("""
@@ -1278,7 +1278,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithVirtualMethod_GeneratesCorrectly()
     {
         var result = RunGenerator("""
@@ -1326,7 +1326,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithAbstractMethod_GeneratesCorrectly()
     {
         var result = RunGenerator("""
@@ -1371,7 +1371,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithMcpServerPrompt_GeneratesCorrectly()
     {
         var result = RunGenerator("""
@@ -1419,7 +1419,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithMcpServerResource_GeneratesCorrectly()
     {
         var result = RunGenerator("""
@@ -1467,7 +1467,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithGlobalNamespace_GeneratesCorrectly()
     {
         var result = RunGenerator("""
@@ -1510,7 +1510,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithDefaultParameterValues_PreservesDefaults()
     {
         var result = RunGenerator("""
@@ -1564,7 +1564,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithAsyncMethod_ExcludesAsyncModifier()
     {
         var result = RunGenerator("""
@@ -1614,7 +1614,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithAsyncStaticMethod_ExcludesAsyncModifier()
     {
         var result = RunGenerator("""
@@ -1664,7 +1664,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithDefaultParameterValuesAndAsync_HandlesBothCorrectly()
     {
         var result = RunGenerator("""
@@ -1716,7 +1716,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithStringDefaultValue_PreservesQuotedDefault()
     {
         var result = RunGenerator("""
@@ -1764,9 +1764,9 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
     public void Generator_WithTypeFromDifferentNamespace_GeneratesFullyQualifiedTypeName(bool useFullyQualifiedTypesInSource)
     {
         // This test validates that regardless of whether the source code uses fully qualified
@@ -1833,7 +1833,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithGenericListParameter_GeneratesFullyQualifiedTypeName()
     {
         var result = RunGenerator("""
@@ -1885,7 +1885,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithGenericDictionaryParameter_GeneratesFullyQualifiedTypeName()
     {
         var result = RunGenerator("""
@@ -1938,7 +1938,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithArrayParameter_GeneratesFullyQualifiedTypeName()
     {
         var result = RunGenerator("""
@@ -1989,7 +1989,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithNullableReferenceTypeParameter_GeneratesFullyQualifiedTypeName()
     {
         var result = RunGenerator("""
@@ -2040,7 +2040,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithNestedTypeParameter_GeneratesFullyQualifiedTypeName()
     {
         var result = RunGenerator("""
@@ -2094,7 +2094,7 @@ public partial class XmlToDescriptionGeneratorTests
         AssertGeneratedSourceEquals(expected, result.GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Generator_WithNullableValueTypeParameter_GeneratesFullyQualifiedTypeName()
     {
         var result = RunGenerator("""
@@ -2244,7 +2244,7 @@ public partial class XmlToDescriptionGeneratorTests
         public Compilation? Compilation { get; set; }
     }
 
-    [Fact]
+    [Test]
     public void Caching_WithIdenticalCompilation_AllOutputsCached()
     {
         // This tests that running the same compilation twice uses cached results
@@ -2265,13 +2265,13 @@ public partial class XmlToDescriptionGeneratorTests
         var driver = CreateTrackedDriver();
 
         // Run #1
-        driver = driver.RunGenerators(compilation, TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(compilation, TestContext.CurrentContext.CancellationToken);
         var result1 = driver.GetRunResult();
         Assert.Single(result1.Results);
         Assert.Single(result1.Results[0].GeneratedSources);
 
         // Run #2 with same compilation - should be fully cached
-        driver = driver.RunGenerators(compilation, TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(compilation, TestContext.CurrentContext.CancellationToken);
         var result2 = driver.GetRunResult();
         Assert.Single(result2.Results);
         
@@ -2284,7 +2284,7 @@ public partial class XmlToDescriptionGeneratorTests
                 $"Expected Cached or Unchanged but got {output.Reason}"));
     }
 
-    [Fact]
+    [Test]
     public void Caching_WithNewCompilationSameSource_OutputsCached()
     {
         const string Source = """
@@ -2304,7 +2304,7 @@ public partial class XmlToDescriptionGeneratorTests
 
         // Run #1 with first compilation
         var compilation1 = CreateCompilation(Source);
-        driver = driver.RunGenerators(compilation1, TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(compilation1, TestContext.CurrentContext.CancellationToken);
         var result1 = driver.GetRunResult();
         Assert.Single(result1.Results);
 
@@ -2313,7 +2313,7 @@ public partial class XmlToDescriptionGeneratorTests
         var compilation2 = CreateCompilation(Source);
         Assert.NotSame(compilation1, compilation2); // Verify these are different instances
         
-        driver = driver.RunGenerators(compilation2, TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(compilation2, TestContext.CurrentContext.CancellationToken);
         var result2 = driver.GetRunResult();
         Assert.Single(result2.Results);
 
@@ -2336,7 +2336,7 @@ public partial class XmlToDescriptionGeneratorTests
             result2.Results[0].GeneratedSources[0].SourceText.ToString());
     }
 
-    [Fact]
+    [Test]
     public void Caching_WithUnrelatedFileChange_McpMethodCached()
     {
         // Adding an unrelated file should not cause MCP method extraction to re-run
@@ -2366,13 +2366,13 @@ public partial class XmlToDescriptionGeneratorTests
         var driver = CreateTrackedDriver();
 
         // Run #1 with MCP file + unrelated file
-        driver = driver.RunGenerators(CreateCompilation(McpSource, UnrelatedSource1), TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(CreateCompilation(McpSource, UnrelatedSource1), TestContext.CurrentContext.CancellationToken);
         var result1 = driver.GetRunResult();
         Assert.Single(result1.Results);
         var output1 = result1.Results[0].GeneratedSources[0].SourceText.ToString();
 
         // Run #2 with MCP file + MODIFIED unrelated file
-        driver = driver.RunGenerators(CreateCompilation(McpSource, UnrelatedSource2), TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(CreateCompilation(McpSource, UnrelatedSource2), TestContext.CurrentContext.CancellationToken);
         var result2 = driver.GetRunResult();
         Assert.Single(result2.Results);
         var output2 = result2.Results[0].GeneratedSources[0].SourceText.ToString();
@@ -2391,7 +2391,7 @@ public partial class XmlToDescriptionGeneratorTests
             output.Reason is IncrementalStepRunReason.Cached or IncrementalStepRunReason.Unchanged);
     }
 
-    [Fact]
+    [Test]
     public void Caching_WithXmlDocChange_OutputRegenerated()
     {
         // Changing XML docs should cause regeneration
@@ -2424,13 +2424,13 @@ public partial class XmlToDescriptionGeneratorTests
         var driver = CreateTrackedDriver();
 
         // Run #1
-        driver = driver.RunGenerators(CreateCompilation(Source1), TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(CreateCompilation(Source1), TestContext.CurrentContext.CancellationToken);
         var result1 = driver.GetRunResult();
         var output1 = result1.Results[0].GeneratedSources[0].SourceText.ToString();
         Assert.Contains("Original description", output1);
 
         // Run #2 with modified XML docs
-        driver = driver.RunGenerators(CreateCompilation(Source2), TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(CreateCompilation(Source2), TestContext.CurrentContext.CancellationToken);
         var result2 = driver.GetRunResult();
         var output2 = result2.Results[0].GeneratedSources[0].SourceText.ToString();
         Assert.Contains("Modified description", output2);
@@ -2444,7 +2444,7 @@ public partial class XmlToDescriptionGeneratorTests
             output.Reason is IncrementalStepRunReason.Modified or IncrementalStepRunReason.New);
     }
 
-    [Fact]
+    [Test]
     public void Caching_WithAddedMethod_ExistingMethodCached()
     {
         const string Source1 = """
@@ -2480,12 +2480,12 @@ public partial class XmlToDescriptionGeneratorTests
         var driver = CreateTrackedDriver();
 
         // Run #1
-        driver = driver.RunGenerators(CreateCompilation(Source1), TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(CreateCompilation(Source1), TestContext.CurrentContext.CancellationToken);
         var result1 = driver.GetRunResult();
         Assert.Single(result1.Results[0].GeneratedSources);
 
         // Run #2 with added method
-        driver = driver.RunGenerators(CreateCompilation(Source2), TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(CreateCompilation(Source2), TestContext.CurrentContext.CancellationToken);
         var result2 = driver.GetRunResult();
         Assert.Single(result2.Results[0].GeneratedSources);
         
@@ -2506,7 +2506,7 @@ public partial class XmlToDescriptionGeneratorTests
             output.Reason is IncrementalStepRunReason.New or IncrementalStepRunReason.Modified);
     }
 
-    [Fact]
+    [Test]
     public void Caching_MultipleMethodsAcrossFiles_IndependentCaching()
     {
         const string File1 = """
@@ -2551,12 +2551,12 @@ public partial class XmlToDescriptionGeneratorTests
         var driver = CreateTrackedDriver();
 
         // Run #1
-        driver = driver.RunGenerators(CreateCompilation(File1, File2Original), TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(CreateCompilation(File1, File2Original), TestContext.CurrentContext.CancellationToken);
         var result1 = driver.GetRunResult();
         Assert.Single(result1.Results[0].GeneratedSources);
 
         // Run #2 - only File2 changed
-        driver = driver.RunGenerators(CreateCompilation(File1, File2Modified), TestContext.Current.CancellationToken);
+        driver = driver.RunGenerators(CreateCompilation(File1, File2Modified), TestContext.CurrentContext.CancellationToken);
         var result2 = driver.GetRunResult();
         Assert.Single(result2.Results[0].GeneratedSources);
 

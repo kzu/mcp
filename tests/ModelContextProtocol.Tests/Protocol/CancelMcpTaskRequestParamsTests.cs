@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class CancelMcpTaskRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void CancelMcpTaskRequestParams_SerializationRoundTrip()
     {
         // Arrange

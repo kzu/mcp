@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class RootTests
 {
-    [Fact]
+    [Test]
     public static void Root_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new Root
@@ -26,7 +26,7 @@ public static class RootTests
         Assert.Equal("data", (string?)deserialized.Meta["custom"]);
     }
 
-    [Fact]
+    [Test]
     public static void Root_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new Root

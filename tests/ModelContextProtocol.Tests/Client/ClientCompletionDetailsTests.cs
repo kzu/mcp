@@ -1,10 +1,10 @@
-using ModelContextProtocol.Client;
+﻿using ModelContextProtocol.Client;
 
 namespace ModelContextProtocol.Tests.Client;
 
 public class ClientCompletionDetailsTests
 {
-    [Fact]
+    [Test]
     public void ClientTransportClosedException_ExposesDetails()
     {
         var details = new StdioClientCompletionDetails
@@ -26,7 +26,7 @@ public class ClientCompletionDetailsTests
         Assert.IsType<IOException>(exception.InnerException);
     }
 
-    [Fact]
+    [Test]
     public void ClientTransportClosedException_WithNullException_HasDefaultMessage()
     {
         var details = new ClientCompletionDetails();
@@ -38,7 +38,7 @@ public class ClientCompletionDetailsTests
         Assert.Same(details, exception.Details);
     }
 
-    [Fact]
+    [Test]
     public void ClientTransportClosedException_IsIOException()
     {
         var details = new ClientCompletionDetails();
@@ -46,7 +46,7 @@ public class ClientCompletionDetailsTests
         Assert.IsType<ClientTransportClosedException>(exception);
     }
 
-    [Fact]
+    [Test]
     public void ClientCompletionDetails_PropertiesRoundtrip()
     {
         var exception = new InvalidOperationException("test");
@@ -58,14 +58,14 @@ public class ClientCompletionDetailsTests
         Assert.Same(exception, details.Exception);
     }
 
-    [Fact]
+    [Test]
     public void ClientCompletionDetails_DefaultsToNull()
     {
         var details = new ClientCompletionDetails();
         Assert.Null(details.Exception);
     }
 
-    [Fact]
+    [Test]
     public void StdioClientCompletionDetails_PropertiesRoundtrip()
     {
         var exception = new IOException("process exited");
@@ -85,7 +85,7 @@ public class ClientCompletionDetailsTests
         Assert.Same(stderrLines, details.StandardErrorTail);
     }
 
-    [Fact]
+    [Test]
     public void StdioClientCompletionDetails_DefaultsToNull()
     {
         var details = new StdioClientCompletionDetails();
@@ -95,7 +95,7 @@ public class ClientCompletionDetailsTests
         Assert.Null(details.StandardErrorTail);
     }
 
-    [Fact]
+    [Test]
     public void StdioClientCompletionDetails_IsClientCompletionDetails()
     {
         ClientCompletionDetails details = new StdioClientCompletionDetails { ExitCode = 1 };
@@ -103,7 +103,7 @@ public class ClientCompletionDetailsTests
         Assert.Equal(1, stdio.ExitCode);
     }
 
-    [Fact]
+    [Test]
     public void HttpClientCompletionDetails_PropertiesRoundtrip()
     {
         var exception = new HttpRequestException("connection refused");
@@ -118,7 +118,7 @@ public class ClientCompletionDetailsTests
         Assert.Equal(System.Net.HttpStatusCode.NotFound, details.HttpStatusCode);
     }
 
-    [Fact]
+    [Test]
     public void HttpClientCompletionDetails_DefaultsToNull()
     {
         var details = new HttpClientCompletionDetails();
@@ -126,7 +126,7 @@ public class ClientCompletionDetailsTests
         Assert.Null(details.HttpStatusCode);
     }
 
-    [Fact]
+    [Test]
     public void HttpClientCompletionDetails_IsClientCompletionDetails()
     {
         ClientCompletionDetails details = new HttpClientCompletionDetails { HttpStatusCode = System.Net.HttpStatusCode.NotFound };

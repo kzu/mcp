@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ElicitationCapabilityTests
 {
-    [Fact]
+    [Test]
     public static void ElicitationCapability_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ElicitationCapability
@@ -22,7 +22,7 @@ public static class ElicitationCapabilityTests
         Assert.NotNull(deserialized.Url);
     }
 
-    [Fact]
+    [Test]
     public static void ElicitationCapability_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ElicitationCapability();

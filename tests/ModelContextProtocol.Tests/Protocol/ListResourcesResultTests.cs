@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ListResourcesResultTests
 {
-    [Fact]
+    [Test]
     public static void ListResourcesResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ListResourcesResult
@@ -37,7 +37,7 @@ public static class ListResourcesResultTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void ListResourcesResult_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ListResourcesResult();

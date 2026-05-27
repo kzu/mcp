@@ -7,7 +7,7 @@ namespace ModelContextProtocol.Tests;
 
 public static class McpJsonUtilitiesTests
 {
-    [Fact]
+    [Test]
     public static void DefaultOptions_IsSingleton()
     {
         var options = McpJsonUtilities.DefaultOptions;
@@ -17,7 +17,7 @@ public static class McpJsonUtilitiesTests
         Assert.Same(options, McpJsonUtilities.DefaultOptions);
     }
 
-    [Fact]
+    [Test]
     public static void DefaultOptions_UseReflectionWhenEnabled()
     {
         var options = McpJsonUtilities.DefaultOptions;
@@ -26,7 +26,7 @@ public static class McpJsonUtilitiesTests
         Assert.Equal(JsonSerializer.IsReflectionEnabledByDefault, options.TryGetTypeInfo(anonType, out _));
     }
 
-    [Fact]
+    [Test]
     public static void DefaultOptions_UnknownEnumHandling()
     {
         var options = McpJsonUtilities.DefaultOptions;
@@ -44,7 +44,7 @@ public static class McpJsonUtilitiesTests
         }
     }
 
-    [Fact]
+    [Test]
     public static void DefaultOptions_CanSerializeIEnumerableOfContentBlock()
     {
         var options = McpJsonUtilities.DefaultOptions;

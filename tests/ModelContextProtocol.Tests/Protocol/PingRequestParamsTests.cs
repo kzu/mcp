@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class PingRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void PingRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new PingRequestParams
@@ -22,7 +22,7 @@ public static class PingRequestParamsTests
         Assert.Equal("tok-1", (string)deserialized.Meta["progressToken"]!);
     }
 
-    [Fact]
+    [Test]
     public static void PingRequestParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new PingRequestParams();

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Time.Testing;
+﻿using Microsoft.Extensions.Time.Testing;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using ModelContextProtocol.Tests.Utils;
@@ -9,12 +9,12 @@ namespace ModelContextProtocol.Tests.Server;
 
 public class InMemoryMcpTaskStoreTests : LoggedTest
 {
-    public InMemoryMcpTaskStoreTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public InMemoryMcpTaskStoreTests()
+        : base()
     {
     }
 
-    [Fact]
+    [Test]
     public async Task CreateTaskAsync_CreatesTaskWithUniqueId()
     {
         // Arrange
@@ -24,7 +24,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         var request = new JsonRpcRequest { Method = "tools/call" };
 
         // Act
-        var task = await store.CreateTaskAsync(metadata, requestId, request, "session-1", TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, requestId, request, "session-1", TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(task);
@@ -34,7 +34,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.NotEqual(default, task.LastUpdatedAt);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateTaskAsync_GeneratesUniqueTaskIds()
     {
         // Arrange
@@ -42,14 +42,14 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         var metadata = new McpTaskMetadata();
 
         // Act
-        var task1 = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
-        var task2 = await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task1 = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
+        var task2 = await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotEqual(task1.TaskId, task2.TaskId);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateTaskAsync_AppliesTtlFromMetadata()
     {
         // Arrange
@@ -60,13 +60,13 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         };
 
         // Act
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(TimeSpan.FromSeconds(5), task.TimeToLive);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateTaskAsync_CapsMaxTtl()
     {
         // Arrange
@@ -78,22 +78,22 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         };
 
         // Act
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(maxTtl, task.TimeToLive);
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskAsync_ReturnsTaskById()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var created = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var created = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var retrieved = await store.GetTaskAsync(created.TaskId, null, TestContext.Current.CancellationToken);
+        var retrieved = await store.GetTaskAsync(created.TaskId, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(retrieved);
@@ -101,97 +101,97 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Equal(created.Status, retrieved.Status);
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskAsync_ReturnsNullForNonexistentTask()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
 
         // Act
-        var task = await store.GetTaskAsync("nonexistent-id", null, TestContext.Current.CancellationToken);
+        var task = await store.GetTaskAsync("nonexistent-id", null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Null(task);
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskAsync_EnforcesSessionIsolation()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var sameSession = await store.GetTaskAsync(task.TaskId, "session-1", TestContext.Current.CancellationToken);
-        var differentSession = await store.GetTaskAsync(task.TaskId, "session-2", TestContext.Current.CancellationToken);
+        var sameSession = await store.GetTaskAsync(task.TaskId, "session-1", TestContext.CurrentContext.CancellationToken);
+        var differentSession = await store.GetTaskAsync(task.TaskId, "session-2", TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(sameSession);
         Assert.Null(differentSession);
     }
 
-    [Fact]
+    [Test]
     public async Task StoreTaskResultAsync_StoresResultForCompletedTask()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
         var result = new CallToolResult { Content = [new TextContentBlock { Text = "Success" }] };
         var resultElement = JsonSerializer.SerializeToElement(result, McpJsonUtilities.DefaultOptions);
 
         // Act
-        await store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Completed, resultElement, null, TestContext.Current.CancellationToken);
+        await store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Completed, resultElement, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
-        var retrieved = await store.GetTaskAsync(task.TaskId, null, TestContext.Current.CancellationToken);
+        var retrieved = await store.GetTaskAsync(task.TaskId, null, TestContext.CurrentContext.CancellationToken);
         Assert.Equal(McpTaskStatus.Completed, retrieved!.Status);
     }
 
-    [Fact]
+    [Test]
     public async Task StoreTaskResultAsync_EnforcesSessionIsolation()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
         var result = new CallToolResult { Content = [new TextContentBlock { Text = "Success" }] };
         var resultElement = JsonSerializer.SerializeToElement(result, McpJsonUtilities.DefaultOptions);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Completed, resultElement, "session-2", TestContext.Current.CancellationToken));
+            () => store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Completed, resultElement, "session-2", TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task StoreTaskResultAsync_ThrowsForNonTerminalStatus()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
         var result = new CallToolResult { Content = [new TextContentBlock { Text = "Success" }] };
         var resultElement = JsonSerializer.SerializeToElement(result, McpJsonUtilities.DefaultOptions);
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(
-            () => store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Working, resultElement, null, TestContext.Current.CancellationToken));
+            () => store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Working, resultElement, null, TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskResultAsync_ReturnsStoredResult()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
         var result = new CallToolResult { Content = [new TextContentBlock { Text = "Success" }] };
         var resultElement = JsonSerializer.SerializeToElement(result, McpJsonUtilities.DefaultOptions);
-        await store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Completed, resultElement, null, TestContext.Current.CancellationToken);
+        await store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Completed, resultElement, null, TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var retrieved = await store.GetTaskResultAsync(task.TaskId, null, TestContext.Current.CancellationToken);
+        var retrieved = await store.GetTaskResultAsync(task.TaskId, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         var callToolResult = retrieved.Deserialize<CallToolResult>(McpJsonUtilities.DefaultOptions)!;
@@ -199,40 +199,40 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Equal("Success", ((TextContentBlock)callToolResult.Content[0]).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskResultAsync_EnforcesSessionIsolation()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
         var result = new CallToolResult { Content = [new TextContentBlock { Text = "Success" }] };
         var resultElement = JsonSerializer.SerializeToElement(result, McpJsonUtilities.DefaultOptions);
-        await store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Completed, resultElement, "session-1", TestContext.Current.CancellationToken);
+        await store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Completed, resultElement, "session-1", TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => store.GetTaskResultAsync(task.TaskId, "session-2", TestContext.Current.CancellationToken));
+            () => store.GetTaskResultAsync(task.TaskId, "session-2", TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task UpdateTaskStatusAsync_UpdatesStatus()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Act
-        await store.UpdateTaskStatusAsync(task.TaskId, McpTaskStatus.Working, "Processing...", null, TestContext.Current.CancellationToken);
+        await store.UpdateTaskStatusAsync(task.TaskId, McpTaskStatus.Working, "Processing...", null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
-        var updated = await store.GetTaskAsync(task.TaskId, null, TestContext.Current.CancellationToken);
+        var updated = await store.GetTaskAsync(task.TaskId, null, TestContext.CurrentContext.CancellationToken);
         Assert.Equal(McpTaskStatus.Working, updated!.Status);
         Assert.Equal("Processing...", updated.StatusMessage);
     }
 
-    [Fact]
+    [Test]
     public async Task UpdateTaskStatusAsync_UpdatesLastUpdatedAt()
     {
         // Arrange - Use FakeTimeProvider for deterministic testing
@@ -248,17 +248,17 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
             timeProvider: fakeTime);
             
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
         var originalTimestamp = task.LastUpdatedAt;
 
         // Advance time to ensure timestamp changes
         fakeTime.Advance(TimeSpan.FromMilliseconds(10));
 
         // Act
-        await store.UpdateTaskStatusAsync(task.TaskId, McpTaskStatus.Working, null, null, TestContext.Current.CancellationToken);
+        await store.UpdateTaskStatusAsync(task.TaskId, McpTaskStatus.Working, null, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
-        var updated = await store.GetTaskAsync(task.TaskId, null, TestContext.Current.CancellationToken);
+        var updated = await store.GetTaskAsync(task.TaskId, null, TestContext.CurrentContext.CancellationToken);
         Assert.True(updated!.LastUpdatedAt > originalTimestamp);
     }
 
@@ -269,7 +269,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
     // the request completes. See TaskExecutionContext for implementation details.
     // The tests below verify the store correctly handles status transitions.
 
-    [Fact]
+    [Test]
     public async Task InputRequiredStatus_SerializesCorrectly()
     {
         // Verify the input_required status serializes as expected
@@ -287,20 +287,20 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Contains("\"status\":\"input_required\"", json);
     }
 
-    [Fact]
+    [Test]
     public async Task InputRequiredStatus_CanTransitionToWorking()
     {
         // Arrange - Spec: "From input_required: may move to working, completed, failed, or cancelled"
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Transition to input_required (testing store's status transition capability)
         var inputRequiredTask = await store.UpdateTaskStatusAsync(
             task.TaskId,
             McpTaskStatus.InputRequired,
             "Waiting for user confirmation",
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(McpTaskStatus.InputRequired, inputRequiredTask.Status);
 
@@ -309,31 +309,31 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
             task.TaskId,
             McpTaskStatus.Working,
             "Processing resumed",
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(McpTaskStatus.Working, workingTask.Status);
     }
 
-    [Fact]
+    [Test]
     public async Task InputRequiredStatus_CanTransitionToCancelled()
     {
         // Arrange - Spec: Task transitions show input_required can go to terminal states
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Transition to input_required
         await store.UpdateTaskStatusAsync(
             task.TaskId,
             McpTaskStatus.InputRequired,
             "Need input",
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Act - Transition to cancelled
         var cancelledTask = await store.CancelTaskAsync(
             task.TaskId,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(McpTaskStatus.Cancelled, cancelledTask.Status);
@@ -341,16 +341,16 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
 
     #endregion
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_ReturnsAllTasks()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
-        var task1 = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
-        var task2 = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task1 = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
+        var task2 = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var result = await store.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await store.ListTasksAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(2, result.Tasks.Count);
@@ -359,17 +359,17 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Null(result.NextCursor);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_FiltersBySession()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
-        var task1 = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
-        var task2 = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, "session-2", TestContext.Current.CancellationToken);
+        var task1 = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
+        var task2 = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, "session-2", TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var session1Result = await store.ListTasksAsync(sessionId: "session-1", cancellationToken: TestContext.Current.CancellationToken);
-        var session2Result = await store.ListTasksAsync(sessionId: "session-2", cancellationToken: TestContext.Current.CancellationToken);
+        var session1Result = await store.ListTasksAsync(sessionId: "session-1", cancellationToken: TestContext.CurrentContext.CancellationToken);
+        var session2Result = await store.ListTasksAsync(sessionId: "session-2", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Single(session1Result.Tasks);
@@ -378,7 +378,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Equal(task2.TaskId, session2Result.Tasks[0].TaskId);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_SupportsPagination()
     {
         // Arrange
@@ -387,14 +387,14 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         // Create 150 tasks (more than page size of 100)
         for (int i = 0; i < 150; i++)
         {
-            await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+            await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
         }
 
         // Act - First page
-        var firstPageResult = await store.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var firstPageResult = await store.ListTasksAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         
         // Act - Second page
-        var secondPageResult = await store.ListTasksAsync(cursor: firstPageResult.NextCursor, cancellationToken: TestContext.Current.CancellationToken);
+        var secondPageResult = await store.ListTasksAsync(cursor: firstPageResult.NextCursor, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(100, firstPageResult.Tasks.Count);
@@ -403,71 +403,71 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Null(secondPageResult.NextCursor);
     }
 
-    [Fact]
+    [Test]
     public async Task CancelTaskAsync_CancelsTask()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var cancelled = await store.CancelTaskAsync(task.TaskId, null, TestContext.Current.CancellationToken);
+        var cancelled = await store.CancelTaskAsync(task.TaskId, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(McpTaskStatus.Cancelled, cancelled.Status);
     }
 
-    [Fact]
+    [Test]
     public async Task CancelTaskAsync_IsIdempotent()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
         
         // First cancellation
-        await store.CancelTaskAsync(task.TaskId, null, TestContext.Current.CancellationToken);
+        await store.CancelTaskAsync(task.TaskId, null, TestContext.CurrentContext.CancellationToken);
 
         // Act - Second cancellation
-        var result = await store.CancelTaskAsync(task.TaskId, null, TestContext.Current.CancellationToken);
+        var result = await store.CancelTaskAsync(task.TaskId, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert - Should return unchanged task, not throw
         Assert.Equal(McpTaskStatus.Cancelled, result.Status);
     }
 
-    [Fact]
+    [Test]
     public async Task CancelTaskAsync_DoesNotCancelCompletedTask()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
         var result = new CallToolResult { Content = [new TextContentBlock { Text = "Success" }] };
         var resultElement = JsonSerializer.SerializeToElement(result, McpJsonUtilities.DefaultOptions);
-        await store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Completed, resultElement, null, TestContext.Current.CancellationToken);
+        await store.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Completed, resultElement, null, TestContext.CurrentContext.CancellationToken);
 
         // Act
-        var cancelResult = await store.CancelTaskAsync(task.TaskId, null, TestContext.Current.CancellationToken);
+        var cancelResult = await store.CancelTaskAsync(task.TaskId, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert - Task remains completed
         Assert.Equal(McpTaskStatus.Completed, cancelResult.Status);
     }
 
-    [Fact]
+    [Test]
     public async Task CancelTaskAsync_EnforcesSessionIsolation()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => store.CancelTaskAsync(task.TaskId, "session-2", TestContext.Current.CancellationToken));
+            () => store.CancelTaskAsync(task.TaskId, "session-2", TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task Dispose_StopsCleanupTimer()
     {
         // Arrange - Use FakeTimeProvider for deterministic testing
@@ -485,7 +485,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
             timeProvider: fakeTime);
             
         var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromMilliseconds(100) };
-        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Act
         store.Dispose();
@@ -498,7 +498,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.True(true); // If we get here without exceptions, dispose worked
     }
 
-    [Fact]
+    [Test]
     public async Task CleanupExpiredTasks_RemovesExpiredTasks()
     {
         // Arrange - Use FakeTimeProvider for deterministic testing
@@ -517,10 +517,10 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
             timeProvider: fakeTime);
             
         var metadata = new McpTaskMetadata { TimeToLive = ttl };
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Verify task exists initially
-        var resultBefore = await store.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resultBefore = await store.ListTasksAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Single(resultBefore.Tasks);
 
         // Advance time past the TTL to make task expired
@@ -530,13 +530,13 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         fakeTime.Advance(cleanupInterval);
 
         // Act - List tasks to verify cleanup happened
-        var resultAfter = await store.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resultAfter = await store.ListTasksAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Empty(resultAfter.Tasks); // Task should be cleaned up by the timer
     }
 
-    [Fact]
+    [Test]
     public async Task DefaultTtl_AppliedWhenNoTtlSpecified()
     {
         // Arrange
@@ -545,13 +545,13 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         var metadata = new McpTaskMetadata(); // No TTL specified
 
         // Act
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(defaultTtl, task.TimeToLive);
     }
 
-    [Fact]
+    [Test]
     public async Task MultipleOperations_ConcurrentAccess()
     {
         // Arrange
@@ -565,7 +565,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
             tasks.Add(Task.Run(async () =>
             {
                 var metadata = new McpTaskMetadata();
-                return await store.CreateTaskAsync(metadata, new RequestId($"req-{taskNum}"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+                return await store.CreateTaskAsync(metadata, new RequestId($"req-{taskNum}"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
             }));
         }
 
@@ -576,7 +576,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Equal(10, createdTasks.Select(t => t.TaskId).Distinct().Count());
     }
 
-    [Fact]
+    [Test]
     public void Constructor_ThrowsWhenDefaultTtlExceedsMaxTtl()
     {
         // Arrange & Act & Assert
@@ -590,7 +590,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Contains("cannot exceed maximum TTL", exception.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateTaskAsync_UsesConfiguredPollInterval()
     {
         // Arrange
@@ -598,13 +598,13 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         var metadata = new McpTaskMetadata();
 
         // Act
-        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(TimeSpan.FromMilliseconds(2500), task.PollInterval);
     }
 
-    [Fact]
+    [Test]
     public void Constructor_ThrowsWhenPollIntervalIsZero()
     {
         // Arrange & Act & Assert
@@ -615,7 +615,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Contains("Poll interval must be positive", exception.Message);
     }
 
-    [Fact]
+    [Test]
     public void Constructor_ThrowsWhenPollIntervalIsNegative()
     {
         // Arrange & Act & Assert
@@ -626,72 +626,72 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Contains("Poll interval must be positive", exception.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskAsync_ReturnsDefensiveCopy()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var createdTask = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var createdTask = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Act - Get the task and modify the returned copy
-        var retrievedTask = await store.GetTaskAsync(createdTask.TaskId, null, TestContext.Current.CancellationToken);
+        var retrievedTask = await store.GetTaskAsync(createdTask.TaskId, null, TestContext.CurrentContext.CancellationToken);
         var originalStatus = retrievedTask!.Status;
         retrievedTask.Status = McpTaskStatus.Completed;
         retrievedTask.StatusMessage = "Modified externally";
 
         // Assert - Get the task again and verify the stored state wasn't affected
-        var taskAgain = await store.GetTaskAsync(createdTask.TaskId, null, TestContext.Current.CancellationToken);
+        var taskAgain = await store.GetTaskAsync(createdTask.TaskId, null, TestContext.CurrentContext.CancellationToken);
         Assert.Equal(originalStatus, taskAgain!.Status);
         Assert.Null(taskAgain.StatusMessage);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_ReturnsDefensiveCopies()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Act - List tasks and modify the returned copies
-        var result = await store.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await store.ListTasksAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         var firstTask = result.Tasks[0];
         var originalTaskId = firstTask.TaskId;
         firstTask.Status = McpTaskStatus.Failed;
         firstTask.StatusMessage = "Modified in list";
 
         // Assert - Get the task directly and verify the stored state wasn't affected
-        var directTask = await store.GetTaskAsync(originalTaskId, null, TestContext.Current.CancellationToken);
+        var directTask = await store.GetTaskAsync(originalTaskId, null, TestContext.CurrentContext.CancellationToken);
         Assert.Equal(McpTaskStatus.Working, directTask!.Status);
         Assert.Null(directTask.StatusMessage);
     }
 
-    [Fact]
+    [Test]
     public async Task CancelTaskAsync_ReturnsDefensiveCopy()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
         var metadata = new McpTaskMetadata();
-        var createdTask = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var createdTask = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Act - Cancel the task and modify the returned copy
-        var cancelledTask = await store.CancelTaskAsync(createdTask.TaskId, null, TestContext.Current.CancellationToken);
+        var cancelledTask = await store.CancelTaskAsync(createdTask.TaskId, null, TestContext.CurrentContext.CancellationToken);
         cancelledTask.StatusMessage = "Modified after cancel";
         cancelledTask.Status = McpTaskStatus.Completed;
 
         // Assert - Get the task again and verify it's still cancelled with no message
-        var taskAgain = await store.GetTaskAsync(createdTask.TaskId, null, TestContext.Current.CancellationToken);
+        var taskAgain = await store.GetTaskAsync(createdTask.TaskId, null, TestContext.CurrentContext.CancellationToken);
         Assert.Equal(McpTaskStatus.Cancelled, taskAgain!.Status);
         Assert.Null(taskAgain.StatusMessage);
     }
 
-    [Fact]
+    [Test]
     public async Task ConcurrentUpdates_HandlesContentionCorrectly()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
-        var task = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Act - Launch 100 concurrent updates to the same task
         var updateTasks = Enumerable.Range(0, 100).Select(i =>
@@ -699,7 +699,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
             {
                 try
                 {
-                    await store.UpdateTaskStatusAsync(task.TaskId, McpTaskStatus.Working, $"Update {i}", null, TestContext.Current.CancellationToken);
+                    await store.UpdateTaskStatusAsync(task.TaskId, McpTaskStatus.Working, $"Update {i}", null, TestContext.CurrentContext.CancellationToken);
                     return true;
                 }
                 catch
@@ -714,18 +714,18 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.All(results, success => Assert.True(success));
 
         // Verify task is still in valid state (one of the updates won)
-        var finalTask = await store.GetTaskAsync(task.TaskId, null, TestContext.Current.CancellationToken);
+        var finalTask = await store.GetTaskAsync(task.TaskId, null, TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(finalTask);
         Assert.Equal(McpTaskStatus.Working, finalTask.Status);
         Assert.Matches(@"Update \d+", finalTask.StatusMessage!);
     }
 
-    [Fact]
+    [Test]
     public async Task ConcurrentStoreResult_OnlyFirstWins()
     {
         // Arrange
         using var store = new InMemoryMcpTaskStore();
-        var task = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Act - Try to store results concurrently (only first should succeed)
         var storeTasks = Enumerable.Range(0, 10).Select(i =>
@@ -740,7 +740,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
                         McpTaskStatus.Completed,
                         resultElement,
                         null,
-                        TestContext.Current.CancellationToken);
+                        TestContext.CurrentContext.CancellationToken);
                     return i;
                 }
                 catch (InvalidOperationException)
@@ -757,11 +757,11 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Single(successfulUpdates);
 
         // Verify the winning result is stored
-        var finalTask = await store.GetTaskAsync(task.TaskId, null, TestContext.Current.CancellationToken);
+        var finalTask = await store.GetTaskAsync(task.TaskId, null, TestContext.CurrentContext.CancellationToken);
         Assert.Equal(McpTaskStatus.Completed, finalTask!.Status);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_PaginationWithCustomPageSize()
     {
         // Arrange - Use small page size for testing
@@ -770,13 +770,13 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         // Create 25 tasks
         for (int i = 0; i < 25; i++)
         {
-            await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+            await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
         }
 
         // Act - Paginate through all tasks
-        var result1 = await store.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
-        var result2 = await store.ListTasksAsync(cursor: result1.NextCursor, cancellationToken: TestContext.Current.CancellationToken);
-        var result3 = await store.ListTasksAsync(cursor: result2.NextCursor, cancellationToken: TestContext.Current.CancellationToken);
+        var result1 = await store.ListTasksAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
+        var result2 = await store.ListTasksAsync(cursor: result1.NextCursor, cancellationToken: TestContext.CurrentContext.CancellationToken);
+        var result3 = await store.ListTasksAsync(cursor: result2.NextCursor, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Equal(10, result1.Tasks.Count);
@@ -791,7 +791,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Equal(25, allTaskIds.Distinct().Count());
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_NoDuplicatesWithIdenticalTimestamps()
     {
         // Arrange
@@ -799,7 +799,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
 
         // Create tasks with identical metadata to increase chance of timestamp collision
         var createTasks = Enumerable.Range(0, 20).Select(i =>
-            store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken));
+            store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken));
 
         await Task.WhenAll(createTasks);
 
@@ -808,7 +808,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         string? cursor = null;
         do
         {
-            var result = await store.ListTasksAsync(cursor: cursor, cancellationToken: TestContext.Current.CancellationToken);
+            var result = await store.ListTasksAsync(cursor: cursor, cancellationToken: TestContext.CurrentContext.CancellationToken);
             allTasks.AddRange(result.Tasks);
             cursor = result.NextCursor;
         } while (cursor != null);
@@ -822,7 +822,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Equal(allTasks.OrderBy(t => t.CreatedAt).ThenBy(t => t.TaskId).Select(t => t.TaskId), taskIds);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_ConsistentWithExpiredTasksRemovedBetweenPages()
     {
         // Arrange - Use FakeTimeProvider for deterministic testing
@@ -841,17 +841,17 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         // Create 15 tasks
         for (int i = 0; i < 15; i++)
         {
-            await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+            await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
         }
 
         // Act - Get first page immediately
-        var result1 = await store.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result1 = await store.ListTasksAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Advance time past TTL to make tasks expire
         fakeTime.Advance(ttl + TimeSpan.FromMilliseconds(500));
 
         // Get second page after expiration
-        var result2 = await store.ListTasksAsync(cursor: result1.NextCursor, cancellationToken: TestContext.Current.CancellationToken);
+        var result2 = await store.ListTasksAsync(cursor: result1.NextCursor, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert - First page should have 5 tasks, second page should have 0 (all expired)
         Assert.Equal(5, result1.Tasks.Count);
@@ -860,7 +860,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Null(result2.NextCursor);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_KeysetPaginationMaintainsConsistencyWithNewTasks()
     {
         // Arrange
@@ -869,21 +869,21 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         // Create 10 initial tasks
         for (int i = 0; i < 10; i++)
         {
-            await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+            await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
         }
 
         // Get first page
-        var result1 = await store.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result1 = await store.ListTasksAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal(5, result1.Tasks.Count);
 
         // Add more tasks between pages (these should appear in later queries, not retroactively in page 2)
         for (int i = 10; i < 15; i++)
         {
-            await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+            await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
         }
 
         // Get second page using cursor from before new tasks were added
-        var result2 = await store.ListTasksAsync(cursor: result1.NextCursor, cancellationToken: TestContext.Current.CancellationToken);
+        var result2 = await store.ListTasksAsync(cursor: result1.NextCursor, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert - Second page should have 5 tasks from original set
         Assert.Equal(5, result2.Tasks.Count);
@@ -895,7 +895,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Empty(page1Ids.Intersect(page2Ids));
     }
 
-    [Fact]
+    [Test]
     public async Task UpdateTaskStatusAsync_ConcurrentWithList_NoCorruption()
     {
         // Arrange
@@ -905,19 +905,19 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         var tasks = new List<McpTask>();
         for (int i = 0; i < 20; i++)
         {
-            var task = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+            var task = await store.CreateTaskAsync(new McpTaskMetadata(), new RequestId($"req-{i}"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
             tasks.Add(task);
         }
 
         // Act - Concurrently list and update tasks
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestContext.CurrentContext.CancellationToken;
         var listTask = Task.Run(async () =>
         {
             var allTasks = new List<McpTask>();
             string? cursor = null;
             do
             {
-                var result = await store.ListTasksAsync(cursor: cursor, cancellationToken: TestContext.Current.CancellationToken);
+                var result = await store.ListTasksAsync(cursor: cursor, cancellationToken: TestContext.CurrentContext.CancellationToken);
                 allTasks.AddRange(result.Tasks);
                 cursor = result.NextCursor;
                 await Task.Delay(10, ct); // Small delay to increase chance of interleaving
@@ -929,7 +929,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         {
             foreach (var task in tasks)
             {
-                await store.UpdateTaskStatusAsync(task.TaskId, McpTaskStatus.Working, "Updated", null, TestContext.Current.CancellationToken);
+                await store.UpdateTaskStatusAsync(task.TaskId, McpTaskStatus.Working, "Updated", null, TestContext.CurrentContext.CancellationToken);
                 await Task.Delay(5, ct); // Small delay
             }
         }, ct);
@@ -942,7 +942,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Equal(20, listedTasks.Select(t => t.TaskId).Distinct().Count());
     }
 
-    [Fact]
+    [Test]
     public void Constructor_ThrowsForInvalidMaxTasks()
     {
         // Assert
@@ -950,7 +950,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Throws<ArgumentOutOfRangeException>(() => new InMemoryMcpTaskStore(maxTasks: -1));
     }
 
-    [Fact]
+    [Test]
     public void Constructor_ThrowsForInvalidMaxTasksPerSession()
     {
         // Assert
@@ -958,7 +958,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Throws<ArgumentOutOfRangeException>(() => new InMemoryMcpTaskStore(maxTasksPerSession: -1));
     }
 
-    [Fact]
+    [Test]
     public async Task CreateTaskAsync_EnforcesMaxTasksLimit()
     {
         // Arrange
@@ -966,17 +966,17 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         var metadata = new McpTaskMetadata();
 
         // Act - Create up to the limit
-        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
-        await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
-        await store.CreateTaskAsync(metadata, new RequestId("req-3"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-3"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert - Fourth task should throw
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            store.CreateTaskAsync(metadata, new RequestId("req-4"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken));
+            store.CreateTaskAsync(metadata, new RequestId("req-4"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken));
         Assert.Contains("Maximum number of tasks (3) has been reached", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateTaskAsync_EnforcesMaxTasksPerSessionLimit()
     {
         // Arrange
@@ -984,17 +984,17 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         var metadata = new McpTaskMetadata();
 
         // Act - Create up to the limit for session-1
-        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
-        await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
 
         // Assert - Third task for session-1 should throw
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            store.CreateTaskAsync(metadata, new RequestId("req-3"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken));
+            store.CreateTaskAsync(metadata, new RequestId("req-3"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken));
         Assert.Contains("Maximum number of tasks per session (2) has been reached", ex.Message);
         Assert.Contains("session-1", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateTaskAsync_MaxTasksPerSession_AllowsDifferentSessions()
     {
         // Arrange
@@ -1002,19 +1002,19 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         var metadata = new McpTaskMetadata();
 
         // Act - Create 2 tasks for session-1
-        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
-        await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
 
         // Should still be able to create tasks for session-2
-        var task3 = await store.CreateTaskAsync(metadata, new RequestId("req-3"), new JsonRpcRequest { Method = "test" }, "session-2", TestContext.Current.CancellationToken);
-        var task4 = await store.CreateTaskAsync(metadata, new RequestId("req-4"), new JsonRpcRequest { Method = "test" }, "session-2", TestContext.Current.CancellationToken);
+        var task3 = await store.CreateTaskAsync(metadata, new RequestId("req-3"), new JsonRpcRequest { Method = "test" }, "session-2", TestContext.CurrentContext.CancellationToken);
+        var task4 = await store.CreateTaskAsync(metadata, new RequestId("req-4"), new JsonRpcRequest { Method = "test" }, "session-2", TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(task3);
         Assert.NotNull(task4);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateTaskAsync_MaxTasksPerSession_DoesNotApplyToNullSession()
     {
         // Arrange
@@ -1022,9 +1022,9 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         var metadata = new McpTaskMetadata();
 
         // Act - Create multiple tasks with null session (should not be limited)
-        var task1 = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
-        var task2 = await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
-        var task3 = await store.CreateTaskAsync(metadata, new RequestId("req-3"), new JsonRpcRequest { Method = "test" }, null, TestContext.Current.CancellationToken);
+        var task1 = await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
+        var task2 = await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
+        var task3 = await store.CreateTaskAsync(metadata, new RequestId("req-3"), new JsonRpcRequest { Method = "test" }, null, TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(task1);
@@ -1032,7 +1032,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.NotNull(task3);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateTaskAsync_CombinesMaxTasksAndMaxTasksPerSession()
     {
         // Arrange - Global limit of 5, per-session limit of 2
@@ -1040,28 +1040,28 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         var metadata = new McpTaskMetadata();
 
         // Create 2 tasks for session-1 (hits per-session limit)
-        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
-        await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
 
         // session-1 is at its limit
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            store.CreateTaskAsync(metadata, new RequestId("req-3"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken));
+            store.CreateTaskAsync(metadata, new RequestId("req-3"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken));
 
         // But session-2 can still create tasks
-        await store.CreateTaskAsync(metadata, new RequestId("req-4"), new JsonRpcRequest { Method = "test" }, "session-2", TestContext.Current.CancellationToken);
-        await store.CreateTaskAsync(metadata, new RequestId("req-5"), new JsonRpcRequest { Method = "test" }, "session-2", TestContext.Current.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-4"), new JsonRpcRequest { Method = "test" }, "session-2", TestContext.CurrentContext.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-5"), new JsonRpcRequest { Method = "test" }, "session-2", TestContext.CurrentContext.CancellationToken);
 
         // Now global limit is reached (4 tasks total, but 5th would be 5)
         // Wait, we have 4 tasks, should be able to create one more
-        await store.CreateTaskAsync(metadata, new RequestId("req-6"), new JsonRpcRequest { Method = "test" }, "session-3", TestContext.Current.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-6"), new JsonRpcRequest { Method = "test" }, "session-3", TestContext.CurrentContext.CancellationToken);
 
         // Now at 5 tasks (global limit), should throw
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            store.CreateTaskAsync(metadata, new RequestId("req-7"), new JsonRpcRequest { Method = "test" }, "session-3", TestContext.Current.CancellationToken));
+            store.CreateTaskAsync(metadata, new RequestId("req-7"), new JsonRpcRequest { Method = "test" }, "session-3", TestContext.CurrentContext.CancellationToken));
         Assert.Contains("Maximum number of tasks (5) has been reached", ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task CreateTaskAsync_MaxTasksPerSession_ExcludesExpiredTasks()
     {
         // Arrange - Use FakeTimeProvider for deterministic testing
@@ -1080,19 +1080,19 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         var metadata = new McpTaskMetadata();
 
         // Create first task
-        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
+        await store.CreateTaskAsync(metadata, new RequestId("req-1"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
 
         // Advance time past TTL to make the first task expire
         fakeTime.Advance(shortTtl + TimeSpan.FromMilliseconds(1));
 
         // Should be able to create another task since the first one expired
-        var task2 = await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.Current.CancellationToken);
+        var task2 = await store.CreateTaskAsync(metadata, new RequestId("req-2"), new JsonRpcRequest { Method = "test" }, "session-1", TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(task2);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_KeysetPaginationWorksWithIdenticalTimestamps()
     {
         // Arrange - Use a fake time provider to create tasks with identical timestamps
@@ -1116,7 +1116,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
                 new RequestId($"req-{i}"),
                 new JsonRpcRequest { Method = "test" },
                 null,
-                TestContext.Current.CancellationToken);
+                TestContext.CurrentContext.CancellationToken);
             createdTasks.Add(task);
         }
 
@@ -1125,14 +1125,14 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.All(createdTasks, task => Assert.Equal(firstTimestamp, task.CreatedAt));
 
         // Act - Get first page
-        var result1 = await store.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result1 = await store.ListTasksAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert - First page should have 5 tasks
         Assert.Equal(5, result1.Tasks.Count);
         Assert.NotNull(result1.NextCursor);
 
         // Get second page using cursor
-        var result2 = await store.ListTasksAsync(cursor: result1.NextCursor, cancellationToken: TestContext.Current.CancellationToken);
+        var result2 = await store.ListTasksAsync(cursor: result1.NextCursor, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert - Second page should have 5 tasks
         Assert.Equal(5, result2.Tasks.Count);
@@ -1149,7 +1149,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         Assert.Equal(allCreatedIds, allReturnedIds);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_TasksCreatedAfterFirstPageWithSameTimestampAppearInSecondPage()
     {
         // Arrange - Use a fake time provider so we can control timestamps precisely
@@ -1174,12 +1174,12 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
                 new RequestId($"req-initial-{i}"),
                 new JsonRpcRequest { Method = "test" },
                 null,
-                TestContext.Current.CancellationToken);
+                TestContext.CurrentContext.CancellationToken);
             initialTasks.Add(task);
         }
 
         // Get first page - should have 5 tasks with a cursor
-        var result1 = await store.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result1 = await store.ListTasksAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal(5, result1.Tasks.Count);
         Assert.NotNull(result1.NextCursor);
 
@@ -1194,7 +1194,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
                 new RequestId($"req-later-{i}"),
                 new JsonRpcRequest { Method = "test" },
                 null,
-                TestContext.Current.CancellationToken);
+                TestContext.CurrentContext.CancellationToken);
             laterTasks.Add(task);
         }
 
@@ -1208,7 +1208,7 @@ public class InMemoryMcpTaskStoreTests : LoggedTest
         string? cursor = result1.NextCursor;
         while (cursor != null)
         {
-            var result = await store.ListTasksAsync(cursor: cursor, cancellationToken: TestContext.Current.CancellationToken);
+            var result = await store.ListTasksAsync(cursor: cursor, cancellationToken: TestContext.CurrentContext.CancellationToken);
             allSubsequentTasks.AddRange(result.Tasks);
             cursor = result.NextCursor;
         }

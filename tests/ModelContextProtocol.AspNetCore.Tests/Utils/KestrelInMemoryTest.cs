@@ -9,8 +9,8 @@ namespace ModelContextProtocol.AspNetCore.Tests.Utils;
 
 public abstract class KestrelInMemoryTest : LoggedTest
 {
-    public KestrelInMemoryTest(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public KestrelInMemoryTest()
+        : base()
     {
         Builder = WebApplication.CreateEmptyBuilder(new());
         Builder.Services.AddSingleton<IConnectionListenerFactory>(KestrelInMemoryTransport);
@@ -18,7 +18,7 @@ public abstract class KestrelInMemoryTest : LoggedTest
         Builder.Services.AddRoutingCore();
         Builder.Services.AddLogging();
         Builder.Services.AddSingleton<ILoggerProvider>(MockLoggerProvider);
-        Builder.Services.AddSingleton(XunitLoggerProvider);
+        Builder.Services.AddSingleton(LoggerProvider);
         Builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
         SocketsHttpHandler.ConnectCallback = (context, token) =>
