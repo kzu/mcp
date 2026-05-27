@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.Json.Serialization;
 using ModelContextProtocol.Protocol;
 
@@ -15,7 +15,7 @@ namespace ModelContextProtocol.Tests;
 /// </remarks>
 public class ExperimentalInternalPropertyTests
 {
-    [Fact]
+    [Test]
     public void ExperimentalProperties_MustBeHiddenFromSourceGenerator()
     {
         // [Experimental] properties on stable protocol types must use the internal property

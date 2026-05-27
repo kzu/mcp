@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ResourceTests
 {
-    [Fact]
+    [Test]
     public static void Resource_SerializationRoundTrip_PreservesAllProperties()
     {
         // Arrange
@@ -47,7 +47,7 @@ public static class ResourceTests
         Assert.Equal(original.Annotations.Audience, deserialized.Annotations.Audience);
     }
 
-    [Fact]
+    [Test]
     public static void Resource_SerializationRoundTrip_WithMinimalProperties()
     {
         // Arrange
@@ -75,7 +75,7 @@ public static class ResourceTests
         Assert.Equal(original.Annotations, deserialized.Annotations);
     }
 
-    [Fact]
+    [Test]
     public static void Resource_HasCorrectJsonPropertyNames()
     {
         var resource = new Resource

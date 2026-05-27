@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class PromptArgumentTests
 {
-    [Fact]
+    [Test]
     public static void PromptArgument_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new PromptArgument
@@ -26,7 +26,7 @@ public static class PromptArgumentTests
         Assert.True(deserialized.Required);
     }
 
-    [Fact]
+    [Test]
     public static void PromptArgument_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new PromptArgument

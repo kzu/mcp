@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class AnnotationsTests
 {
-    [Fact]
+    [Test]
     public static void Annotations_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new Annotations
@@ -27,7 +27,7 @@ public static class AnnotationsTests
         Assert.Equal(original.LastModified, deserialized.LastModified);
     }
 
-    [Fact]
+    [Test]
     public static void Annotations_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new Annotations();

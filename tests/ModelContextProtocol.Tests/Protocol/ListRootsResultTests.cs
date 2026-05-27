@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ListRootsResultTests
 {
-    [Fact]
+    [Test]
     public static void ListRootsResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ListRootsResult

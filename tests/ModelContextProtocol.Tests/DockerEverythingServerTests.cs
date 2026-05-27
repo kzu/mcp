@@ -1,10 +1,10 @@
-using ModelContextProtocol.Client;
+﻿using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Tests.Utils;
 
 namespace ModelContextProtocol.Tests;
 
-public class DockerEverythingServerTests(ITestOutputHelper testOutputHelper) : LoggedTest(testOutputHelper)
+public class DockerEverythingServerTests() : LoggedTest()
 {
     /// <summary>Port number to be grabbed by the next test.</summary>
     private static int s_nextPort = 3000;
@@ -22,8 +22,8 @@ public class DockerEverythingServerTests(ITestOutputHelper testOutputHelper) : L
 
     public static bool IsDockerAvailable => EverythingSseServerFixture.IsDockerAvailable;
 
-    [Fact(Skip = "docker is not available", SkipUnless = nameof(IsDockerAvailable))]
-    [Trait("Execution", "Manual")]
+    [Test, Ignore("docker is not available")]
+    [Category("Execution")]
     public async Task ConnectAndReceiveMessage_EverythingServerWithSse()
     {
         int port = CreatePortNumber();
@@ -47,15 +47,15 @@ public class DockerEverythingServerTests(ITestOutputHelper testOutputHelper) : L
             new HttpClientTransport(defaultConfig),
             defaultOptions, 
             loggerFactory: LoggerFactory,
-            cancellationToken: TestContext.Current.CancellationToken);
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // assert
         Assert.NotEmpty(tools);
     }
 
-    [Fact(Skip = "docker is not available", SkipUnless = nameof(IsDockerAvailable))]
-    [Trait("Execution", "Manual")]
+    [Test, Ignore("docker is not available")]
+    [Category("Execution")]
     public async Task Sampling_Sse_EverythingServer()
     {
         int port = CreatePortNumber();
@@ -91,14 +91,14 @@ public class DockerEverythingServerTests(ITestOutputHelper testOutputHelper) : L
             new HttpClientTransport(defaultConfig),
             defaultOptions,
             loggerFactory: LoggerFactory,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Call the server's trigger-sampling-request tool which should trigger our sampling handler
         var result = await client.CallToolAsync("trigger-sampling-request", new Dictionary<string, object?>
             {
                 ["prompt"] = "Test prompt",
                 ["maxTokens"] = 100
-            }, cancellationToken: TestContext.Current.CancellationToken);
+            }, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // assert
         Assert.NotNull(result);

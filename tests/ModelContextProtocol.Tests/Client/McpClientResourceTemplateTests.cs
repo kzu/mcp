@@ -8,7 +8,7 @@ namespace ModelContextProtocol.Tests.Client;
 
 public partial class McpClientResourceTemplateTests : ClientServerTestBase
 {
-    public McpClientResourceTemplateTests(ITestOutputHelper outputHelper) : base(outputHelper)
+    public McpClientResourceTemplateTests() : base()
     {
     }
 
@@ -68,14 +68,14 @@ public partial class McpClientResourceTemplateTests : ClientServerTestBase
         }
     }
 
-    [Theory]
-    [MemberData(nameof(UriTemplate_InputsProduceExpectedOutputs_MemberData))]
+    [Test]
+    [TestCaseSource(nameof(UriTemplate_InputsProduceExpectedOutputs_MemberData))]
     public async Task UriTemplate_InputsProduceExpectedOutputs(
         IReadOnlyDictionary<string, object?> variables, string uriTemplate, object expected)
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var result = await client.ReadResourceAsync(uriTemplate, variables, null, TestContext.Current.CancellationToken);
+        var result = await client.ReadResourceAsync(uriTemplate, variables, null, TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(result);
         var actualUri = Assert.IsType<TextResourceContents>(Assert.Single(result.Contents)).Text;
 
@@ -218,38 +218,38 @@ public partial class McpClientResourceTemplateTests : ClientServerTestBase
               ["{+list}", "red,green,blue"],
               ["{+list*}", "red,green,blue"],
               ["{+keys}", [
-                "comma,,,dot,.,semi,;",
-                "comma,,,semi,;,dot,.",
-                "dot,.,comma,,,semi,;",
-                "dot,.,semi,;,comma,,",
-                "semi,;,comma,,,dot,.",
-                "semi,;,dot,.,comma,,"
+                "comma,,dot,.,semi,;",
+                "comma,,semi,;,dot,.",
+                "dot,.,comma,,semi,;",
+                "dot,.,semi,;,comma,",
+                "semi,;,comma,,dot,.",
+                "semi,;,dot,.,comma,"
               ]],
               ["{+keys*}", [
-                "comma=,,dot=.,semi=;",
-                "comma=,,semi=;,dot=.",
-                "dot=.,comma=,,semi=;",
+                "comma=,dot=.,semi=;",
+                "comma=,semi=;,dot=.",
+                "dot=.,comma=,semi=;",
                 "dot=.,semi=;,comma=,",
-                "semi=;,comma=,,dot=.",
+                "semi=;,comma=,dot=.",
                 "semi=;,dot=.,comma=,"
               ]],
               ["{#path:6}/here", "#/foo/b/here"],
               ["{#list}", "#red,green,blue"],
               ["{#list*}", "#red,green,blue"],
               ["{#keys}", [
-                "#comma,,,dot,.,semi,;",
-                "#comma,,,semi,;,dot,.",
-                "#dot,.,comma,,,semi,;",
-                "#dot,.,semi,;,comma,,",
-                "#semi,;,comma,,,dot,.",
-                "#semi,;,dot,.,comma,,"
+                "#comma,,dot,.,semi,;",
+                "#comma,,semi,;,dot,.",
+                "#dot,.,comma,,semi,;",
+                "#dot,.,semi,;,comma,",
+                "#semi,;,comma,,dot,.",
+                "#semi,;,dot,.,comma,"
               ]],
               ["{#keys*}", [
-                "#comma=,,dot=.,semi=;",
-                "#comma=,,semi=;,dot=.",
-                "#dot=.,comma=,,semi=;",
+                "#comma=,dot=.,semi=;",
+                "#comma=,semi=;,dot=.",
+                "#dot=.,comma=,semi=;",
                 "#dot=.,semi=;,comma=,",
-                "#semi=;,comma=,,dot=.",
+                "#semi=;,comma=,dot=.",
                 "#semi=;,dot=.,comma=,"
               ]],
               ["X{.var:3}", "X.val"],
@@ -483,19 +483,19 @@ public partial class McpClientResourceTemplateTests : ClientServerTestBase
                 ["{+list}", "red,green,blue"],
                 ["{+list*}", "red,green,blue"],
                 ["{+keys}", [
-                  "comma,,,dot,.,semi,;",
-                  "comma,,,semi,;,dot,.",
-                  "dot,.,comma,,,semi,;",
-                  "dot,.,semi,;,comma,,",
-                  "semi,;,comma,,,dot,.",
-                  "semi,;,dot,.,comma,,"
+                  "comma,,dot,.,semi,;",
+                  "comma,,semi,;,dot,.",
+                  "dot,.,comma,,semi,;",
+                  "dot,.,semi,;,comma,",
+                  "semi,;,comma,,dot,.",
+                  "semi,;,dot,.,comma,"
                 ]],
                 ["{+keys*}", [
-                  "comma=,,dot=.,semi=;",
-                  "comma=,,semi=;,dot=.",
-                  "dot=.,comma=,,semi=;",
+                  "comma=,dot=.,semi=;",
+                  "comma=,semi=;,dot=.",
+                  "dot=.,comma=,semi=;",
                   "dot=.,semi=;,comma=,",
-                  "semi=;,comma=,,dot=.",
+                  "semi=;,comma=,dot=.",
                   "semi=;,dot=.,comma=,"
                 ]]
              ]
@@ -533,12 +533,12 @@ public partial class McpClientResourceTemplateTests : ClientServerTestBase
                 ["{#list}", "#red,green,blue"],
                 ["{#list*}", "#red,green,blue"],
                 ["{#keys}", [
-                  "#comma,,,dot,.,semi,;",
-                  "#comma,,,semi,;,dot,.",
-                  "#dot,.,comma,,,semi,;",
-                  "#dot,.,semi,;,comma,,",
-                  "#semi,;,comma,,,dot,.",
-                  "#semi,;,dot,.,comma,,"
+                  "#comma,,dot,.,semi,;",
+                  "#comma,,semi,;,dot,.",
+                  "#dot,.,comma,,semi,;",
+                  "#dot,.,semi,;,comma,",
+                  "#semi,;,comma,,dot,.",
+                  "#semi,;,dot,.,comma,"
                 ]]
             ]
           },
@@ -575,19 +575,19 @@ public partial class McpClientResourceTemplateTests : ClientServerTestBase
                ["X{.list}", "X.red,green,blue"],
                ["X{.list*}", "X.red.green.blue"],
                ["{#keys}", [
-                "#comma,,,dot,.,semi,;",
-                "#comma,,,semi,;,dot,.",
-                "#dot,.,comma,,,semi,;",
-                "#dot,.,semi,;,comma,,",
-                "#semi,;,comma,,,dot,.",
-                "#semi,;,dot,.,comma,,"
+                "#comma,,dot,.,semi,;",
+                "#comma,,semi,;,dot,.",
+                "#dot,.,comma,,semi,;",
+                "#dot,.,semi,;,comma,",
+                "#semi,;,comma,,dot,.",
+                "#semi,;,dot,.,comma,"
                ]],
                ["{#keys*}", [
-                "#comma=,,dot=.,semi=;",
-                "#comma=,,semi=;,dot=.",
-                "#dot=.,comma=,,semi=;",
+                "#comma=,dot=.,semi=;",
+                "#comma=,semi=;,dot=.",
+                "#dot=.,comma=,semi=;",
                 "#dot=.,semi=;,comma=,",
-                "#semi=;,comma=,,dot=.",
+                "#semi=;,comma=,dot=.",
                 "#semi=;,dot=.,comma=,"
                ]],
                ["X{.empty_keys}", "X"],

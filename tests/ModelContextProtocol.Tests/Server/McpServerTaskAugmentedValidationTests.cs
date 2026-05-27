@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -13,8 +13,8 @@ namespace ModelContextProtocol.Tests.Server;
 /// </summary>
 public class McpServerTaskAugmentedValidationTests : LoggedTest
 {
-    public McpServerTaskAugmentedValidationTests(ITestOutputHelper outputHelper)
-        : base(outputHelper)
+    public McpServerTaskAugmentedValidationTests()
+        : base()
     {
     }
 
@@ -26,7 +26,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
         };
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolAsTask_ThrowsError_WhenNoTaskStoreConfigured()
     {
         // Arrange - Server WITHOUT task store, but with an async tool (auto-marked as taskSupport: optional)
@@ -46,7 +46,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert - Calling with task metadata should fail
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
@@ -57,12 +57,12 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                     Arguments = CreateArguments("input", "test"),
                     Task = new McpTaskMetadata()
                 },
-                TestContext.Current.CancellationToken));
+                TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains("not supported", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolAsTask_ThrowsError_WhenToolHasForbiddenTaskSupport()
     {
         // Arrange - Server with task store, but tool has taskSupport: forbidden (sync tool)
@@ -86,7 +86,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert - Calling with task metadata should fail because tool doesn't support it
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
@@ -97,13 +97,13 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                     Arguments = CreateArguments("input", "test"),
                     Task = new McpTaskMetadata()
                 },
-                TestContext.Current.CancellationToken));
+                TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains("does not support task-augmented execution", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(McpErrorCode.InvalidParams, exception.ErrorCode);
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolAsTask_Succeeds_WhenToolHasOptionalTaskSupport()
     {
         // Arrange - Server with task store and async tool (auto-marked as taskSupport: optional)
@@ -130,7 +130,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act - Calling with task metadata should succeed
         var result = await client.CallToolAsync(
@@ -140,14 +140,14 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 Arguments = CreateArguments("input", "test"),
                 Task = new McpTaskMetadata()
             },
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Assert - Should return a task
         Assert.NotNull(result.Task);
         Assert.NotNull(result.Task.TaskId);
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolNormally_Succeeds_WhenToolHasForbiddenTaskSupport()
     {
         // Arrange - Server with task store, but calling without task metadata
@@ -170,7 +170,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act - Calling WITHOUT task metadata should succeed
         var result = await client.CallToolAsync(
@@ -179,14 +179,14 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 Name = "sync-tool",
                 Arguments = CreateArguments("input", "test"),
             },
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Assert - Should return normal result
         Assert.NotNull(result.Content);
         Assert.Null(result.Task);
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolNormally_ThrowsError_WhenToolHasRequiredTaskSupport()
     {
         // Arrange - Server with task store and tool with taskSupport: required
@@ -214,7 +214,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert - Calling WITHOUT task metadata should fail
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
@@ -224,13 +224,13 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                     Name = "required-task-tool",
                     Arguments = CreateArguments("input", "test"),
                 },
-                TestContext.Current.CancellationToken));
+                TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains("requires task-augmented execution", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(McpErrorCode.InvalidParams, exception.ErrorCode);
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolAsTask_Succeeds_WhenToolHasRequiredTaskSupport()
     {
         // Arrange - Server with task store and tool with taskSupport: required
@@ -258,7 +258,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act - Calling WITH task metadata should succeed
         var result = await client.CallToolAsync(
@@ -268,14 +268,14 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 Arguments = CreateArguments("input", "test"),
                 Task = new McpTaskMetadata()
             },
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Assert - Should return a task
         Assert.NotNull(result.Task);
         Assert.NotNull(result.Task.TaskId);
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolAsTask_WithRequiredTaskSupport_CanResolveScopedServicesFromDI()
     {
         // Regression test for https://github.com/modelcontextprotocol/csharp-sdk/issues/1430:
@@ -311,7 +311,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 }));
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         var result = await client.CallToolAsync(
             new CallToolRequestParams
@@ -319,7 +319,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 Name = "di-required-task-tool",
                 Task = new McpTaskMetadata()
             },
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result.Task);
         string taskId = result.Task.TaskId;
@@ -329,8 +329,8 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
         int attempts = 0;
         do
         {
-            await Task.Delay(50, TestContext.Current.CancellationToken);
-            taskStatus = await client.GetTaskAsync(taskId, cancellationToken: TestContext.Current.CancellationToken);
+            await Task.Delay(50, TestContext.CurrentContext.CancellationToken);
+            taskStatus = await client.GetTaskAsync(taskId, cancellationToken: TestContext.CurrentContext.CancellationToken);
             attempts++;
         }
         while (taskStatus.Status == McpTaskStatus.Working && attempts < 50);
@@ -341,7 +341,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
         Assert.Equal("hello-from-di", capturedValue);
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolAsTaskAsync_WithProgress_CreatesTaskSuccessfully()
     {
         // Arrange - Server with task store and a tool that reports progress
@@ -375,7 +375,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Track progress notifications received by client
         var receivedProgressValues = new List<ProgressNotificationValue>();
@@ -393,7 +393,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
             arguments: null,
             taskMetadata: new McpTaskMetadata(),
             progress: progress,
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert - Task was created successfully
         Assert.NotNull(mcpTask);
@@ -404,7 +404,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
         // This test verifies the code path executes without errors.
     }
 
-    [Fact]
+    [Test]
     public async Task CallToolAsTaskAsync_WithoutProgress_DoesNotRequireProgressHandler()
     {
         // Arrange - Server with task store and a tool that reports progress
@@ -433,7 +433,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act - Call tool as task WITHOUT progress tracking (progress: null)
         var mcpTask = await client.CallToolAsTaskAsync(
@@ -441,7 +441,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
             arguments: null,
             taskMetadata: new McpTaskMetadata(),
             progress: null, // No progress handler
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert - Task was still created successfully
         Assert.NotNull(mcpTask);
@@ -455,7 +455,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
 
     #region Error Code Tests for Invalid/Nonexistent TaskId
 
-    [Fact]
+    [Test]
     public async Task GetTaskAsync_WithNonexistentTaskId_ReturnsInvalidParamsError()
     {
         // Arrange - Spec: "Invalid or nonexistent taskId in tasks/get: -32602 (Invalid params)"
@@ -470,17 +470,17 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "test-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.GetTaskAsync("nonexistent-task-id-12345", cancellationToken: TestContext.Current.CancellationToken));
+            await client.GetTaskAsync("nonexistent-task-id-12345", cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal(McpErrorCode.InvalidParams, exception.ErrorCode);
         Assert.Contains("not found", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskResultAsync_WithNonexistentTaskId_ReturnsInvalidParamsError()
     {
         // Arrange - Spec: "Invalid or nonexistent taskId in tasks/result: -32602 (Invalid params)"
@@ -495,17 +495,17 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "test-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.GetTaskResultAsync("nonexistent-task-id-12345", cancellationToken: TestContext.Current.CancellationToken));
+            await client.GetTaskResultAsync("nonexistent-task-id-12345", cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal(McpErrorCode.InvalidParams, exception.ErrorCode);
         Assert.Contains("not found", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Test]
     public async Task CancelTaskAsync_WithNonexistentTaskId_ReturnsError()
     {
         // Arrange - Spec: "Invalid or nonexistent taskId in tasks/cancel: -32602 (Invalid params)"
@@ -521,16 +521,16 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "test-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.CancelTaskAsync("nonexistent-task-id-12345", cancellationToken: TestContext.Current.CancellationToken));
+            await client.CancelTaskAsync("nonexistent-task-id-12345", cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.NotNull(exception);
     }
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_WithInvalidCursor_HandlesGracefully()
     {
         // Arrange - Spec says: "Invalid or nonexistent cursor in tasks/list: -32602 (Invalid params)"
@@ -546,12 +546,12 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "test-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act - Pass invalid cursor
         var result = await client.ListTasksAsync(
             new ListTasksRequestParams { Cursor = "invalid-cursor-that-does-not-exist" },
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         // Assert - Should return valid (possibly empty) result
         Assert.NotNull(result.Tasks);
@@ -561,7 +561,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
 
     #region Blocking Behavior Tests
 
-    [Fact]
+    [Test]
     public async Task GetTaskResultAsync_ReturnsImmediately_WhenTaskAlreadyComplete()
     {
         // Arrange
@@ -576,7 +576,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "quick-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Create and wait for task to complete
         var callResult = await client.CallToolAsync(
@@ -586,7 +586,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 Arguments = new Dictionary<string, JsonElement>(),
                 Task = new McpTaskMetadata()
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(callResult.Task);
         string taskId = callResult.Task.TaskId;
@@ -595,19 +595,19 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
         McpTask taskStatus;
         do
         {
-            await Task.Delay(50, TestContext.Current.CancellationToken);
-            taskStatus = await client.GetTaskAsync(taskId, cancellationToken: TestContext.Current.CancellationToken);
+            await Task.Delay(50, TestContext.CurrentContext.CancellationToken);
+            taskStatus = await client.GetTaskAsync(taskId, cancellationToken: TestContext.CurrentContext.CancellationToken);
         }
         while (taskStatus.Status == McpTaskStatus.Working);
 
         // Act - Get result (should return since task is complete)
-        var result = await client.GetTaskResultAsync(taskId, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.GetTaskResultAsync(taskId, cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert - Should get valid result
         Assert.NotEqual(default, result);
     }
 
-    [Fact]
+    [Test]
     public async Task GetTaskResultAsync_ForFailedTask_ReturnsErrorResult()
     {
         // Arrange
@@ -629,7 +629,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "failable-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Create a failing task
         var callResult = await client.CallToolAsync(
@@ -639,7 +639,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 Arguments = new Dictionary<string, JsonElement>(),
                 Task = new McpTaskMetadata()
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(callResult.Task);
         string taskId = callResult.Task.TaskId;
@@ -649,8 +649,8 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
         int attempts = 0;
         do
         {
-            await Task.Delay(50, TestContext.Current.CancellationToken);
-            taskStatus = await client.GetTaskAsync(taskId, cancellationToken: TestContext.Current.CancellationToken);
+            await Task.Delay(50, TestContext.CurrentContext.CancellationToken);
+            taskStatus = await client.GetTaskAsync(taskId, cancellationToken: TestContext.CurrentContext.CancellationToken);
             attempts++;
         }
         while (taskStatus.Status == McpTaskStatus.Working && attempts < 50);
@@ -658,7 +658,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
         Assert.Equal(McpTaskStatus.Failed, taskStatus.Status);
 
         // Act - Get result for failed task
-        var result = await client.GetTaskResultAsync(taskId, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.GetTaskResultAsync(taskId, cancellationToken: TestContext.CurrentContext.CancellationToken);
         var toolResult = result.Deserialize<CallToolResult>(McpJsonUtilities.DefaultOptions);
 
         // Assert - Failed task should have isError=true
@@ -670,7 +670,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
 
     #region Task Consistency and Lifecycle Tests
 
-    [Fact]
+    [Test]
     public async Task ListTasksAsync_ContainsAllTasksRetrievableByGet()
     {
         // Arrange - Spec: "If a task is retrievable via tasks/get, it MUST be retrievable via tasks/list"
@@ -685,7 +685,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "test-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Create multiple tasks
         var createdTaskIds = new List<string>();
@@ -701,7 +701,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                     },
                     Task = new McpTaskMetadata()
                 },
-                cancellationToken: TestContext.Current.CancellationToken);
+                cancellationToken: TestContext.CurrentContext.CancellationToken);
 
             Assert.NotNull(result.Task);
             createdTaskIds.Add(result.Task.TaskId);
@@ -710,12 +710,12 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
         // Verify each task is retrievable via get
         foreach (var taskId in createdTaskIds)
         {
-            var task = await client.GetTaskAsync(taskId, cancellationToken: TestContext.Current.CancellationToken);
+            var task = await client.GetTaskAsync(taskId, cancellationToken: TestContext.CurrentContext.CancellationToken);
             Assert.NotNull(task);
         }
 
         // Act - List all tasks
-        var allTasks = await client.ListTasksAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var allTasks = await client.ListTasksAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert - All tasks must be in the list
         foreach (var taskId in createdTaskIds)
@@ -724,7 +724,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
         }
     }
 
-    [Fact]
+    [Test]
     public async Task NewTask_StartsInWorkingStatus()
     {
         // Arrange - Spec: "Tasks MUST begin in the working status when created."
@@ -746,7 +746,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "controllable-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act - Create a task
         var callResult = await client.CallToolAsync(
@@ -756,7 +756,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 Arguments = new Dictionary<string, JsonElement>(),
                 Task = new McpTaskMetadata()
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(callResult.Task);
@@ -766,7 +766,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
         taskCanComplete.TrySetResult(true);
     }
 
-    [Fact]
+    [Test]
     public async Task Task_ContainsRequiredTimestamps()
     {
         // Arrange - Spec: "Receivers MUST include createdAt and lastUpdatedAt timestamps"
@@ -781,7 +781,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "test-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         var beforeCreation = DateTimeOffset.UtcNow;
 
@@ -793,7 +793,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 Arguments = new Dictionary<string, JsonElement>(),
                 Task = new McpTaskMetadata()
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var afterCreation = DateTimeOffset.UtcNow;
 
@@ -805,7 +805,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
         Assert.True(callResult.Task.CreatedAt <= afterCreation.AddSeconds(1));
     }
 
-    [Fact]
+    [Test]
     public async Task Task_IncludesTtlInResponse()
     {
         // Arrange - Spec: "Receivers MUST include the actual ttl duration in tasks/get responses."
@@ -820,7 +820,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "test-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act
         var callResult = await client.CallToolAsync(
@@ -830,17 +830,17 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 Arguments = new Dictionary<string, JsonElement>(),
                 Task = new McpTaskMetadata { TimeToLive = TimeSpan.FromMinutes(30) }
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(callResult.Task);
         Assert.NotNull(callResult.Task.TimeToLive);
 
-        var taskStatus = await client.GetTaskAsync(callResult.Task.TaskId, cancellationToken: TestContext.Current.CancellationToken);
+        var taskStatus = await client.GetTaskAsync(callResult.Task.TaskId, cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(taskStatus.TimeToLive);
     }
 
-    [Fact]
+    [Test]
     public async Task Task_IncludesPollIntervalInResponse()
     {
         // Arrange - Spec: "Receivers MAY include a pollInterval value"
@@ -855,7 +855,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "test-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act
         var callResult = await client.CallToolAsync(
@@ -865,7 +865,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 Arguments = new Dictionary<string, JsonElement>(),
                 Task = new McpTaskMetadata()
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(callResult.Task);
@@ -876,7 +876,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
 
     #region Server Without Tasks Capability Tests
 
-    [Fact]
+    [Test]
     public async Task ServerCapabilities_DoNotIncludeTasks_WhenNoTaskStore()
     {
         // Arrange - Spec: "If capabilities.tasks is not defined, the peer SHOULD NOT attempt to create tasks"
@@ -888,13 +888,13 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "async-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.Null(client.ServerCapabilities?.Tasks);
     }
 
-    [Fact]
+    [Test]
     public async Task NormalRequest_Succeeds_WhenTasksNotSupported()
     {
         // Arrange - Normal requests should work without task support
@@ -905,7 +905,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 new McpServerToolCreateOptions { Name = "sync-tool" })]);
         });
 
-        await using var client = await fixture.CreateClientAsync(TestContext.Current.CancellationToken);
+        await using var client = await fixture.CreateClientAsync(TestContext.CurrentContext.CancellationToken);
 
         // Act
         var result = await client.CallToolAsync(
@@ -914,7 +914,7 @@ public class McpServerTaskAugmentedValidationTests : LoggedTest
                 Name = "sync-tool",
                 Arguments = CreateArguments("input", "test")
             },
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert
         Assert.NotNull(result.Content);

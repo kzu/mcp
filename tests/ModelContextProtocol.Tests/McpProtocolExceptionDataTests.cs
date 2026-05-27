@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -19,8 +19,8 @@ public class McpProtocolExceptionDataTests : ClientServerTestBase
 {
     public static bool IsNotNetFramework => !PlatformDetection.IsNetFramework;
     
-    public McpProtocolExceptionDataTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public McpProtocolExceptionDataTests()
+        : base()
     {
     }
 
@@ -70,13 +70,13 @@ public class McpProtocolExceptionDataTests : ClientServerTestBase
         });
     }
 
-    [Fact]
+    [Test]
     public async Task Exception_With_Serializable_Data_Propagates_To_Client()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.CallToolAsync("throw_with_serializable_data", cancellationToken: TestContext.Current.CancellationToken));
+            await client.CallToolAsync("throw_with_serializable_data", cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): Resource not found", exception.Message);
         Assert.Equal(McpErrorCode.ResourceNotFound, exception.ErrorCode);
@@ -101,7 +101,7 @@ public class McpProtocolExceptionDataTests : ClientServerTestBase
         Assert.Equal(404.0, exception.Data["code"]); // Numbers are stored as double
     }
 
-    [Fact(Skip = "Non-serializable test data not supported on .NET Framework", SkipUnless = nameof(IsNotNetFramework))]
+    [Test, Ignore("Non-serializable test data not supported on .NET Framework")]
     public async Task Exception_With_NonSerializable_Data_Still_Propagates_Error_To_Client()
     {
         await using McpClient client = await CreateMcpClientForServer();
@@ -110,7 +110,7 @@ public class McpProtocolExceptionDataTests : ClientServerTestBase
         // The server should still send a proper error response to the client, with non-serializable
         // values filtered out.
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.CallToolAsync("throw_with_nonserializable_data", cancellationToken: TestContext.Current.CancellationToken));
+            await client.CallToolAsync("throw_with_nonserializable_data", cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): Resource not found", exception.Message);
         Assert.Equal(McpErrorCode.ResourceNotFound, exception.ErrorCode);
@@ -132,14 +132,14 @@ public class McpProtocolExceptionDataTests : ClientServerTestBase
         Assert.Equal("file:///path/to/resource", exception.Data["uri"]);
     }
 
-    [Fact(Skip = "Non-serializable test data not supported on .NET Framework", SkipUnless = nameof(IsNotNetFramework))]
+    [Test, Ignore("Non-serializable test data not supported on .NET Framework")]
     public async Task Exception_With_Only_NonSerializable_Data_Still_Propagates_Error_To_Client()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         // When all data is non-serializable, the error should still be sent (with null data)
         var exception = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.CallToolAsync("throw_with_only_nonserializable_data", cancellationToken: TestContext.Current.CancellationToken));
+            await client.CallToolAsync("throw_with_only_nonserializable_data", cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal("Request failed (remote): Resource not found", exception.Message);
         Assert.Equal(McpErrorCode.ResourceNotFound, exception.ErrorCode);

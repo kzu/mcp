@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class InitializeRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void InitializeRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new InitializeRequestParams

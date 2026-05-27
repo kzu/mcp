@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class CallToolRequestParamsTests
 {
-    [Fact]
+    [Test]
     public static void CallToolRequestParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new CallToolRequestParams
@@ -36,7 +36,7 @@ public static class CallToolRequestParamsTests
         Assert.Equal("token-123", (string)deserialized.Meta["progressToken"]!);
     }
 
-    [Fact]
+    [Test]
     public static void CallToolRequestParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new CallToolRequestParams

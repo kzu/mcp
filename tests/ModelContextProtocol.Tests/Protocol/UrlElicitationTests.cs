@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -6,7 +6,7 @@ using ModelContextProtocol.Tests.Utils;
 
 namespace ModelContextProtocol.Tests.Configuration;
 
-public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : ClientServerTestBase(testOutputHelper)
+public partial class UrlElicitationTests() : ClientServerTestBase()
 {
     protected override void ConfigureServices(ServiceCollection services, IMcpServerBuilder mcpServerBuilder)
     {
@@ -190,7 +190,7 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
         });
     }
 
-    [Fact]
+    [Test]
     public async Task Can_Elicit_OutOfBand_With_Url()
     {
         string? capturedElicitationId = null;
@@ -263,7 +263,7 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
                 await Task.CompletedTask;
             });
 
-        var result = await client.CallToolAsync("TestUrlElicitation", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("TestUrlElicitation", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Verify the tool completed successfully
         Assert.Single(result.Content);
@@ -276,11 +276,11 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
         Assert.NotNull(capturedMessage);
         Assert.Contains(capturedElicitationId, capturedUrl);
 
-        var notifiedElicitationId = await completionNotification.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.Current.CancellationToken);
+        var notifiedElicitationId = await completionNotification.Task.WaitAsync(TestConstants.DefaultTimeout, TestContext.CurrentContext.CancellationToken);
         Assert.Equal(capturedElicitationId, notifiedElicitationId);
     }
 
-    [Fact]
+    [Test]
     public async Task UrlElicitation_User_Can_Decline()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -311,7 +311,7 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
             }
         });
 
-        var result = await client.CallToolAsync("TestUrlElicitationDecline", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("TestUrlElicitationDecline", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Server should handle decline gracefully
         Assert.Single(result.Content);
@@ -319,7 +319,7 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
         Assert.Equal("payment-declined", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task UrlElicitation_User_Can_Cancel()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -349,7 +349,7 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
             }
         });
 
-        var result = await client.CallToolAsync("TestUrlElicitationCancel", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("TestUrlElicitationCancel", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Server should handle cancellation
         Assert.Single(result.Content);
@@ -357,7 +357,7 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
         Assert.Equal("verification-canceled", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task UrlElicitation_Defaults_To_Unsupported_When_Handler_Provided()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -375,14 +375,14 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
         Assert.NotNull(defaultCapability.Form);
         Assert.Null(defaultCapability.Url);
 
-        var result = await client.CallToolAsync("ProbeUrlCapability", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("ProbeUrlCapability", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.True(result.IsError);
         var textContent = Assert.IsType<TextContentBlock>(result.Content[0]);
         Assert.Equal("An error occurred invoking 'ProbeUrlCapability': Client does not support URL mode elicitation requests.", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task FormElicitation_Defaults_To_Supported_When_Handler_Provided()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -397,13 +397,13 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
         Assert.NotNull(capability.Form);
         Assert.Null(capability.Url);
 
-        var result = await client.CallToolAsync("ProbeFormCapability", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("ProbeFormCapability", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         var textContent = Assert.IsType<TextContentBlock>(result.Content[0]);
         Assert.Equal("form-allowed:decline", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task UrlElicitation_BlankCapability_Allows_Only_Form()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -422,17 +422,17 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
         Assert.NotNull(capability.Form);
         Assert.Null(capability.Url);
 
-        var urlResult = await client.CallToolAsync("ProbeUrlCapability", cancellationToken: TestContext.Current.CancellationToken);
+        var urlResult = await client.CallToolAsync("ProbeUrlCapability", cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.True(urlResult.IsError);
         var urlTextContent = Assert.IsType<TextContentBlock>(urlResult.Content[0]);
         Assert.Equal("An error occurred invoking 'ProbeUrlCapability': Client does not support URL mode elicitation requests.", urlTextContent.Text);
 
-        var formResult = await client.CallToolAsync("ProbeFormCapability", cancellationToken: TestContext.Current.CancellationToken);
+        var formResult = await client.CallToolAsync("ProbeFormCapability", cancellationToken: TestContext.CurrentContext.CancellationToken);
         var textContent = Assert.IsType<TextContentBlock>(formResult.Content[0]);
         Assert.Equal("form-allowed:decline", textContent.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task FormElicitation_UrlOnlyCapability_NotSupported()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -459,17 +459,17 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
         Assert.Null(capability.Form);
         Assert.NotNull(capability.Url);
 
-        var urlResult = await client.CallToolAsync("ProbeUrlCapability", cancellationToken: TestContext.Current.CancellationToken);
+        var urlResult = await client.CallToolAsync("ProbeUrlCapability", cancellationToken: TestContext.CurrentContext.CancellationToken);
         var urlText = Assert.IsType<TextContentBlock>(urlResult.Content[0]);
         Assert.Equal("url-allowed", urlText.Text);
 
-        var formResult = await client.CallToolAsync("ProbeFormCapability", cancellationToken: TestContext.Current.CancellationToken);
+        var formResult = await client.CallToolAsync("ProbeFormCapability", cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.True(formResult.IsError);
         var formText = Assert.IsType<TextContentBlock>(formResult.Content[0]);
         Assert.Equal("An error occurred invoking 'ProbeFormCapability': Client does not support form mode elicitation requests.", formText.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task UrlElicitation_Requires_ElicitationId_For_Url_Mode()
     {
         var elicitationHandlerCalled = false;
@@ -493,7 +493,7 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
             }
         });
 
-        var result = await client.CallToolAsync("TestUrlElicitationMissingId", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("TestUrlElicitationMissingId", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.True(result.IsError);
         var textContent = Assert.IsType<TextContentBlock>(result.Content[0]);
@@ -501,7 +501,7 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
         Assert.False(elicitationHandlerCalled);
     }
 
-    [Fact]
+    [Test]
     public async Task UrlElicitationRequired_Exception_Propagates_To_Client()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -516,7 +516,7 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
         });
 
         var exception = await Assert.ThrowsAsync<UrlElicitationRequiredException>(
-            async () => await client.CallToolAsync("TestUrlElicitationRequired", cancellationToken: TestContext.Current.CancellationToken));
+            async () => await client.CallToolAsync("TestUrlElicitationRequired", cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Equal(McpErrorCode.UrlElicitationRequired, exception.ErrorCode);
 
@@ -527,7 +527,7 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
         Assert.Equal("Authorization is required to access Example Co.", elicitation.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task FormElicitation_Requires_RequestedSchema()
     {
         var elicitationHandlerCalled = false;
@@ -548,7 +548,7 @@ public partial class UrlElicitationTests(ITestOutputHelper testOutputHelper) : C
             }
         });
 
-        var result = await client.CallToolAsync("TestFormElicitationMissingSchema", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("TestFormElicitationMissingSchema", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.True(result.IsError);
         var textContent = Assert.IsType<TextContentBlock>(result.Content[0]);

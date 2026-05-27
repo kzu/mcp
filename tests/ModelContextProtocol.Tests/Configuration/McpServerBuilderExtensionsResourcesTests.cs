@@ -15,8 +15,8 @@ namespace ModelContextProtocol.Tests.Configuration;
 
 public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTestBase
 {
-    public McpServerBuilderExtensionsResourcesTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public McpServerBuilderExtensionsResourcesTests()
+        : base()
     {
     }
 
@@ -114,7 +114,7 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
         .WithResources<SimpleResources>();
     }
 
-    [Fact]
+    [Test]
     public void Adds_Resources_To_Server()
     {
         var serverOptions = ServiceProvider.GetRequiredService<IOptions<McpServerOptions>>().Value;
@@ -123,52 +123,52 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
         Assert.NotEmpty(resources);
     }
 
-    [Fact]
+    [Test]
     public async Task Can_List_And_Call_Registered_Resources()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         Assert.NotNull(client.ServerCapabilities.Resources);
 
-        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal(7, resources.Count);
 
         var resource = resources.First(t => t.Name == "some_neat_direct_resource");
         Assert.Equal("Some neat direct resource", resource.Description);
 
-        var result = await resource.ReadAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var result = await resource.ReadAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(result);
         Assert.Single(result.Contents);
         Assert.Equal("This is a neat resource", Assert.IsType<TextResourceContents>(result.Contents[0]).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task Can_List_And_Call_Registered_ResourceTemplates()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var resources = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resources = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal(3, resources.Count);
 
         var resource = resources.First(t => t.Name == "some_neat_templated_resource");
         Assert.Equal("Some neat resource with parameters", resource.Description);
 
-        var result = await resource.ReadAsync(new Dictionary<string, object?>() { ["name"] = "hello" }, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await resource.ReadAsync(new Dictionary<string, object?>() { ["name"] = "hello" }, cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(result);
         Assert.Single(result.Contents);
         Assert.Equal("This is a neat resource with parameters: hello", Assert.IsType<TextResourceContents>(result.Contents[0]).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task Can_Be_Notified_Of_Resource_Changes()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal(7, resources.Count);
 
         Channel<JsonRpcNotification> listChanged = Channel.CreateUnbounded<JsonRpcNotification>();
-        var notificationRead = listChanged.Reader.ReadAsync(TestContext.Current.CancellationToken);
+        var notificationRead = listChanged.Reader.ReadAsync(TestContext.CurrentContext.CancellationToken);
         Assert.False(notificationRead.IsCompleted);
 
         var serverOptions = ServiceProvider.GetRequiredService<IOptions<McpServerOptions>>().Value;
@@ -185,27 +185,27 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
             serverResources.Add(newResource);
             await notificationRead;
 
-            resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+            resources = await client.ListResourcesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
             Assert.Equal(8, resources.Count);
             Assert.Contains(resources, t => t.Name == "NewResource");
 
-            notificationRead = listChanged.Reader.ReadAsync(TestContext.Current.CancellationToken);
+            notificationRead = listChanged.Reader.ReadAsync(TestContext.CurrentContext.CancellationToken);
             Assert.False(notificationRead.IsCompleted);
             serverResources.Remove(newResource);
             await notificationRead;
         }
 
-        resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        resources = await client.ListResourcesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal(7, resources.Count);
         Assert.DoesNotContain(resources, t => t.Name == "NewResource");
     }
 
-    [Fact]
+    [Test]
     public async Task AttributeProperties_Propagated()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
-        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(resources);
         Assert.NotEmpty(resources);
         McpClientResource resource = resources.First(t => t.Name == "some_neat_direct_resource");
@@ -217,7 +217,7 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
         Assert.Equal("https://example.com/direct-resource-icon.svg", resourceIcon.Source);
         Assert.Null(resourceIcon.Theme);
 
-        var resourceTemplates = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var resourceTemplates = await client.ListResourceTemplatesAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(resourceTemplates);
         Assert.NotEmpty(resourceTemplates);
         McpClientResourceTemplate resourceTemplate = resourceTemplates.First(t => t.Name == "some_neat_templated_resource");
@@ -230,24 +230,24 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
         Assert.Null(templateIcon.Theme);
     }
 
-    [Fact]
+    [Test]
     public async Task Throws_When_Resource_Fails()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         await Assert.ThrowsAsync<McpProtocolException>(async () => await client.ReadResourceAsync(
             $"resource://mcp/{nameof(SimpleResources.ThrowsException)}",
-            cancellationToken: TestContext.Current.CancellationToken));
+            cancellationToken: TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task Logs_Resource_Uri_On_Successful_Read()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         var result = await client.ReadResourceAsync(
             "resource://mcp/some_neat_direct_resource",
-            cancellationToken: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(result);
 
@@ -255,28 +255,28 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
         Assert.Equal(LogLevel.Information, infoLog.LogLevel);
     }
 
-    [Fact]
+    [Test]
     public async Task Logs_Resource_Uri_When_Resource_Throws()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         await Assert.ThrowsAsync<McpProtocolException>(async () => await client.ReadResourceAsync(
             "resource://mcp/throws_exception",
-            cancellationToken: TestContext.Current.CancellationToken));
+            cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         var errorLog = Assert.Single(MockLoggerProvider.LogMessages, m => m.LogLevel == LogLevel.Error);
         Assert.Equal("ReadResource \"resource://mcp/throws_exception\" threw an unhandled exception.", errorLog.Message);
         Assert.IsType<InvalidOperationException>(errorLog.Exception);
     }
 
-    [Fact]
+    [Test]
     public async Task Logs_Resource_Error_When_Resource_Throws_OperationCanceledException()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         await Assert.ThrowsAsync<McpProtocolException>(async () => await client.ReadResourceAsync(
             "resource://mcp/throws_operation_canceled_exception",
-            cancellationToken: TestContext.Current.CancellationToken));
+            cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains(MockLoggerProvider.LogMessages, m =>
             m.LogLevel == LogLevel.Error &&
@@ -288,14 +288,14 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
             m.Message.Contains("request handler failed"));
     }
 
-    [Fact]
+    [Test]
     public async Task Logs_Resource_Error_When_Resource_Throws_McpProtocolException()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         await Assert.ThrowsAsync<McpProtocolException>(async () => await client.ReadResourceAsync(
             "resource://mcp/throws_mcp_protocol_exception",
-            cancellationToken: TestContext.Current.CancellationToken));
+            cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains(MockLoggerProvider.LogMessages, m =>
             m.LogLevel == LogLevel.Error &&
@@ -307,20 +307,20 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
             m.Message.Contains("request handler failed"));
     }
 
-    [Fact]
+    [Test]
     public async Task Throws_Exception_On_Unknown_Resource()
     {
         await using McpClient client = await CreateMcpClientForServer();
 
         var e = await Assert.ThrowsAsync<McpProtocolException>(async () => await client.ReadResourceAsync(
             "test:///NotRegisteredResource",
-            cancellationToken: TestContext.Current.CancellationToken));
+            cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains("Resource not found", e.Message);
         Assert.Equal(McpErrorCode.ResourceNotFound, e.ErrorCode);
     }
 
-    [Fact]
+    [Test]
     public void WithResources_InvalidArgs_Throws()
     {
         IMcpServerBuilder builder = new ServiceCollection().AddMcpServer();
@@ -336,7 +336,7 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
         Assert.Throws<ArgumentNullException>("builder", () => nullBuilder.WithResourcesFromAssembly());
     }
 
-    [Fact]
+    [Test]
     public async Task WithResources_TargetInstance_UsesTarget()
     {
         ServiceCollection sc = new();
@@ -348,12 +348,12 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
         var result = await resource.ReadAsync(new RequestContext<ReadResourceRequestParams>(new Mock<McpServer>().Object, new JsonRpcRequest { Method = "test", Id = new RequestId("1") }, new()
         {
             Uri = "returns://string"
-        }), TestContext.Current.CancellationToken);
+        }), TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal(target.ReturnsString(), (result?.Contents[0] as TextResourceContents)?.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task WithResources_TargetInstance_UsesEnumerableImplementation()
     {
         ServiceCollection sc = new();
@@ -377,7 +377,7 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    [Fact]
+    [Test]
     public void Empty_Enumerables_Is_Allowed()
     {
         IMcpServerBuilder builder = new ServiceCollection().AddMcpServer();
@@ -388,7 +388,7 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
         builder.WithResourcesFromAssembly(typeof(AIFunction).Assembly); // no exception even though no resources exposed
     }
 
-    [Fact]
+    [Test]
     public void Register_Resources_From_Current_Assembly()
     {
         ServiceCollection sc = new();
@@ -399,7 +399,7 @@ public partial class McpServerBuilderExtensionsResourcesTests : ClientServerTest
         Assert.Contains(services.GetServices<McpServerResource>(), t => t.ProtocolResourceTemplate?.UriTemplate == $"resource://mcp/some_neat_templated_resource{{?name}}");
     }
 
-    [Fact]
+    [Test]
     public void Register_Resources_From_Multiple_Sources()
     {
         ServiceCollection sc = new();

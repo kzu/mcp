@@ -1,22 +1,22 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public class ToolChoiceTests
 {
-    [Fact]
+    [Test]
     public void DefaultModeIsNull()
     {
         Assert.Null(new ToolChoice().Mode);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("none")]
-    [InlineData("required")]
-    [InlineData("auto")]
-    [InlineData("something_custom")]
+    [Test]
+    [TestCase(null)]
+    [TestCase("none")]
+    [TestCase("required")]
+    [TestCase("auto")]
+    [TestCase("something_custom")]
     public void SerializesWithMode(string? mode)
     {
         ToolChoice toolChoice = new() { Mode = mode };

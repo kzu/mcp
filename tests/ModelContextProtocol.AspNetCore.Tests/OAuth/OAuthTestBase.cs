@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.WebUtilities;
@@ -20,7 +20,7 @@ public abstract class OAuthTestBase : KestrelInMemoryTest, IAsyncDisposable
     protected readonly TestOAuthServer.Program TestOAuthServer;
     private readonly Task _testOAuthRunTask;
 
-    protected OAuthTestBase(ITestOutputHelper outputHelper, bool configureMcpMetadata = true)
+    protected OAuthTestBase( bool configureMcpMetadata = true)
         : base(outputHelper)
     {
         // Let the HandleAuthorizationUrlAsync take a look at the Location header
@@ -86,7 +86,7 @@ public abstract class OAuthTestBase : KestrelInMemoryTest, IAsyncDisposable
         // Wait for the OAuth server to be ready before starting the MCP server.
         // This prevents race conditions in CI where the OAuth server may not be
         // fully initialized when the first test request is made.
-        await TestOAuthServer.ServerStarted.WaitAsync(TestContext.Current.CancellationToken);
+        await TestOAuthServer.ServerStarted.WaitAsync(TestContext.CurrentContext.CancellationToken);
 
         Builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
         {
@@ -102,7 +102,7 @@ public abstract class OAuthTestBase : KestrelInMemoryTest, IAsyncDisposable
         {
             AuthenticationSchemes = authScheme
         });
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
         return app;
     }
 

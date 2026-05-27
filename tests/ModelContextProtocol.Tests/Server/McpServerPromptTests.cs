@@ -1,4 +1,4 @@
-using Microsoft.Extensions.AI;
+﻿using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -26,11 +26,11 @@ public class McpServerPromptTests
     public McpServerPromptTests()
     {
 #if !NET
-        Assert.SkipWhen(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "https://github.com/modelcontextprotocol/csharp-sdk/issues/587");
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) Assert.Ignore("https://github.com/modelcontextprotocol/csharp-sdk/issues/587");
 #endif
     }
 
-    [Fact]
+    [Test]
     public void Create_InvalidArgs_Throws()
     {
         Assert.Throws<ArgumentNullException>("function", () => McpServerPrompt.Create((AIFunction)null!));
@@ -40,7 +40,7 @@ public class McpServerPromptTests
         Assert.Throws<ArgumentNullException>("method", () => McpServerPrompt.Create((Delegate)null!));
     }
 
-    [Fact]
+    [Test]
     public async Task SupportsMcpServer()
     {
         Mock<McpServer> mockServer = new();
@@ -55,14 +55,14 @@ public class McpServerPromptTests
 
         var result = await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(mockServer.Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(result);
         Assert.NotNull(result.Messages);
         Assert.Single(result.Messages);
         Assert.Equal("Hello", Assert.IsType<TextContentBlock>(result.Messages[0].Content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task SupportsCtorInjection()
     {
         MyService expectedMyService = new();
@@ -84,7 +84,7 @@ public class McpServerPromptTests
 
         var result = await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(mockServer.Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(result);
         Assert.NotNull(result.Messages);
         Assert.Single(result.Messages);
@@ -114,7 +114,7 @@ public class McpServerPromptTests
         public string TestPrompt() => $"{_ms is not null} {_server is not null} {_request is not null} {_progress is not null}";
     }
 
-    [Fact]
+    [Test]
     public async Task SupportsServiceFromDI()
     {
         MyService expectedMyService = new();
@@ -134,15 +134,15 @@ public class McpServerPromptTests
 
         await Assert.ThrowsAnyAsync<ArgumentException>(async () => await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken));
+            TestContext.CurrentContext.CancellationToken));
 
         var result = await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }) { Services = services },
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
         Assert.Equal("Hello", Assert.IsType<TextContentBlock>(result.Messages[0].Content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task SupportsOptionalServiceFromDI()
     {
         MyService expectedMyService = new();
@@ -159,11 +159,11 @@ public class McpServerPromptTests
 
         var result = await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
         Assert.Equal("Hello", Assert.IsType<TextContentBlock>(result.Messages[0].Content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task SupportsDisposingInstantiatedDisposableTargets()
     {
         McpServerPrompt prompt1 = McpServerPrompt.Create(
@@ -172,11 +172,11 @@ public class McpServerPromptTests
 
         var result = await prompt1.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
         Assert.Equal("disposals:1", Assert.IsType<TextContentBlock>(result.Messages[0].Content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task SupportsAsyncDisposingInstantiatedAsyncDisposableTargets()
     {
         McpServerPrompt prompt1 = McpServerPrompt.Create(
@@ -185,11 +185,11 @@ public class McpServerPromptTests
 
         var result = await prompt1.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
         Assert.Equal("asyncDisposals:1", Assert.IsType<TextContentBlock>(result.Messages[0].Content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task SupportsAsyncDisposingInstantiatedAsyncDisposableAndDisposableTargets()
     {
         McpServerPrompt prompt1 = McpServerPrompt.Create(
@@ -198,11 +198,11 @@ public class McpServerPromptTests
 
         var result = await prompt1.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
         Assert.Equal("disposals:0, asyncDisposals:1", Assert.IsType<TextContentBlock>(result.Messages[0].Content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task CanReturnGetPromptResult()
     {
         GetPromptResult expected = new();
@@ -214,12 +214,12 @@ public class McpServerPromptTests
 
         var actual = await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         Assert.Same(expected, actual);
     }
 
-    [Fact]
+    [Test]
     public async Task CanReturnText()
     {
         string expected = "hello";
@@ -231,7 +231,7 @@ public class McpServerPromptTests
 
         var actual = await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(actual);
         Assert.NotNull(actual.Messages);
@@ -241,7 +241,7 @@ public class McpServerPromptTests
         Assert.Equal(expected, Assert.IsType<TextContentBlock>(actual.Messages[0].Content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task CanReturnPromptMessage()
     {
         PromptMessage expected = new()
@@ -257,7 +257,7 @@ public class McpServerPromptTests
 
         var actual = await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(actual);
         Assert.NotNull(actual.Messages);
@@ -265,7 +265,7 @@ public class McpServerPromptTests
         Assert.Same(expected, actual.Messages[0]);
     }
 
-    [Fact]
+    [Test]
     public async Task CanReturnPromptMessages()
     {
         IList<PromptMessage> expected =
@@ -289,7 +289,7 @@ public class McpServerPromptTests
 
         var actual = await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(actual);
         Assert.NotNull(actual.Messages);
@@ -300,7 +300,7 @@ public class McpServerPromptTests
         Assert.Equal("hello again", Assert.IsType<TextContentBlock>(actual.Messages[1].Content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task CanReturnChatMessage()
     {
         PromptMessage expected = new()
@@ -316,7 +316,7 @@ public class McpServerPromptTests
 
         var actual = await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(actual);
         Assert.NotNull(actual.Messages);
@@ -325,7 +325,7 @@ public class McpServerPromptTests
         Assert.Equal("hello", Assert.IsType<TextContentBlock>(actual.Messages[0].Content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task CanReturnChatMessages()
     {
         PromptMessage[] expected = [
@@ -348,7 +348,7 @@ public class McpServerPromptTests
 
         var actual = await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(actual);
         Assert.NotNull(actual.Messages);
@@ -359,7 +359,7 @@ public class McpServerPromptTests
         Assert.Equal("hello again", Assert.IsType<TextContentBlock>(actual.Messages[1].Content).Text);
     }
 
-    [Fact]
+    [Test]
     public async Task ThrowsForNullReturn()
     {
         McpServerPrompt prompt = McpServerPrompt.Create(() =>
@@ -369,10 +369,10 @@ public class McpServerPromptTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken));
+            TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task ThrowsForUnexpectedTypeReturn()
     {
         McpServerPrompt prompt = McpServerPrompt.Create(() =>
@@ -382,10 +382,10 @@ public class McpServerPromptTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await prompt.GetAsync(
             new RequestContext<GetPromptRequestParams>(new Mock<McpServer>().Object, CreateTestJsonRpcRequest(), new() { Name = "" }),
-            TestContext.Current.CancellationToken));
+            TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task SupportsSchemaCreateOptions()
     {
         AIJsonSchemaCreateOptions schemaCreateOptions = new()
@@ -493,7 +493,7 @@ public class McpServerPromptTests
         }
     }
 
-    [Fact]
+    [Test]
     public void SupportsIconsInCreateOptions()
     {
         var icons = new List<Icon>
@@ -511,7 +511,7 @@ public class McpServerPromptTests
         Assert.Equal("image/png", icon.MimeType);
     }
 
-    [Fact]
+    [Test]
     public void SupportsIconSourceInAttribute()
     {
         McpServerPrompt prompt = McpServerPrompt.Create([McpServerPrompt(IconSource = "https://example.com/prompt-icon.svg")] () => "test prompt");
@@ -522,7 +522,7 @@ public class McpServerPromptTests
         Assert.Null(icon.Sizes);
     }
 
-    [Fact]
+    [Test]
     public void CreateOptionsIconsOverrideAttributeIconSource_Prompt()
     {
         var optionsIcons = new List<Icon>
@@ -540,7 +540,7 @@ public class McpServerPromptTests
         Assert.Equal("image/svg+xml", icon.MimeType);
     }
 
-    [Fact]
+    [Test]
     public void SupportsPromptWithoutIcons()
     {
         McpServerPrompt prompt = McpServerPrompt.Create([McpServerPrompt] () => "test prompt");

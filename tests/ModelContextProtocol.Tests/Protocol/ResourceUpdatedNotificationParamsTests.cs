@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ResourceUpdatedNotificationParamsTests
 {
-    [Fact]
+    [Test]
     public static void ResourceUpdatedNotificationParams_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ResourceUpdatedNotificationParams
@@ -24,7 +24,7 @@ public static class ResourceUpdatedNotificationParamsTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void ResourceUpdatedNotificationParams_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ResourceUpdatedNotificationParams

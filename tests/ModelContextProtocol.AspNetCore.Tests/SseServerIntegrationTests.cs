@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public class SseServerIntegrationTests(SseServerIntegrationTestFixture fixture, ITestOutputHelper testOutputHelper)
+public class SseServerIntegrationTests(SseServerIntegrationTestFixture fixture)
     : HttpServerIntegrationTests(fixture, testOutputHelper)
 
 {
@@ -14,10 +14,10 @@ public class SseServerIntegrationTests(SseServerIntegrationTestFixture fixture, 
         Name = "In-memory SSE Client",
     };
 
-    [Fact]
+    [Test]
     public async Task EventSourceResponse_Includes_ExpectedHeaders()
     {
-        using var sseResponse = await _fixture.HttpClient.GetAsync("/sse", HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        using var sseResponse = await _fixture.HttpClient.GetAsync("/sse", HttpCompletionOption.ResponseHeadersRead, TestContext.CurrentContext.CancellationToken);
 
         sseResponse.EnsureSuccessStatusCode();
 
@@ -29,18 +29,18 @@ public class SseServerIntegrationTests(SseServerIntegrationTestFixture fixture, 
         Assert.Equal("no", Assert.Single(sseResponse.Headers.GetValues("X-Accel-Buffering")));
     }
 
-    [Fact]
+    [Test]
     public async Task EventSourceStream_Includes_MessageEventType()
     {
         // Simulate our own MCP client handshake using a plain HttpClient so we can look for "event: message"
         // in the raw SSE response stream which is not exposed by the real MCP client.
-        await using var sseResponse = await _fixture.HttpClient.GetStreamAsync("/sse", TestContext.Current.CancellationToken);
+        await using var sseResponse = await _fixture.HttpClient.GetStreamAsync("/sse", TestContext.CurrentContext.CancellationToken);
         using var streamReader = new StreamReader(sseResponse);
 
-        var endpointEvent = await streamReader.ReadLineAsync(TestContext.Current.CancellationToken);
+        var endpointEvent = await streamReader.ReadLineAsync(TestContext.CurrentContext.CancellationToken);
         Assert.Equal("event: endpoint", endpointEvent);
 
-        var endpointData = await streamReader.ReadLineAsync(TestContext.Current.CancellationToken);
+        var endpointData = await streamReader.ReadLineAsync(TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(endpointData);
         Assert.StartsWith("data: ", endpointData);
         var messageEndpoint = endpointData["data: ".Length..];
@@ -50,7 +50,7 @@ public class SseServerIntegrationTests(SseServerIntegrationTestFixture fixture, 
             """;
         using (var initializeRequestBody = new StringContent(initializeRequest, Encoding.UTF8, "application/json"))
         {
-            using var response = await _fixture.HttpClient.PostAsync(messageEndpoint, initializeRequestBody, TestContext.Current.CancellationToken);
+            using var response = await _fixture.HttpClient.PostAsync(messageEndpoint, initializeRequestBody, TestContext.CurrentContext.CancellationToken);
             Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
         }
 
@@ -59,12 +59,12 @@ public class SseServerIntegrationTests(SseServerIntegrationTestFixture fixture, 
             """;
         using (var initializedNotificationBody = new StringContent(initializedNotification, Encoding.UTF8, "application/json"))
         {
-            using var response = await _fixture.HttpClient.PostAsync(messageEndpoint, initializedNotificationBody, TestContext.Current.CancellationToken);
+            using var response = await _fixture.HttpClient.PostAsync(messageEndpoint, initializedNotificationBody, TestContext.CurrentContext.CancellationToken);
             Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
         }
 
-        Assert.Equal("", await streamReader.ReadLineAsync(TestContext.Current.CancellationToken));
-        var messageEvent = await streamReader.ReadLineAsync(TestContext.Current.CancellationToken);
+        Assert.Equal("", await streamReader.ReadLineAsync(TestContext.CurrentContext.CancellationToken));
+        var messageEvent = await streamReader.ReadLineAsync(TestContext.CurrentContext.CancellationToken);
         Assert.Equal("event: message", messageEvent);
     }
 }

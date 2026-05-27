@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class PrimitiveSchemaDefinitionTests
 {
-    [Fact]
+    [Test]
     public static void StringSchema_UnknownProperties_AreIgnored()
     {
         const string json = """
@@ -39,7 +39,7 @@ public static class PrimitiveSchemaDefinitionTests
         Assert.Equal("email", stringSchema.Format);
     }
 
-    [Fact]
+    [Test]
     public static void NumberSchema_UnknownProperties_AreIgnored()
     {
         const string json = """
@@ -71,7 +71,7 @@ public static class PrimitiveSchemaDefinitionTests
         Assert.Equal(1000, numberSchema.Maximum);
     }
 
-    [Fact]
+    [Test]
     public static void BooleanSchema_UnknownProperties_AreIgnored()
     {
         const string json = """
@@ -101,7 +101,7 @@ public static class PrimitiveSchemaDefinitionTests
         Assert.False(boolSchema.Default);
     }
 
-    [Fact]
+    [Test]
     public static void UntitledSingleSelectEnumSchema_UnknownProperties_AreIgnored()
     {
         const string json = """
@@ -134,7 +134,7 @@ public static class PrimitiveSchemaDefinitionTests
         Assert.Equal("option1", enumSchema.Default);
     }
 
-    [Fact]
+    [Test]
     public static void TitledSingleSelectEnumSchema_UnknownProperties_AreIgnored()
     {
         const string json = """
@@ -168,7 +168,7 @@ public static class PrimitiveSchemaDefinitionTests
         Assert.Equal("option2", enumSchema.Default);
     }
 
-    [Fact]
+    [Test]
     public static void UntitledMultiSelectEnumSchema_UnknownProperties_AreIgnored()
     {
         const string json = """
@@ -211,7 +211,7 @@ public static class PrimitiveSchemaDefinitionTests
         Assert.Contains("optionC", enumSchema.Default);
     }
 
-    [Fact]
+    [Test]
     public static void TitledMultiSelectEnumSchema_UnknownProperties_AreIgnored()
     {
         const string json = """
@@ -259,7 +259,7 @@ public static class PrimitiveSchemaDefinitionTests
     }
 
 #pragma warning disable MCP9001 // LegacyTitledEnumSchema is deprecated but supported for backward compatibility
-    [Fact]
+    [Test]
     public static void LegacyTitledEnumSchema_UnknownProperties_AreIgnored()
     {
         const string json = """

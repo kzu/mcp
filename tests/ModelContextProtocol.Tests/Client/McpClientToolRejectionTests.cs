@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -12,8 +12,8 @@ public class McpClientToolRejectionTests : ClientServerTestBase
     private const string InvalidToolName = "InvalidHeaderTool";
     private const string ValidToolName = "ValidTool";
 
-    public McpClientToolRejectionTests(ITestOutputHelper outputHelper)
-        : base(outputHelper)
+    public McpClientToolRejectionTests()
+        : base()
     {
     }
 
@@ -47,12 +47,12 @@ public class McpClientToolRejectionTests : ClientServerTestBase
         mcpServerBuilder.WithTools([invalidTool]);
     }
 
-    [Fact]
+    [Test]
     public async Task ListToolsAsync_ExcludesToolWithInvalidXMcpHeader_AndLogsWarning()
     {
         // Act
         await using var client = await CreateMcpClientForServer();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         // Assert: the valid tool is returned, the invalid one is excluded.
         Assert.Contains(tools, t => t.Name == ValidToolName);

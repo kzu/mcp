@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using ModelContextProtocol.Tests.Utils;
@@ -12,45 +12,45 @@ namespace ModelContextProtocol.ConformanceTests;
 /// </summary>
 public class ClientConformanceTests
 {
-    private readonly ITestOutputHelper _output;
+    private readonly;
 
     // Public static property required for SkipUnless attribute
     public static bool IsNodeInstalled => NodeHelpers.IsNodeInstalled();
     public static bool HasSep2243Scenarios => NodeHelpers.HasSep2243Scenarios();
 
-    public ClientConformanceTests(ITestOutputHelper output)
+    public ClientConformanceTests()
     {
         _output = output;
     }
 
-    [Theory(Skip = "Node.js is not installed. Skipping client conformance tests.", SkipUnless = nameof(IsNodeInstalled))]
-    [InlineData("initialize")]
-    [InlineData("tools_call")]
-    [InlineData("elicitation-sep1034-client-defaults")]
-    [InlineData("sse-retry")]
-    [InlineData("auth/metadata-default")]
-    [InlineData("auth/metadata-var1")]
-    [InlineData("auth/metadata-var2")]
-    [InlineData("auth/metadata-var3")]
-    [InlineData("auth/basic-cimd")]
-    [InlineData("auth/scope-from-www-authenticate")]
-    [InlineData("auth/scope-from-scopes-supported")]
-    [InlineData("auth/scope-omitted-when-undefined")]
-    [InlineData("auth/scope-step-up")]
-    [InlineData("auth/scope-retry-limit")]
-    [InlineData("auth/token-endpoint-auth-basic")]
-    [InlineData("auth/token-endpoint-auth-post")]
-    [InlineData("auth/token-endpoint-auth-none")]
-    [InlineData("auth/resource-mismatch")]
-    [InlineData("auth/pre-registration")]
+    [Test, Ignore("Node.js is not installed. Skipping client conformance tests.")]
+    [TestCase("initialize")]
+    [TestCase("tools_call")]
+    [TestCase("elicitation-sep1034-client-defaults")]
+    [TestCase("sse-retry")]
+    [TestCase("auth/metadata-default")]
+    [TestCase("auth/metadata-var1")]
+    [TestCase("auth/metadata-var2")]
+    [TestCase("auth/metadata-var3")]
+    [TestCase("auth/basic-cimd")]
+    [TestCase("auth/scope-from-www-authenticate")]
+    [TestCase("auth/scope-from-scopes-supported")]
+    [TestCase("auth/scope-omitted-when-undefined")]
+    [TestCase("auth/scope-step-up")]
+    [TestCase("auth/scope-retry-limit")]
+    [TestCase("auth/token-endpoint-auth-basic")]
+    [TestCase("auth/token-endpoint-auth-post")]
+    [TestCase("auth/token-endpoint-auth-none")]
+    [TestCase("auth/resource-mismatch")]
+    [TestCase("auth/pre-registration")]
 
     // Backcompat: Legacy 2025-03-26 OAuth flows (no PRM, root-location metadata).
-    [InlineData("auth/2025-03-26-oauth-metadata-backcompat")]
-    [InlineData("auth/2025-03-26-oauth-endpoint-fallback")]
+    [TestCase("auth/2025-03-26-oauth-metadata-backcompat")]
+    [TestCase("auth/2025-03-26-oauth-endpoint-fallback")]
 
     // Extensions: Require ES256 JWT signing (private_key_jwt) and client_credentials grant support.
-    // [InlineData("auth/client-credentials-jwt")]
-    // [InlineData("auth/client-credentials-basic")]
+    // [TestCase("auth/client-credentials-jwt")]
+    // [TestCase("auth/client-credentials-basic")]
 
     public async Task RunConformanceTest(string scenario)
     {
@@ -63,10 +63,10 @@ public class ClientConformanceTests
     }
 
     // HTTP Standardization (SEP-2243)
-    [Theory(Skip = "SEP-2243 conformance scenarios not yet available.", SkipUnless = nameof(HasSep2243Scenarios))]
-    [InlineData("http-standard-headers")]
-    [InlineData("http-custom-headers")]
-    [InlineData("http-invalid-tool-headers")]
+    [Test, Ignore("SEP-2243 conformance scenarios not yet available.")]
+    [TestCase("http-standard-headers")]
+    [TestCase("http-custom-headers")]
+    [TestCase("http-invalid-tool-headers")]
     public async Task RunConformanceTest_Sep2243(string scenario)
     {
         // Run the conformance test suite
@@ -98,8 +98,7 @@ public class ClientConformanceTests
 
         var process = new Process { StartInfo = startInfo };
 
-        // Protect callbacks with try/catch to prevent ITestOutputHelper from
-        // throwing on a background thread if events arrive after the test completes.
+        // Protect callbacks with try/catch to prevent// throwing on a background thread if events arrive after the test completes.
         DataReceivedEventHandler outputHandler = (sender, e) =>
         {
             if (e.Data != null)

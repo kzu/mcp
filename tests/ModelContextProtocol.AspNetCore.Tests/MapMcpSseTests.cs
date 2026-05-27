@@ -5,7 +5,7 @@ using ModelContextProtocol.Server;
 
 namespace ModelContextProtocol.AspNetCore.Tests;
 
-public class MapMcpSseTests(ITestOutputHelper outputHelper) : MapMcpTests(outputHelper)
+public class MapMcpSseTests() : MapMcpTests()
 {
     protected override bool UseStreamableHttp => false;
     protected override bool Stateless => false;
@@ -16,9 +16,9 @@ public class MapMcpSseTests(ITestOutputHelper outputHelper) : MapMcpTests(output
         options.EnableLegacySse = true;
     }
 
-    [Theory]
-    [InlineData("/mcp")]
-    [InlineData("/mcp/secondary")]
+    [Test]
+    [TestCase("/mcp")]
+    [TestCase("/mcp/secondary")]
     public async Task Allows_Customizing_Route(string pattern)
     {
         Builder.Services.AddMcpServer().WithHttpTransport(options => options.EnableLegacySse = true);
@@ -26,24 +26,24 @@ public class MapMcpSseTests(ITestOutputHelper outputHelper) : MapMcpTests(output
 
         app.MapMcp(pattern);
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
-        using var response = await HttpClient.GetAsync($"http://localhost:5000{pattern}/sse", HttpCompletionOption.ResponseHeadersRead, TestContext.Current.CancellationToken);
+        using var response = await HttpClient.GetAsync($"http://localhost:5000{pattern}/sse", HttpCompletionOption.ResponseHeadersRead, TestContext.CurrentContext.CancellationToken);
         response.EnsureSuccessStatusCode();
-        using var sseStream = await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+        using var sseStream = await response.Content.ReadAsStreamAsync(TestContext.CurrentContext.CancellationToken);
         using var sseStreamReader = new StreamReader(sseStream, System.Text.Encoding.UTF8);
-        var eventLine = await sseStreamReader.ReadLineAsync(TestContext.Current.CancellationToken);
-        var dataLine = await sseStreamReader.ReadLineAsync(TestContext.Current.CancellationToken);
+        var eventLine = await sseStreamReader.ReadLineAsync(TestContext.CurrentContext.CancellationToken);
+        var dataLine = await sseStreamReader.ReadLineAsync(TestContext.CurrentContext.CancellationToken);
         Assert.NotNull(eventLine);
         Assert.Equal("event: endpoint", eventLine);
         Assert.NotNull(dataLine);
         Assert.Equal($"data: {pattern}/message", dataLine[..dataLine.IndexOf('?')]);
     }
 
-    [Theory]
-    [InlineData("/a", "/a/sse")]
-    [InlineData("/a/", "/a/sse")]
-    [InlineData("/a/b", "/a/b/sse")]
+    [Test]
+    [TestCase("/a", "/a/sse")]
+    [TestCase("/a/", "/a/sse")]
+    [TestCase("/a/b", "/a/b/sse")]
     public async Task CanConnect_WithMcpClient_AfterCustomizingRoute(string routePattern, string requestPath)
     {
         Builder.Services.AddMcpServer(options =>
@@ -58,14 +58,14 @@ public class MapMcpSseTests(ITestOutputHelper outputHelper) : MapMcpTests(output
 
         app.MapMcp(routePattern);
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var mcpClient = await ConnectAsync(requestPath);
 
         Assert.Equal("TestCustomRouteServer", mcpClient.ServerInfo.Name);
     }
 
-    [Fact]
+    [Test]
     public async Task EnablePollingAsync_ThrowsInvalidOperationException_InSseMode()
     {
         InvalidOperationException? capturedException = null;
@@ -88,11 +88,11 @@ public class MapMcpSseTests(ITestOutputHelper outputHelper) : MapMcpTests(output
         await using var app = Builder.Build();
         app.MapMcp();
 
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestContext.CurrentContext.CancellationToken);
 
         await using var mcpClient = await ConnectAsync();
 
-        await mcpClient.CallToolAsync("polling_tool", cancellationToken: TestContext.Current.CancellationToken);
+        await mcpClient.CallToolAsync("polling_tool", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.NotNull(capturedException);
         Assert.Contains("Streamable HTTP", capturedException.Message, StringComparison.OrdinalIgnoreCase);

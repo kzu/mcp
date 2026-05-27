@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Caching.Distributed;
+﻿using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -20,7 +20,7 @@ namespace ModelContextProtocol.AspNetCore.Tests;
 /// events for resumability, including across simulated disconnections.
 /// </para>
 /// </remarks>
-public class DistributedCacheResumabilityIntegrationTests(ITestOutputHelper testOutputHelper) : ResumabilityIntegrationTestsBase(testOutputHelper)
+public class DistributedCacheResumabilityIntegrationTests() : ResumabilityIntegrationTestsBase()
 {
     /// <inheritdoc />
     protected override ValueTask<ISseEventStreamStore> CreateEventStreamStoreAsync()

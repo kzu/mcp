@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using System.Text.Json;
@@ -8,8 +8,8 @@ namespace ModelContextProtocol.Tests.Configuration;
 
 public partial class ElicitationTypedTests : ClientServerTestBase
 {
-    public ElicitationTypedTests(ITestOutputHelper testOutputHelper)
-        : base(testOutputHelper)
+    public ElicitationTypedTests()
+        : base()
     {
     }
 
@@ -111,7 +111,7 @@ public partial class ElicitationTypedTests : ClientServerTestBase
         });
     }
 
-    [Fact]
+    [Test]
     public async Task Can_Elicit_Typed_Information()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -200,12 +200,12 @@ public partial class ElicitationTypedTests : ClientServerTestBase
             }
         });
 
-        var result = await client.CallToolAsync("TestElicitationTyped", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("TestElicitationTyped", cancellationToken: TestContext.CurrentContext.CancellationToken);
 
         Assert.Equal("success", (result.Content[0] as TextContentBlock)?.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task Elicit_Typed_Respects_NamingPolicy()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -243,11 +243,11 @@ public partial class ElicitationTypedTests : ClientServerTestBase
             },
         });
 
-        var result = await client.CallToolAsync("TestElicitationCamelForm", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("TestElicitationCamelForm", cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal("success", (result.Content[0] as TextContentBlock)?.Text);
     }
 
-    [Fact]
+    [Test]
     public async Task Elicit_Typed_With_Unsupported_Property_Type_Throws()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -264,12 +264,12 @@ public partial class ElicitationTypedTests : ClientServerTestBase
         });
 
         var ex = await Assert.ThrowsAsync<McpProtocolException>(async() =>
-            await client.CallToolAsync("TestElicitationUnsupportedType", cancellationToken: TestContext.Current.CancellationToken));
+            await client.CallToolAsync("TestElicitationUnsupportedType", cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains(typeof(UnsupportedForm.Nested).FullName!, ex.Message);
     }
 
-    [Fact]
+    [Test]
     public async Task Elicit_Typed_With_Nullable_Property_Type_Throws()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -286,10 +286,10 @@ public partial class ElicitationTypedTests : ClientServerTestBase
         });
 
         var ex = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.CallToolAsync("TestElicitationNullablePropertyForm", cancellationToken: TestContext.Current.CancellationToken));
+            await client.CallToolAsync("TestElicitationNullablePropertyForm", cancellationToken: TestContext.CurrentContext.CancellationToken));
     }
 
-    [Fact]
+    [Test]
     public async Task Elicit_Typed_With_NonObject_Generic_Type_Throws()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -306,7 +306,7 @@ public partial class ElicitationTypedTests : ClientServerTestBase
         });
 
         var ex = await Assert.ThrowsAsync<McpProtocolException>(async () =>
-            await client.CallToolAsync("TestElicitationNonObjectGenericType", cancellationToken: TestContext.Current.CancellationToken));
+            await client.CallToolAsync("TestElicitationNonObjectGenericType", cancellationToken: TestContext.CurrentContext.CancellationToken));
 
         Assert.Contains(typeof(string).FullName!, ex.Message);
     }
@@ -387,7 +387,7 @@ public partial class ElicitationTypedTests : ClientServerTestBase
     [JsonSerializable(typeof(JsonElement))]
     internal partial class ElicitationDefaultsJsonContext : JsonSerializerContext;
 
-    [Fact(Skip = "Requires AIJsonUtilities to support extracting default values from optional parameters")]
+    [Test, Ignore("Requires AIJsonUtilities to support extracting default values from optional parameters")]
     public async Task Elicit_Typed_With_Defaults_Maps_To_Schema_Defaults()
     {
         await using McpClient client = await CreateMcpClientForServer(new McpClientOptions
@@ -447,7 +447,7 @@ public partial class ElicitationTypedTests : ClientServerTestBase
             }
         });
 
-        var result = await client.CallToolAsync("TestElicitationWithDefaults", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync("TestElicitationWithDefaults", cancellationToken: TestContext.CurrentContext.CancellationToken);
         Assert.Equal("success", (result.Content[0] as TextContentBlock)?.Text);
     }
 }

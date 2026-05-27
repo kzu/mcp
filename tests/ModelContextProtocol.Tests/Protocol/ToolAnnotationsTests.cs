@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class ToolAnnotationsTests
 {
-    [Fact]
+    [Test]
     public static void ToolAnnotations_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new ToolAnnotations
@@ -28,7 +28,7 @@ public static class ToolAnnotationsTests
         Assert.False(deserialized.ReadOnlyHint);
     }
 
-    [Fact]
+    [Test]
     public static void ToolAnnotations_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new ToolAnnotations();

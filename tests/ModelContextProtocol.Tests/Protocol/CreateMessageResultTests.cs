@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public class CreateMessageResultTests
 {
-    [Fact]
+    [Test]
     public void CreateMessageResult_WithSingleContent_Serializes()
     {
         CreateMessageResult result = new()
@@ -25,7 +25,7 @@ public class CreateMessageResultTests
         Assert.IsType<TextContentBlock>(deserialized.Content[0]);
     }
 
-    [Fact]
+    [Test]
     public void CreateMessageResult_WithMultipleToolUses_Serializes()
     {
         CreateMessageResult result = new()
@@ -60,7 +60,7 @@ public class CreateMessageResultTests
         Assert.Equal("call_2", ((ToolUseContentBlock)deserialized.Content[1]).Id);
     }
 
-    [Fact]
+    [Test]
     public void CreateMessageResult_WithMixedContent_Serializes()
     {
         CreateMessageResult result = new()
@@ -89,7 +89,7 @@ public class CreateMessageResultTests
         Assert.IsType<ToolUseContentBlock>(deserialized.Content[1]);
     }
 
-    [Fact]
+    [Test]
     public void CreateMessageResult_EmptyContent_AllowedButUnusual()
     {
         CreateMessageResult result = new()
@@ -107,7 +107,7 @@ public class CreateMessageResultTests
         Assert.Empty(deserialized.Content);
     }
 
-    [Fact]
+    [Test]
     public void CreateMessageResult_WithImageContent_Serializes()
     {
         CreateMessageResult result = new()
@@ -130,7 +130,7 @@ public class CreateMessageResultTests
         Assert.Equal("image/png", imageBlock.MimeType);
     }
 
-    [Fact]
+    [Test]
     public void CreateMessageResult_RoundTripWithAllFields()
     {
         CreateMessageResult original = new()
@@ -163,7 +163,7 @@ public class CreateMessageResultTests
         Assert.Equal("metadata", (string)deserialized.Meta["custom"]!);
     }
 
-    [Fact]
+    [Test]
     public void CreateMessageResult_WithToolUse_SerializationRoundtrips()
     {
         CreateMessageResult result = new()
@@ -197,7 +197,7 @@ public class CreateMessageResultTests
         Assert.Equal("Paris", toolUse.Input.GetProperty("city").GetString());
     }
 
-    [Fact]
+    [Test]
     public void CreateMessageResult_WithParallelToolUses_SerializationRoundtrips()
     {
         CreateMessageResult result = new()

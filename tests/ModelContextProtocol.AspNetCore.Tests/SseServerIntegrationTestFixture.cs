@@ -14,7 +14,7 @@ public class SseServerIntegrationTestFixture : IAsyncDisposable
     private readonly Task _serverTask;
     private readonly CancellationTokenSource _stopCts = new();
 
-    // XUnit's ITestOutputHelper is created per test, while this fixture is used for
+    // XUnit'screated per test, while this fixture is used for
     // multiple tests, so this dispatches the output to the current test.
     private readonly DelegatingTestOutputHelper _delegatingTestOutputHelper = new();
 
@@ -50,10 +50,10 @@ public class SseServerIntegrationTestFixture : IAsyncDisposable
             new HttpClientTransport(DefaultTransportOptions, HttpClient, loggerFactory),
             options,
             loggerFactory,
-            TestContext.Current.CancellationToken);
+            TestContext.CurrentContext.CancellationToken);
     }
 
-    public void Initialize(ITestOutputHelper output, HttpClientTransportOptions clientTransportOptions)
+    public void Initialize( HttpClientTransportOptions clientTransportOptions)
     {
         _delegatingTestOutputHelper.CurrentTestOutputHelper = output;
         DefaultTransportOptions = clientTransportOptions;

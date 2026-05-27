@@ -1,4 +1,4 @@
-using ModelContextProtocol.Client;
+﻿using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Tests.Utils;
 using System.Text.Json;
@@ -11,7 +11,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 /// Uses a custom transport that acts as a server, sending elicitation requests and capturing
 /// the raw response the client sends back, before any server-side default application.
 /// </summary>
-public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) : LoggedTest(testOutputHelper)
+public class ElicitationClientDefaultsTests() : LoggedTest()
 {
     private static readonly ElicitRequestParams s_elicitParamsWithDefaults = new()
     {
@@ -34,12 +34,12 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
         },
     };
 
-    [Fact]
+    [Test]
     public async Task ClientAppliesDefaults_NullContent()
     {
         // Client handler returns accept with null content.
         // The client should fill in all defaults before sending the response.
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestContext.CurrentContext.CancellationToken;
         await using ClientElicitationTestTransport transport = new(s_elicitParamsWithDefaults);
         await using var client = await McpClient.CreateAsync(transport, new McpClientOptions
         {
@@ -62,10 +62,10 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
         Assert.Equal("active", rawResult.Content["status"].GetString());
     }
 
-    [Fact]
+    [Test]
     public async Task ClientAppliesDefaults_EmptyContent()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestContext.CurrentContext.CancellationToken;
         await using ClientElicitationTestTransport transport = new(s_elicitParamsWithDefaults);
         await using var client = await McpClient.CreateAsync(transport, new McpClientOptions
         {
@@ -85,12 +85,12 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
         Assert.Equal(30, rawResult.Content["age"].GetDouble());
     }
 
-    [Fact]
+    [Test]
     public async Task ClientAppliesDefaults_PartialContent()
     {
         // Client handler returns accept with only some fields.
         // The client should fill in missing defaults before sending the response.
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestContext.CurrentContext.CancellationToken;
         await using ClientElicitationTestTransport transport = new(s_elicitParamsWithDefaults);
         await using var client = await McpClient.CreateAsync(transport, new McpClientOptions
         {
@@ -125,10 +125,10 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
         Assert.Equal("active", rawResult.Content["status"].GetString());
     }
 
-    [Fact]
+    [Test]
     public async Task ClientAppliesDefaults_AllFieldsProvided_NoChange()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestContext.CurrentContext.CancellationToken;
         await using ClientElicitationTestTransport transport = new(s_elicitParamsWithDefaults);
         await using var client = await McpClient.CreateAsync(transport, new McpClientOptions
         {
@@ -161,10 +161,10 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
         Assert.Equal("inactive", rawResult.Content["status"].GetString());
     }
 
-    [Fact]
+    [Test]
     public async Task ClientAppliesDefaults_Decline_NoDefaultsApplied()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestContext.CurrentContext.CancellationToken;
         await using ClientElicitationTestTransport transport = new(s_elicitParamsWithDefaults);
         await using var client = await McpClient.CreateAsync(transport, new McpClientOptions
         {
@@ -181,10 +181,10 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
         Assert.Null(rawResult.Content);
     }
 
-    [Fact]
+    [Test]
     public async Task ClientAppliesDefaults_Cancel_NoDefaultsApplied()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestContext.CurrentContext.CancellationToken;
         await using ClientElicitationTestTransport transport = new(s_elicitParamsWithDefaults);
         await using var client = await McpClient.CreateAsync(transport, new McpClientOptions
         {
@@ -200,7 +200,7 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
         Assert.Null(rawResult.Content);
     }
 
-    [Fact]
+    [Test]
     public async Task ClientAppliesDefaults_SchemaWithNoDefaults_NoChange()
     {
         ElicitRequestParams paramsNoDefaults = new()
@@ -216,7 +216,7 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
             },
         };
 
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestContext.CurrentContext.CancellationToken;
         await using ClientElicitationTestTransport transport = new(paramsNoDefaults);
         await using var client = await McpClient.CreateAsync(transport, new McpClientOptions
         {
@@ -234,7 +234,7 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
         Assert.Empty(rawResult.Content);
     }
 
-    [Fact]
+    [Test]
     public async Task ClientAppliesDefaults_MultiSelectEnum()
     {
         ElicitRequestParams paramsMultiSelect = new()
@@ -267,7 +267,7 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
             },
         };
 
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestContext.CurrentContext.CancellationToken;
         await using ClientElicitationTestTransport transport = new(paramsMultiSelect);
         await using var client = await McpClient.CreateAsync(transport, new McpClientOptions
         {
@@ -290,7 +290,7 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
         Assert.Equal(["y"], categories);
     }
 
-    [Fact]
+    [Test]
     public async Task ClientAppliesDefaults_TitledSingleSelectEnum()
     {
         ElicitRequestParams paramsTitledEnum = new()
@@ -314,7 +314,7 @@ public class ElicitationClientDefaultsTests(ITestOutputHelper testOutputHelper) 
             },
         };
 
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestContext.CurrentContext.CancellationToken;
         await using ClientElicitationTestTransport transport = new(paramsTitledEnum);
         await using var client = await McpClient.CreateAsync(transport, new McpClientOptions
         {

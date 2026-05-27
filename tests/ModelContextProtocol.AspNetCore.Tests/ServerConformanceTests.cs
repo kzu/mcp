@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -93,13 +93,13 @@ public class ConformanceServerFixture : IAsyncLifetime
 /// Uses a shared <see cref="ConformanceServerFixture"/> so the server is started once
 /// and reused across all tests, avoiding TCP port conflicts on Windows.
 /// </summary>
-public class ServerConformanceTests(ConformanceServerFixture fixture, ITestOutputHelper output)
+public class ServerConformanceTests(ConformanceServerFixture fixture)
     : IClassFixture<ConformanceServerFixture>
 {
-    [Fact]
+    [Test]
     public async Task RunConformanceTests()
     {
-        Assert.SkipWhen(!NodeHelpers.IsNodeInstalled(), "Node.js is not installed. Skipping conformance tests.");
+        if (!NodeHelpers.IsNodeInstalled()) Assert.Ignore("Node.js is not installed. Skipping conformance tests.");
 
         var result = await RunConformanceTestsAsync($"server --url {fixture.ServerUrl}");
 
@@ -107,13 +107,12 @@ public class ServerConformanceTests(ConformanceServerFixture fixture, ITestOutpu
             $"Conformance tests failed.\n\nStdout:\n{result.Output}\n\nStderr:\n{result.Error}");
     }
 
-    [Fact]
+    [Test]
     public async Task RunPendingConformanceTest_JsonSchema202012()
     {
-        Assert.SkipWhen(!NodeHelpers.IsNodeInstalled(), "Node.js is not installed. Skipping conformance tests.");
-        Assert.SkipWhen(
-            RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
-            "Pending Node-based conformance scenario is unstable on Windows due to a libuv shutdown assertion.");
+        if (!NodeHelpers.IsNodeInstalled()) Assert.Ignore("Node.js is not installed. Skipping conformance tests.");
+        if (
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) Assert.Ignore("Pending Node-based conformance scenario is unstable on Windows due to a libuv shutdown assertion.");
 
         var result = await RunConformanceTestsAsync($"server --url {fixture.ServerUrl} --scenario json-schema-2020-12");
 
@@ -121,13 +120,12 @@ public class ServerConformanceTests(ConformanceServerFixture fixture, ITestOutpu
             $"Conformance test failed.\n\nStdout:\n{result.Output}\n\nStderr:\n{result.Error}");
     }
 
-    [Fact]
+    [Test]
     public async Task RunPendingConformanceTest_ServerSsePolling()
     {
-        Assert.SkipWhen(!NodeHelpers.IsNodeInstalled(), "Node.js is not installed. Skipping conformance tests.");
-        Assert.SkipWhen(
-            RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
-            "Pending Node-based conformance scenario is unstable on Windows due to a libuv shutdown assertion.");
+        if (!NodeHelpers.IsNodeInstalled()) Assert.Ignore("Node.js is not installed. Skipping conformance tests.");
+        if (
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) Assert.Ignore("Pending Node-based conformance scenario is unstable on Windows due to a libuv shutdown assertion.");
 
         var result = await RunConformanceTestsAsync($"server --url {fixture.ServerUrl} --scenario server-sse-polling");
 
@@ -135,11 +133,11 @@ public class ServerConformanceTests(ConformanceServerFixture fixture, ITestOutpu
             $"Conformance test failed.\n\nStdout:\n{result.Output}\n\nStderr:\n{result.Error}");
     }
 
-    [Fact]
+    [Test]
     public async Task RunConformanceTest_HttpHeaderValidation()
     {
-        Assert.SkipWhen(!NodeHelpers.IsNodeInstalled(), "Node.js is not installed. Skipping conformance tests.");
-        Assert.SkipWhen(!NodeHelpers.HasSep2243Scenarios(), "SEP-2243 conformance scenarios not yet available.");
+        if (!NodeHelpers.IsNodeInstalled()) Assert.Ignore("Node.js is not installed. Skipping conformance tests.");
+        if (!NodeHelpers.HasSep2243Scenarios()) Assert.Ignore("SEP-2243 conformance scenarios not yet available.");
 
         var result = await RunConformanceTestsAsync($"server --url {fixture.ServerUrl} --scenario http-header-validation");
 
@@ -147,11 +145,11 @@ public class ServerConformanceTests(ConformanceServerFixture fixture, ITestOutpu
             $"Conformance test failed.\n\nStdout:\n{result.Output}\n\nStderr:\n{result.Error}");
     }
 
-    [Fact]
+    [Test]
     public async Task RunConformanceTest_HttpCustomHeaderServerValidation()
     {
-        Assert.SkipWhen(!NodeHelpers.IsNodeInstalled(), "Node.js is not installed. Skipping conformance tests.");
-        Assert.SkipWhen(!NodeHelpers.HasSep2243Scenarios(), "SEP-2243 conformance scenarios not yet available.");
+        if (!NodeHelpers.IsNodeInstalled()) Assert.Ignore("Node.js is not installed. Skipping conformance tests.");
+        if (!NodeHelpers.HasSep2243Scenarios()) Assert.Ignore("SEP-2243 conformance scenarios not yet available.");
 
         var result = await RunConformanceTestsAsync($"server --url {fixture.ServerUrl} --scenario http-custom-header-server-validation");
 
@@ -168,8 +166,7 @@ public class ServerConformanceTests(ConformanceServerFixture fixture, ITestOutpu
 
         var process = new Process { StartInfo = startInfo };
 
-        // Protect callbacks with try/catch to prevent ITestOutputHelper from
-        // throwing on a background thread if events arrive after the test completes.
+        // Protect callbacks with try/catch to prevent// throwing on a background thread if events arrive after the test completes.
         DataReceivedEventHandler outputHandler = (sender, e) =>
         {
             if (e.Data != null)

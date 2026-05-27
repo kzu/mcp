@@ -4,18 +4,21 @@ using System.Text;
 
 namespace ModelContextProtocol.Tests.Utils;
 
-public class XunitLoggerProvider() : ILoggerProvider
+/// <summary>
+/// Logger provider that writes to a TextWriter (e.g. TestContext.Out under NUnit).
+/// </summary>
+public sealed class TestLoggerProvider(TextWriter output) : ILoggerProvider
 {
     public ILogger CreateLogger(string categoryName)
     {
-        return new XunitLogger(output, categoryName);
+        return new TestLogger(output, categoryName);
     }
 
     public void Dispose()
     {
     }
 
-    private class XunitLogger( string category) : ILogger
+    private sealed class TestLogger(TextWriter output, string category) : ILogger
     {
         public void Log<TState>(
             LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
@@ -40,19 +43,17 @@ public class XunitLoggerProvider() : ILoggerProvider
             }
             catch (InvalidOperationException)
             {
-                // Ignore exceptions from xUnit's TestOutputHelper when the test has already completed.
-                // Background work may continue logging after xUnit has disposed the test context.
+                // Ignore when the test output writer has been closed (e.g. after test completion).
             }
-            catch (NullReferenceException)
+            catch (ObjectDisposedException)
             {
-                // xUnit v3 may throw NullReferenceException in TestOutputHelper.QueueTestOutput()
-                // when the internal queue has been torn down after test completion.
+                // Writer may be disposed after test.
             }
         }
 
         public bool IsEnabled(LogLevel logLevel) => true;
 
-        public IDisposable BeginScope<TState>(TState state) where TState : notnull
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
             => new NoopDisposable();
 
         private sealed class NoopDisposable : IDisposable

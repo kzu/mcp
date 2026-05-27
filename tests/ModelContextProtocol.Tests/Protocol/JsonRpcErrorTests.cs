@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class JsonRpcErrorTests
 {
-    [Fact]
+    [Test]
     public static void JsonRpcError_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new JsonRpcError
@@ -30,7 +30,7 @@ public static class JsonRpcErrorTests
         Assert.NotNull(error.Error.Data);
     }
 
-    [Fact]
+    [Test]
     public static void JsonRpcError_SerializationRoundTrip_WithoutOptionalData()
     {
         var original = new JsonRpcError

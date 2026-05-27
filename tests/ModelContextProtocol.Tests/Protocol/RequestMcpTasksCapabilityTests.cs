@@ -1,11 +1,11 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 
 namespace ModelContextProtocol.Tests.Protocol;
 
 public static class RequestMcpTasksCapabilityTests
 {
-    [Fact]
+    [Test]
     public static void RequestMcpTasksCapability_SerializationRoundTrip_ToolsOnly()
     {
         // Arrange
@@ -29,7 +29,7 @@ public static class RequestMcpTasksCapabilityTests
         Assert.Null(deserialized.Elicitation);
     }
 
-    [Fact]
+    [Test]
     public static void RequestMcpTasksCapability_SerializationRoundTrip_SamplingOnly()
     {
         // Arrange
@@ -53,7 +53,7 @@ public static class RequestMcpTasksCapabilityTests
         Assert.Null(deserialized.Elicitation);
     }
 
-    [Fact]
+    [Test]
     public static void RequestMcpTasksCapability_SerializationRoundTrip_ElicitationOnly()
     {
         // Arrange
@@ -77,7 +77,7 @@ public static class RequestMcpTasksCapabilityTests
         Assert.NotNull(deserialized.Elicitation.Create);
     }
 
-    [Fact]
+    [Test]
     public static void RequestMcpTasksCapability_HasCorrectJsonPropertyNames()
     {
         var capability = new RequestMcpTasksCapability

@@ -1,4 +1,4 @@
-using ModelContextProtocol.Protocol;
+﻿using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,7 +6,7 @@ namespace ModelContextProtocol.Tests.Protocol;
 
 public static class EmptyResultTests
 {
-    [Fact]
+    [Test]
     public static void EmptyResult_SerializationRoundTrip_PreservesAllProperties()
     {
         var original = new EmptyResult
@@ -22,7 +22,7 @@ public static class EmptyResultTests
         Assert.Equal("value", (string)deserialized.Meta["key"]!);
     }
 
-    [Fact]
+    [Test]
     public static void EmptyResult_SerializationRoundTrip_WithMinimalProperties()
     {
         var original = new EmptyResult();
